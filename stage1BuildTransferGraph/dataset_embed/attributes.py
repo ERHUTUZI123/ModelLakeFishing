@@ -435,48 +435,79 @@ class GraphAttributes():
                 # if not 'clevr' then just use ds_name + label_name
                 else:
                     dataset_name = f"{ds_name}_{json.loads(configs)['label_name']}"
-
             # cannot load imagenet-21k and make them equal
             if dataset_name == 'imagenet_21k':
                 dataset_name = 'imagenet'
 
+            # print the final dataset_name used for loading model feature
             logger.info(f"== dataset_name: {dataset_name}")
+
+            # if dataset is FastJobs_Visual_Emotional_Analysis, skip this model
             if dataset_name == 'FastJobs_Visual_Emotional_Analysis':
                 # delete_model_row_idx.append(i)
                 model_list.append(row['model'])
                 continue
+
+            # get the largest input_shape from this model's fine-tune history
             IMAGE_SHAPE = int(sorted(model_match_rows['input_shape'].values, reverse=True)[0])
+
+            # get current model name
             model_name = row['model']
+
             # if model_name in ['AkshatSurolia/BEiT-FaceMask-Finetuned','AkshatSurolia/ConvNeXt-FaceMask-Finetuned','AkshatSurolia/DeiT-FaceMask-Finetuned','AkshatSurolia/ViT-FaceMask-Finetuned','Amrrs/indian-foods','Amrrs/south-indian-foods']: 
             #     continue
+
+            # create path to load saved model attribution feature
             path = os.path.join(
                 f'../model_embed/{DATA_EMB_METHOD}/feature',
                 dataset_name,
                 model_name.replace('/', '_') + f'_{ATTRIBUTION_METHOD}.npy'
             )
+
+            # print dataset_name and model_name
             logger.info(dataset_name, model_name)
 
             # load model features
             try:
                 features = np.load(path)
+
+            # if loading model feature fails
             except Exception as e:
+                # if we require complete model features, skip this model and add it to model_list
                 if complete_model_features:
                     logger.warning(f'== Skip this model and delete it')
                     # delete_model_row_idx.append(i)
                     model_list.append(row['model'])
                     continue
                 else:
+                    # if we do not require complete model features, use a zero matrix as placeholder
                     features = np.zeros((INPUT_SHAPE, INPUT_SHAPE))
                 # features = np.zeros((INPUT_SHAPE,INPUT_SHAPE))
+
+            # print loaded feature shape
             logger.info(f'features.shape: {features.shape}')
+
+            # if feature is only a 2D zero placeholder, try to obtain missing features
             if features.shape == (INPUT_SHAPE, INPUT_SHAPE):
                 logger.info('Try to obtain missing features')
+
+                # add parent directory to system path
                 sys.path.append('..')
+
+                # import attribution map embed function
                 from model_embed.attribution_map.embed import embed
+
+                # use selected attribution method
                 method = ATTRIBUTION_METHOD  # 'saliency'
+
+                # use batch size 1 to generate model feature
                 batch_size = 1
+
                 try:
+                    # try to generate model attribution feature
                     features = embed('../', model_name, dataset_name, method, input_shape=IMAGE_SHAPE, batch_size=batch_size)
+
+                # if generating feature also fails, skip this model
                 except Exception as e:
                     # print(e)
                     # print('----------')
@@ -485,21 +516,42 @@ class GraphAttributes():
                     model_list.append(row['model'])
                     logger.warning(f'--- fail - skip row {row["model"]}')
                     continue
+
             else:
+                # if loaded feature is all NaN, replace it with zero feature
                 if np.isnan(features).all():
                     features = np.zeros((3, INPUT_SHAPE, INPUT_SHAPE))
+
+            # average feature over first dimension, usually average over channels
             features = np.mean(features, axis=0)
+
             # print(f'features.shape: {features.shape}')
+
+            # if feature shape is not expected INPUT_SHAPE, resize it
             if features.shape[1] != INPUT_SHAPE:
                 # print(f'== features.shape:{features.shape}')
                 features = np.resize(features, (INPUT_SHAPE, INPUT_SHAPE))
+
+            # flatten 2D feature map into 1D vector
             features = features.flatten()
+
+            # add current model feature to model_feature list
             model_feature.append(features)
+
+        # print how many model features are saved
         logger.info(f'== model_feature.shape:{len(model_feature)}')
+
+        # stack all model feature vectors into one matrix
         model_feature = np.stack(model_feature)
+
         # model_feature.astype(np.double)
+
+        # print final model feature matrix shape
         logger.info(f'== model_feature.shape:{model_feature.shape}')
+
         # return torch.from_numpy(model_feature).to(torch.float), delete_model_row_idx
+
+        # return model feature matrix and skipped model list
         return model_feature, model_list  # delete_model_row_idx
 
     def get_dataset_list(self):
