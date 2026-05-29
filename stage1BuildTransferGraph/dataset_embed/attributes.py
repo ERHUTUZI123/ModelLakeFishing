@@ -385,6 +385,11 @@ class GraphAttributes():
         for i, row in self.unique_model_id.iterrows():
             # print what model are we processing
             logger.info(f"======== i: {i}, model: {row['model']} ==========")
+            # if selected model name is NaN
+            if pd.isna(model_match_rows['model'].values[0]):
+                # then we still add it to modeel_list
+                model_list.append(row['model'])
+                continue
             # get all fine-tune history of selected model
             model_match_rows = self.finetune_records.loc[self.finetune_records['model'] == row['model']]
             # if model does not have any fine-tune history
@@ -394,25 +399,40 @@ class GraphAttributes():
                     # delete_model_row_idx.append(i)
                     model_list.append(row['model'])
                 else:
+                    # if not we just drop a purely 0 feature and add to mode_feature
                     features = np.zeros(INPUT_SHAPE * INPUT_SHAPE)
                     model_feature.append(features)
                 continue
-            if model_match_rows['model'].values[0] == np.nan:
-                # delete_model_row_idx.append(i)
-                model_list.append(row['model'])
-                continue
+            
             try:
+                # normalize the name to be all like x_y
                 dataset_name = model_match_rows['dataset'].values[0].replace('/', '_').replace('-', '_')
+                # save name
                 ds_name = dataset_name
+                # if name is saved as key in dataset_map then use key's value as name otherwise just use newly normalized name
                 dataset_name = self.dataset_map[dataset_name] if dataset_name in self.dataset_map.keys() else dataset_name
             except:
+                # error handling print
                 logger.warn('fail to retrieve model')
                 continue
+            # if datasetname is list (e.g value of a key in dataset_map)
             if isinstance(dataset_name, list):
+                # find dataset_name's dataset fine-tune history in finetune_records and get its configs' first item
+                #  and load it to be dict
                 configs = self.finetune_records[self.finetune_records['dataset'] == ds_name]['configs'].values[0].replace("'", '"')
+                # print configs
                 logger.info(configs)
+                '''
+                Interesting parts, it tries to specify tasks like ModelLens using a very rough way
+                for 'clevr' there are many tasks you can do, specified by configs['preprocess']
+                {'preprocess': 'count'}
+                {'preprocess': 'distance'}
+                {'preprocess': 'closest_obejct'}
+                that will be more clear
+                '''
                 if ds_name == 'clevr':
                     dataset_name = json.loads(configs)['preprocess']
+                # if not 'clevr' then just use ds_name + label_name
                 else:
                     dataset_name = f"{ds_name}_{json.loads(configs)['label_name']}"
 
