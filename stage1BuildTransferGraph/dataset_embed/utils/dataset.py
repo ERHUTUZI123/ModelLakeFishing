@@ -2,8 +2,8 @@ from torch.utils.data import DataLoader
 from transformers import PreTrainedTokenizer
 from transformers.image_processing_utils import BaseImageProcessor
 
-from codes.ModelLakeFishing.stage1BuildTransferGraph.text_dataset_embed.utils.base_dataset import BaseDataset
-from transfergraph.dataset.hugging_face.builder import HuggingFaceDatasetBuilderImage, HuggingFaceDatasetBuilderText
+from base_dataset import BaseDataset
+from builder import HuggingFaceDatasetBuilderImage, HuggingFaceDatasetBuilderText
 
 
 class HuggingFaceDatasetText(BaseDataset):

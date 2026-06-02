@@ -5,11 +5,11 @@ import numpy as np
 import pandas as pd
 from transformers import PreTrainedModel
 
-from codes.ModelLakeFishing.stage1BuildTransferGraph.dataset_embed.utils.config import get_root_path_string
-from codes.ModelLakeFishing.stage1BuildTransferGraph.dataset_embed.utils.base_dataset import BaseDataset
-from codes.ModelLakeFishing.stage1BuildTransferGraph.dataset_embed.utils.embed_utils import DatasetEmbeddingMethod
-from codes.ModelLakeFishing.stage1BuildTransferGraph.dataset_embed.utils.task import TaskType
-from codes.ModelLakeFishing.stage1BuildTransferGraph.dataset_embed.utils.feature_utils import extract_features_without_labels
+from config import get_root_path_string
+from base_dataset import BaseDataset
+from embed_utils import DatasetEmbeddingMethod
+from task import TaskType
+from feature_utils import extract_features_without_labels
 
 
 class DatasetEmbedder:

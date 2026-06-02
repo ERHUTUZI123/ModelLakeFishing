@@ -1,6 +1,6 @@
 import pathlib
 
-from codes.ModelLakeFishing.stage1BuildTransferGraph.text_dataset_embed.utils.task import TaskType
+from task import TaskType
 
 
 def get_root_path_string() -> str:

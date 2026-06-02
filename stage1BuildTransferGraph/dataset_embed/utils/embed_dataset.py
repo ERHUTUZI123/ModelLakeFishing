@@ -4,10 +4,10 @@ import logging
 import torch
 from transformers import AutoImageProcessor, AutoConfig, AutoModelForImageClassification, AutoTokenizer, AutoModelForSequenceClassification
 
-from codes.ModelLakeFishing.stage1BuildTransferGraph.text_dataset_embed.utils.embed_utils import DatasetEmbeddingMethod
-from codes.ModelLakeFishing.stage1BuildTransferGraph.text_dataset_embed.utils.embedder import DatasetEmbedder
-from codes.ModelLakeFishing.stage1BuildTransferGraph.text_dataset_embed.utils.dataset import HuggingFaceDatasetImage, HuggingFaceDatasetText
-from codes.ModelLakeFishing.stage1BuildTransferGraph.text_dataset_embed.utils.task import TaskType
+from embed_utils import DatasetEmbeddingMethod
+from embedder import DatasetEmbedder
+from dataset import HuggingFaceDatasetImage, HuggingFaceDatasetText
+from task import TaskType
 
 
 def main(args: argparse.Namespace):
