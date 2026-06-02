@@ -1,0 +1,3 @@
+child_model_id,relation,parent_model_id
+621ffdc136468d709f17dc48,adapter,marcelcastrobr/sagemaker-distilbert-emotion
+69b20b043fadc91fa2784660,finetune,google/gemma-4-31B
