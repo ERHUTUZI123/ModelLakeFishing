@@ -39,6 +39,7 @@ class GraphAttributes():
         self.args = args
         self.resource_path = os.path.join(get_root_path_string(), "resources/experiments", args.task_type.value)
         self.record_path = os.path.join(self.resource_path, "records.csv")
+        self.lineage_record_path = os.path.join('.', 'dataset_embed', 'data', 'lineage_records.csv')
         self.model_config_path = os.path.join(self.resource_path, "model_config_dataset.csv")
         self.peft_method = args.peft_method
 
@@ -267,26 +268,10 @@ class GraphAttributes():
         return positive_edges, positive_edges_weights, negative_edges
 
     def get_edges(self, df, method, type='positive'):
-        '''
-        get_edges converts dataframe file df to graph based on 
-        given method and type
-
-        Before,
-        model        dataset      score
-        model_A      dataset_X    1.27
-        model_B      dataset_Y    0.83
-
-        After,
-        model_A -> dataset_X, weight = 1.27
-        model_B -> dataset_Y, weight = 0.83
-        '''
-        # print length of df after filtering for this type and method
         logger.info(f'\nlen(df) after filtering models by {method}, {type}: {len(df)}')
-        # combine df and unique_dataset_id according to the column 'dataset'
-        #  and keep those both dfs have only
-        # basically add dataset ids into it
+
         mapped_dataset_id = pd.merge(df[['dataset', 'model', method]], self.unique_dataset_id, on='dataset', how='inner')
-        # add model ids into it
+
         mapped_model_id = pd.merge(
             mapped_dataset_id[['dataset', 'model', method]],
             self.unique_model_id,
@@ -676,6 +661,7 @@ class GraphAttributes():
 
         return filtered_results_df, filtered_model_info_df
 
+    
     def get_finetuned_records(self):
         config = pd.read_csv(self.model_config_path)
         # model configuration
@@ -752,6 +738,56 @@ class GraphAttributes():
         finetune_records.index = range(len(finetune_records))
 
         return finetune_records, model_config
+    
+    def get_lineage_records(self):
+        model_config = pd.read_csv(self.model_config_path)
+        lineage_records = pd.read_csv(self.lineage_record_path)
+        available_models = model_config['model'].unique()
+        lineage_records = lineage_records[lineage_records['model'].isin(available_models)]
+        return lineage_records
+    
+    def get_model_model_edge_index(self):
+        df = self.get_lineage_records()
+        relation_weights = {
+            'quantized': 0.9,
+            'adapter': 0.7,
+            'finetune': 0.5,
+            'merge': 0.3
+        }
+        df['weight'] = df['relation'].map(relation_weights).fillna(0.0)
+        edges, edges_weights = self.get_edges_new(df)
+        return edges, edges_weights
+
+    def get_edges_new(self, df):
+        model_id_map = self.unique_model_id.rename(columns={
+            "mappedID": "model_id"
+        })
+
+        base_model_id_map = self.unique_model_id.rename(columns={
+            "model": "base_model",
+            "mappedID": "base_model_id"
+        })
+
+        mapped_lineage = pd.merge(
+            df,
+            model_id_map,
+            on="model",
+            how="inner"
+        )
+
+        mapped_lineage = pd.merge(
+            mapped_lineage,
+            base_model_id_map,
+            on="base_model",
+            how="inner"
+        )
+
+        edge_index_model_to_model = torch.stack([
+            torch.from_numpy(mapped_lineage['base_model_id'].values).long(),
+            torch.from_numpy(mapped_lineage['model_id'].values).long()
+        ], dim=0)
+        edge_attr = torch.from_numpy(mapped_lineage['weight'].values)
+        return edge_index_model_to_model, edge_attr
 
 
 class GraphAttributesWithDomainSimilarity(GraphAttributes):
@@ -905,6 +941,7 @@ class GraphAttributesWithTask2Vec(GraphAttributes):
             threshold=args.distance_thres,
             sim_method=args.dataset_distance_method
         )
+        self.edge_index_model_to_model, self.edge_attr_model_to_model = self.get_model_model_edge_index()
 
     def get_dataset_features(self, reference_model='resnet34'):
         from dataset_embed.task2vec_embed.embed_task import embed

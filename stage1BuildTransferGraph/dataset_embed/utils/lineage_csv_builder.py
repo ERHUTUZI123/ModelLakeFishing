@@ -5,12 +5,16 @@ import pandas as pd
 api = HfApi()
 
 model_ids = \
-["TransferGraph/marcelcastrobr_sagemaker-distilbert-emotion-finetuned-lora-tweet_eval_offensive",
- "google/gemma-4-31B-it"]
+["google/gemma-4-31B-it", 
+ "gghfez/gemma-4-31b-it-control-vectors",
+ "nvidia/Gemma-4-31B-IT-NVFP4",
+ "virtuous7373/Gemma-4-Harmonia-31B",
+ "unsloth/gemma-4-31B-it-GGUF"]
 
-df = pd.DataFrame(columns=["child_model_id", "relation", "parent_model_id"])
+df = pd.DataFrame(columns=["model", "relation", "base_model"])
 
 for model_id in model_ids:
+    child_model_id = model_id
     info = api.model_info(
         repo_id=model_id,
         expand=["baseModels"]
@@ -18,11 +22,12 @@ for model_id in model_ids:
 
     print(info.base_models)
     relation = info.base_models.get('relation')
+    print(relation)
     models_list = info.base_models.get('models', [])
     if models_list:
-        child_model_id = models_list[0].get('_id')
-        parent_model_id = models_list[0].get('id')
-        df.loc[len(df)] = [child_model_id, relation, parent_model_id]
+        for model in models_list:
+            parent_model_id = model.get('id')
+            df.loc[len(df)] = [child_model_id, relation, parent_model_id]
     else:
         continue
 print(df)

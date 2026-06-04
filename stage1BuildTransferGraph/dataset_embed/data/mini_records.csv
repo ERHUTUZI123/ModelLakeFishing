@@ -1,0 +1,5 @@
+model,dataset,accuracy
+resnet18,cifar10,0.80
+resnet18_ft,cifar10,0.60
+resnet18_ft,flowers,0.90
+resnet18_q,flowers,0.70

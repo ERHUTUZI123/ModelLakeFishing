@@ -1,0 +1,3 @@
+model,relation,base_model
+resnet18_ft,finetune,resnet18
+resnet18_q,adapter,resnet18_ft

@@ -1,0 +1,41 @@
+================================================================
+HGraph Readable Dump
+================================================================
+
+Nodes
+--------------------------------
+  dataset   : 2  [cifar10, flowers]
+  model     : 3  [resnet18, resnet18_ft, resnet18_q]
+
+Edges  (after ToUndirected)
+--------------------------------
+
+  [model] --trained_on--> [dataset]  (4 edges)
+    resnet18(0) --> cifar10(0)  w=1.0000
+    resnet18_ft(1) --> cifar10(0)  w=0.0000
+    resnet18_ft(1) --> flowers(1)  w=1.0000
+    resnet18_q(2) --> flowers(1)  w=0.0000
+
+  [dataset] --similar_to--> [dataset]  (2 edges)
+    cifar10(0) --> flowers(1)  w=0.8374
+    flowers(1) --> cifar10(0)  w=0.8374
+
+  [model] --is_base_of--> [model]  (4 edges)
+    resnet18(0) --> resnet18_ft(1)  w=0.5000
+    resnet18_ft(1) --> resnet18(0)  w=0.5000
+    resnet18_ft(1) --> resnet18_q(2)  w=0.7000
+    resnet18_q(2) --> resnet18_ft(1)  w=0.7000
+
+  [model] --transfer_to--> [dataset]  (2 edges)
+    resnet18(0) --> flowers(1)  w=0.5000
+    resnet18_q(2) --> cifar10(0)  w=0.4000
+
+  [dataset] --rev_trained_on--> [model]  (4 edges)  [auto-reverse]
+    cifar10(0) --> resnet18(0)  w=1.0000
+    cifar10(0) --> resnet18_ft(1)  w=0.0000
+    flowers(1) --> resnet18_ft(1)  w=1.0000
+    flowers(1) --> resnet18_q(2)  w=0.0000
+
+  [dataset] --rev_transfer_to--> [model]  (2 edges)  [auto-reverse]
+    flowers(1) --> resnet18(0)  w=0.5000
+    cifar10(0) --> resnet18_q(2)  w=0.4000
