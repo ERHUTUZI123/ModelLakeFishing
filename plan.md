@@ -1,76 +1,163 @@
-好，我按 TransferGraph 已有的数据流，从头到尾把 lineage 边的全流程讲一遍，每一步都对照现有代码里对应的位置，让你能看出它是怎么嵌进去的。
+# xm0_builder 构建指南
+
+目标：把模型节点特征从随机占位换成真实的四分量 $\mathbf{x}_m^{(0)} = [\mathbf{e}_m^{\text{name}} \| \mathbf{e}_m^{\text{desc}} \| \mathbf{e}_m^{\text{size}} \| \mathbf{e}_m^{\text{fam}}]$，让 GraphSAGE 有真实的节点特征可聚合。
+
+---
+
+
+**第零步：先确认接口契约（最重要的对齐点）**
+
+在动手之前，先看清楚 `HGraph` 现在怎么接收模型特征。在你 attach 的测试里，`model_features=[]` 且 `contain_model_feature=False`，于是 `HGraph` 内部用 `torch.rand` 生成随机特征。
+
+`xm0_builder` 的唯一职责就是产出一个能替换那个随机张量的东西：一个形状为 `[num_models, feature_dim]` 的矩阵，**行顺序严格对应 `unique_model_id` 的 mappedID 顺序**。这是整条链路的契约——第 i 行必须是 mappedID 为 i 的那个模型的特征。任何顺序错位都会让每个模型的特征张冠李戴，而且不报错，是最危险的 bug。所以 builder 的输入必须是 `unique_model_id` 这张表，输出按它的行序排列。
 
 ---
 
 **第一步：数据从哪里来**
 
-TransferGraph 现有的数据入口在 `get_finetuned_records` 里，从 `records.csv` 读 fine-tune 历史。lineage 信息不在这个文件里，所以你需要一个**新的数据源**——每个模型的 `base_model` 字段。
+四个分量有两个不同的数据源。
 
-这个字段的来源是 HuggingFace 模型卡。你需要在数据准备阶段（`attributes.py` 之外）先把它抓下来，整理成一张 CSV，最简结构是三列：`model`（子模型名）、`base_model`（父模型名）、`relation_type`（关系类型：quantized / adapter / finetune / merge）。这张表在概念上和 `records.csv` 平级——它是 lineage 边的"原始记录表"，对应工作流第一步"Start from a records DataFrame"。
+name 和 fam 可以直接从模型名字字符串里得到——模型名（如 `google/gemma-4-31B-it`）你已经有了，就在 `unique_model_id['model']` 这一列里，不需要额外抓取。
 
-注意一个现实情况：一个 merge 模型有多个 base_model，所以这张表里同一个子模型可能出现多行，每行连向一个不同的父模型。这是正常的，不要去重成一行。
-
----
-
-**第二步：数据在哪里处理、何时载入**
-
-现有代码在 `GraphAttributes.__init__` 里调用 `get_finetuned_records` 和 `get_node_id`，先把 records 读进来，再生成 `unique_model_id`（模型名到整数 mappedID 的映射表）。
-
-你的 lineage 表要在 `unique_model_id` **生成之后**载入，因为你需要这张映射表来把模型名翻译成节点 ID。所以合理的位置是：在 `__init__` 里 `get_node_id` 之后，加一句载入 lineage CSV，存成 `self.lineage_records`。
-
-这里有一个关键的过滤动作要做。TransferGraph 的图里模型集合是固定的（来自 `unique_model_id`），所以你的 lineage 边只有当**子模型和父模型都在 `unique_model_id` 里**时才有意义。父模型不在图里，这条边就没有可连的目标节点。这个过滤不需要你手动写循环——它会在第四步的 merge 里用 `how='inner'` 自动完成，和现有代码丢弃孤儿边的机制完全一样。
+desc 和 size 需要从 HuggingFace 抓取——desc 来自 model card 的 README 文本，size 来自模型的参数量元数据。这一步要在 `attributes.py` 之外，写一个独立的抓取脚本（和你抓 lineage 的 `base_model` 那个脚本平级），把每个模型的 README 和参数量抓下来存成一张 CSV，结构类似：`model`、`description_text`、`param_count`。这张表和 lineage 表一样，是 builder 的"原始输入"。
 
 ---
 
-**第三步：构建权重**
+**第二步：四个分量分别怎么算**
 
-现有代码里，performance 边的权重来自 accuracy（连续值，做了 groupby 归一化），transferability 边的权重来自 score（连续值，做了 mean 归一化）。这些都是测量出来的连续量，所以要归一化。
+**name 分量。** 把模型名喂进一个轻量句子编码器（sentence-transformers 那类），得到一个固定维度向量。这是 frozen 的，算一次就不变。要决定的设计点：整名编码还是按分隔符切分后编码——先看实际输出再定。
 
-你的 lineage 权重不一样——它是**按关系类型赋的有序离散值**，不是测量出来的。所以处理方式要区别对待：
+**desc 分量。** 把 README 文本喂进同一个编码器，得到 frozen 向量。这是四个分量里最脏的一个，边界情况最多：README 为空、过长（要截断）、非英文。每种情况都要有一个一致的兜底策略。这一步也是整个 builder 里最耗时的离线步骤，必须做断点续跑和缓存，否则中断一次重头来代价极高。
 
-建一个固定的映射表，把 `relation_type` 映射成 $r_{mm'}$。按继承强度排序：quantized 最高、adapter 次之、finetune 再次、merge 最低（比如 0.9 / 0.7 / 0.5 / 0.3）。在 lineage 表里加一列 `relation_weight`，按这个映射填进去。
+**size 分量。** 参数量先做 log10 变换（因为跨四个数量级），再离散化成若干 bucket，每个 bucket 对应一个**可学习**的 embedding。注意这里和 name/desc 不同——size 是 learnable 的，不是 frozen 的。参数量缺失的模型统一进一个 "unknown" bucket。
 
-关键决定：**不要**把这列权重塞进现有的 min-max 或 mean 归一化流程。那套归一化是为了处理没有绝对意义的连续测量值，而你的离散权重本身就是你设计好的、带语义的相对关系，归一化会把 0.9/0.7/0.5/0.3 的精心设计扭曲掉。这也是为什么 lineage 边要单独写一个获取方法，而不是复用 `get_model_dataset_edge_index`——后者内置了 groupby 归一化和阈值过滤，对你的离散权重不适用。
-
----
-
-**第四步：名字翻译成节点 ID，构建 edge_index 和 edge_attr**
-
-这一步完全复刻现有 `get_edges` 的双重 merge 模式，只是两端都换成 model。
-
-现有代码里，model-dataset 边是：用 `model` 列 merge `unique_model_id` 拿模型 ID，用 `dataset` 列 merge `unique_dataset_id` 拿数据集 ID，两端来自不同的映射表。
-
-你的 lineage 边是：用 `model` 列 merge `unique_model_id` 拿子模型 ID，再用 `base_model` 列 merge **同一张** `unique_model_id`（只是 merge 的 key 换成 base_model）拿父模型 ID。两端都来自 `unique_model_id`。两次 merge 都用 `how='inner'`，孤儿边在这一步自动被丢掉。
-
-merge 完之后，把子模型的 mappedID 和父模型的 mappedID 用 `torch.stack` 叠成 `[2, num_edges]` 的 edge_index tensor——这和现有代码 stack 模型 ID 和数据集 ID 的写法一模一样，对应工作流第三步。权重那一列 `relation_weight` 转成 tensor 作为 edge_attr，对应第四步。
-
-关于索引空间有一个细节要注意。在 homo 模式下，现有代码有一行 `self.unique_model_id['mappedID'] += self.max_dataset_idx + 1`，把模型索引整体平移以避免和数据集索引冲突。因为你的 lineage 边两端都是 model，两次 merge 自动拿到的就是平移后的索引，两端都对，不需要任何额外处理——这反而比 model-dataset 边简单，后者要分别处理两个不同的索引空间。hetero 模式下不平移，两端也都用原始 model 索引，同样不需要特殊处理。
+**fam 分量。** 从模型名字和 tags 用规则表推断家族（含 `llama`→LLaMA 系，含 `qwen`→Qwen 系等），每个家族对应一个**可学习**的 embedding。识别不出的进 "Other"。同样是 learnable。
 
 ---
 
-**第五步：插入图**
+**第三步：frozen 和 learnable 必须分开存储（关键架构决定）**
 
-现有代码在 `GraphAttributesWithDomainSimilarity.__init__` 的末尾，把三类边的 edge_index 和 edge_attr 都算好存成 `self.edge_index_xxx` 属性，然后这些属性被传进 `HGraph`，在 `HGraph.__init__` 里注册成 typed relation（比如 `self.data["model", "trained_on", "dataset"]`）。
+这是和 lineage 那套流程最不一样的地方，要特别注意。
 
-你的 lineage 边走同样的路径：在 `__init__` 末尾调用你新写的 lineage 边获取方法，存成 `self.edge_index_lineage` 和 `self.edge_attr_lineage`；然后在 `HGraph.__init__` 里加一个新参数接收它们，注册成 `self.data["model", "derived_from", "model"].edge_index` 和对应的 edge_attr。
+name 和 desc 是 frozen 的——预训练编码器算出来就固定，不参与梯度。size 和 fam 是 learnable 的——它们是 embedding 查找表，训练时会更新。
 
-因为 `HGraph` 末尾会调用 `T.ToUndirected()`，你只需要存单向边（子→父），反向边会自动补上。所以建图时不用操心方向问题。
+这意味着 builder 的产出不是一个拼好的完整矩阵，而应该分两部分：frozen 部分（name+desc）离线算好存成文件，直接当作固定特征；learnable 部分（size bucket id 和 family id）只需要存**离散的索引**（第几个 bucket、第几个家族），真正的 embedding 向量在 GraphSAGE 训练时才动态查表生成。
+
+如果你把 size 和 fam 也提前算成固定向量塞进特征矩阵，它们就变成 frozen 的了，失去了"可学习"的意义——这违背了我们设计 $\mathbf{e}_m^{\text{size}}$ 和 $\mathbf{e}_m^{\text{fam}}$ 作为可训练 embedding 的初衷。所以这一步的产出实际上是：一个 frozen 特征矩阵 + 两列离散索引（size_bucket_id、family_id）。
+
+---
+
+**第四步：维度对齐**
+
+name 和 desc 如果用同一个编码器，维度一致；如果用不同编码器，拼接前要先投影到统一维度。整个 $\mathbf{x}_m^{(0)}$ 的最终维度会一路传到 GraphSAGE，影响计算量，要心里有数控制在合理范围（参考你数据集特征的维度量级，别让模型侧维度爆炸性地大于数据集侧）。
+
+---
+
+**第五步：接进 HGraph**
+
+现有 `HGraph` 在 `contain_model_feature=True` 时会读传进来的 `model_features`。所以你要做两件事：把 `contain_model_feature` 打开；把 builder 产出的 frozen 特征矩阵传进 `model_features` 参数。
+
+但 learnable 的 size/fam 索引不能走 `model_features` 这个口子——它走的是固定特征的路径。size/fam 的 embedding 层需要在 GraphSAGE 模型内部定义，训练时用索引查表，再和 frozen 特征拼接。所以这一步实际上跨越了"建图"和"建模型"两个阶段：frozen 部分进图作为节点特征，learnable 部分的索引要作为额外信息带到模型定义里。这是你接下来写 GraphSAGE 时要接的口子，builder 现在只需要把这两列索引准备好。
 
 ---
 
 **第六步：最小验证**
 
-改完先别训练。`HGraph._print()` 会打印 `self.data` 和 `metadata()`。确认输出里多了一类 `("model", "derived_from", "model")` 边，且边数和你过滤后预期的 lineage 边数量吻合。这是最快的 sanity check，确认边确实进了图，再往下走。
+仿照你 lineage 的 sanity check 思路。在小图（那 3 个模型）上：
+
+确认 frozen 特征矩阵的行数等于模型数，行序和 `unique_model_id` 的 mappedID 对得上（抽查第 0 行是不是 mappedID=0 那个模型的特征）。确认 size_bucket_id 和 family_id 两列没有意外的 NaN，缺失值都正确落进了 unknown/Other。确认维度符合预期。
+
+这一步只验证 builder 的产出本身正确，不涉及训练——和你验证 lineage 边"确实进了图"是同一层级的检查。
 
 ---
 
-**整条链路对照一下现有代码**
+**整条链路对照一下你已经做过的 lineage 流程**
 
-数据源：`records.csv` → 你的 `lineage.csv`。
-载入：`get_finetuned_records` → 你在 `__init__` 里载入 lineage 表。
-ID 映射：`get_node_id` 生成的 `unique_model_id`（复用，不改）。
-边构建：`get_edges` 的双重 merge → 你的 lineage 边方法，两端都 merge `unique_model_id`。
-权重：accuracy/score 的归一化 → 你的离散权重映射（不归一化）。
-插图：`HGraph` 注册 `trained_on` 边 → 你注册 `derived_from` 边。
+数据源：lineage 的 `base_model` 字段 → 这里的 README 文本 + 参数量（外部抓取脚本，平级）。
+载入时机：lineage 在 `get_node_id` 之后载入 → 这里 builder 也依赖 `unique_model_id` 已生成。
+核心操作：lineage 是双重 merge 建边 → 这里是四分量编码 + 拼接建节点特征。
+关键区别点：lineage 的关键是"权重不归一化" → 这里的关键是"frozen 与 learnable 分开存储"。
+接进图：lineage 注册 `is_base_of` 边 → 这里 frozen 特征走 `model_features` 进图，learnable 索引留给模型定义。
 
-每一步都有现成的对应物，你做的是平移复制加一处关键改动（权重不归一化、两端同源），没有任何一步是凭空新增的范式。
+每一步都有你 lineage 流程的对应物。最该警惕的两个点：行序对齐（第零步）和 frozen/learnable 分离（第三步）——前者错了会静默地张冠李戴，后者错了会让两个本该训练的 embedding 退化成固定值。
+
+# Model Feature Embeddings — $\mathbf{x}_m^{(0)}$
+
+$$\mathbf{x}_m^{(0)} = [\mathbf{e}_m^{\text{name}} \| \mathbf{e}_m^{\text{desc}} \| \mathbf{e}_m^{\text{size}} \| \mathbf{e}_m^{\text{fam}}]$$
+
+---
+
+## $\mathbf{e}_m^{\text{name}}$
+
+**来源**：`module/model/modelNameEncoder.py:6–122` — `ModelNameAvgEncoder.forward()`
+
+| 步骤 | 操作 |
+|------|------|
+| 1 | 模型名按 `-` / `_` / `/` / 空格切词 |
+| 2 | 每个 token 用 MD5 hash → 映射到 10000-bucket |
+| 3 | 查 learned `tok_emb: nn.Embedding(10000, token_dim)` |
+| 4 | 所有 token embedding 取平均 → `[B, token_dim]` |
+
+---
+
+## $\mathbf{e}_m^{\text{id}}$
+
+**来源**：`module/model/MLP.py:688–693` — `self._id_emb`
+
+```python
+self._id_emb = nn.Embedding(num_models + 1, model_dim)
+```
+
+- 直接 learned embedding，按 `model_id` 查表
+- 训练时以 `model_id_dropout_rate` 概率替换为 `[UNK]`，强迫模型依赖 name/desc/size 信号以支持 zero-shot 泛化
+- 与 $\mathbf{e}_m^{\text{name}}$ 一同在 `encode_model()` 内拼接后输出
+
+---
+
+## $\mathbf{e}_m^{\text{desc}}$
+
+**来源**：`module/model/MLP.py:67–101` (`_build_desc_matrix`) + `MLP.py:706–713`
+
+```python
+self.register_buffer("model_desc_matrix", model_desc_matrix)  # frozen
+```
+
+- 从外部 `.npz` 文件预加载（字段：`model_names` + `embeddings`）
+- 预计算文本 embedding，维度 1536（likely OpenAI / sentence-transformer）
+- 注册为 `register_buffer`，**不参与反向传播**
+- 推理时按 `model_id` 直接行索引 → `[B, 1536]`
+
+---
+
+## $\mathbf{e}_m^{\text{size}}$
+
+**来源**：`module/model/MLP.py:116`
+
+```python
+self.size_embedding = nn.Embedding(num_size_buckets, size_dim)
+```
+
+- 模型参数量预先离散化为若干 bucket，编为整数 `size_id`
+- 按 `size_id` 查 learned embedding → `[B, size_dim]`
+
+---
+
+## $\mathbf{e}_m^{\text{fam}}$
+
+**来源**：`module/model/MLP.py:123–126`
+
+```python
+self.family_embedding = nn.Embedding(num_families, family_dim)
+```
+
+- 模型所属 family（如 LLaMA、Mistral 等）预先编为整数 `family_id`
+- 按 `family_id` 查 learned embedding → `[B, family_dim]`
+
+---
+
+## 拼接位置
+
+| 阶段 | 位置 | 内容 |
+|------|------|------|
+| `encode_model()` | `MLP.py:879–911` | `name \|\| id \|\| desc` → `h_model` |
+| `forward()` | `MLP.py:950–964` | `h_model \|\| h_size \|\| h_family \|\| ...` → `residual_inp` |
