@@ -6,17 +6,19 @@ x_m^(0) = [e_name || e_desc || e_size || e_fam]
 Row i of every output matrix corresponds to the model whose mappedID == i
 (the row-order contract from unique_model_id, enforced by get_model_names).
 
-This module handles the name component (e_name).
-desc / size / fam components are added in subsequent steps.
+e_name : hash-avg of model name tokens (frozen random projection, fast, no deps)
+e_desc : sentence-transformer encoding of README text (frozen, pre-computed offline)
+e_size / e_fam : learnable embeddings indexed by discrete bucket/family id (added later)
 """
 
 import re
 import hashlib
 import numpy as np
 import pandas as pd
+from pathlib import Path
 from typing import List
 
-from dataset_embed.utils.fetch_metadata import get_model_names
+from dataset_embed.utils.fetch_metadata import get_model_names, get_model_descriptions
 
 # ── constants ─────────────────────────────────────────────────────────────────
 
@@ -115,8 +117,6 @@ def build_name_embeddings(
     return embeddings
 
 
-# ── top-level entry point ─────────────────────────────────────────────────────
-
 def build_name_component(
     unique_model_id: pd.DataFrame,
     token_dim: int = 64,
@@ -135,3 +135,115 @@ def build_name_component(
     """
     names = get_model_names(unique_model_id)
     return build_name_embeddings(names, token_dim=token_dim, seed=seed)
+
+
+# ── desc embedding builder ────────────────────────────────────────────────────
+
+def build_desc_embeddings(
+    model_names: List[str],
+    model_descriptions: List[str],
+    emb_cache_path: Path | str | None = None,
+    encoder_name: str = "all-MiniLM-L6-v2",
+    batch_size: int = 64,
+) -> np.ndarray:
+    """
+    Encode model README texts into frozen embeddings.
+
+    Uses sentence-transformers for semantic encoding — NOT hash-avg, because
+    README text is natural language where semantic meaning matters and
+    hash-avg over deduplicated tokens collapses under template pollution
+    (every README shares ## Usage / ## Training tokens).
+
+    Storage format matches ModelLens (model_desp_emb_path):
+      .npz with keys 'model_names' (str array) and 'embeddings' (float32 matrix)
+    so pre-computed files from both projects are interchangeable.
+
+    Parameters
+    ----------
+    model_names        : model id strings in mappedID order
+    model_descriptions : README texts in the same mappedID order
+                         (use get_model_descriptions(unique_model_id, ...))
+    emb_cache_path     : if given and the .npz exists, skip encoding and load
+                         directly; otherwise encode and save
+    encoder_name       : sentence-transformers model name
+    batch_size         : encoding batch size
+
+    Returns
+    -------
+    np.ndarray of shape [num_models, emb_dim], dtype float32,
+    row i = e_desc for mappedID i. Zero vector for empty descriptions.
+    """
+    if emb_cache_path is not None:
+        emb_cache_path = Path(emb_cache_path)
+        if emb_cache_path.exists():
+            payload = np.load(emb_cache_path, allow_pickle=True)
+            if "model_names" in payload and "embeddings" in payload:
+                lookup = {str(n): i for i, n in enumerate(payload["model_names"].tolist())}
+                emb_dim = int(payload["embeddings"].shape[1])
+                result = np.zeros((len(model_names), emb_dim), dtype=np.float32)
+                for i, name in enumerate(model_names):
+                    idx = lookup.get(name)
+                    if idx is not None:
+                        result[i] = payload["embeddings"][idx]
+                return result
+
+    from sentence_transformers import SentenceTransformer
+
+    encoder = SentenceTransformer(encoder_name)
+    texts = [d if d.strip() else "[no description]" for d in model_descriptions]
+    print(f"[build_desc_embeddings] encoding {len(texts)} descriptions with {encoder_name} ...")
+    embeddings = encoder.encode(
+        texts,
+        batch_size=batch_size,
+        show_progress_bar=True,
+        convert_to_numpy=True,
+        normalize_embeddings=True,
+    ).astype(np.float32)
+
+    if emb_cache_path is not None:
+        emb_cache_path.parent.mkdir(parents=True, exist_ok=True)
+        np.savez(emb_cache_path,
+                 model_names=np.array(model_names),
+                 embeddings=embeddings)
+        print(f"[build_desc_embeddings] saved to {emb_cache_path}")
+
+    return embeddings
+
+
+def build_desc_component(
+    unique_model_id: pd.DataFrame,
+    desc_cache_path: Path | str | None = None,
+    emb_cache_path: Path | str | None = None,
+    max_chars: int = 2000,
+    encoder_name: str = "all-MiniLM-L6-v2",
+    batch_size: int = 64,
+) -> np.ndarray:
+    """
+    Full pipeline: unique_model_id -> e_desc matrix.
+
+    Step 1: get_model_descriptions  -> List[str] of README texts (with caching)
+    Step 2: build_desc_embeddings   -> np.ndarray [num_models, emb_dim]
+
+    Parameters
+    ----------
+    desc_cache_path : CSV cache for raw README texts (passed to get_model_descriptions)
+    emb_cache_path  : .npz cache for computed embeddings (skips re-encoding on rerun)
+
+    Returns
+    -------
+    np.ndarray of shape [num_models, emb_dim], dtype float32,
+    row i = e_desc for the model with mappedID == i.
+    """
+    names = get_model_names(unique_model_id)
+    descs = get_model_descriptions(
+        unique_model_id,
+        cache_path=desc_cache_path,
+        max_chars=max_chars,
+    )
+    return build_desc_embeddings(
+        model_names=names,
+        model_descriptions=descs,
+        emb_cache_path=emb_cache_path,
+        encoder_name=encoder_name,
+        batch_size=batch_size,
+    )
