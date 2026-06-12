@@ -1,0 +1,4 @@
+model,description
+resnet18,ResNet-18 trained on ImageNet. Baseline vision backbone.
+resnet18_ft,ResNet-18 fine-tuned on flowers and cifar10.
+resnet18_q,Quantized adapter variant of resnet18_ft.

@@ -8,6 +8,18 @@ CSV files
   mini_lineage_records.csv  model, relation, base_model
   mini_dataset_features.csv dataset, f0, f1, f2, f3
 
+Offline x_m^(0) fixtures (written by this script — synthetic models do not
+exist on HuggingFace, so the raw-data caches are pre-seeded and the builders
+never touch the network or load sentence-transformers):
+  mini_desc_cache.csv       model, description       (README text cache)
+  mini_desc_emb_cache.npz   model_names, embeddings  (desc embedding cache)
+  mini_size_cache.csv       model, param_count       (NaN -> unknown bucket)
+  mini_family_vocab.csv     family, family_id        (append-only vocab)
+
+Validates (plan.md step 6): row-order contract, frozen concat dims, no NaN,
+size/family index ranges, HGraph integration of x + index columns, and that
+gradients reach ModelNodeEncoder's learnable tables but not the frozen x.
+
 Run
 ---
   cd stage1BuildTransferGraph
@@ -26,6 +38,8 @@ import torch
 
 sys.path.insert(0, os.path.dirname(__file__))
 from dataset_embed.utils.graph import HGraph
+from dataset_embed.xm0_builder import build_xm0, build_name_embeddings
+from dataset_embed.TRAINING_model_node_encoder import ModelNodeEncoder
 
 # ── paths ─────────────────────────────────────────────────────────────────────
 
@@ -119,7 +133,64 @@ edge_index_mm = torch.tensor([lin["base_id"].values,
                                lin["derived_id"].values], dtype=torch.long)
 edge_attr_mm  = torch.tensor(lin["weight"].values, dtype=torch.float)
 
-# ── 7. Build HGraph ───────────────────────────────────────────────────────────
+# ── 7. x_m^(0) node features: seed offline caches, build, sanity-check ───────
+
+DESC_DIM = 32
+mini_descs = {
+    "resnet18":    "ResNet-18 trained on ImageNet. Baseline vision backbone.",
+    "resnet18_ft": "ResNet-18 fine-tuned on flowers and cifar10.",
+    "resnet18_q":  "Quantized adapter variant of resnet18_ft.",
+}
+pd.DataFrame(
+    {"model": list(mini_descs), "description": list(mini_descs.values())}
+).to_csv(os.path.join(DATA_DIR, "mini_desc_cache.csv"), index=False)
+
+rng = np.random.default_rng(7)
+mini_desc_embs = {m: rng.standard_normal(DESC_DIM).astype(np.float32)
+                  for m in mini_descs}
+# stored in REVERSED name order on purpose: cache rows are keyed by model
+# name, so the builder must realign them to mappedID order — the row-order
+# spot check below catches it if alignment ever silently breaks
+rev = list(reversed(list(mini_desc_embs)))
+np.savez(os.path.join(DATA_DIR, "mini_desc_emb_cache.npz"),
+         model_names=np.array(rev),
+         embeddings=np.stack([mini_desc_embs[m] for m in rev]))
+
+pd.DataFrame({
+    "model":       ["resnet18", "resnet18_ft", "resnet18_q"],
+    "param_count": [11689512,   11689512,      np.nan],  # NaN -> unknown bucket
+}).to_csv(os.path.join(DATA_DIR, "mini_size_cache.csv"), index=False)
+
+xm0 = build_xm0(
+    unique_model_id,
+    token_dim=64,
+    desc_cache_path=os.path.join(DATA_DIR, "mini_desc_cache.csv"),
+    desc_emb_cache_path=os.path.join(DATA_DIR, "mini_desc_emb_cache.npz"),
+    size_cache_path=os.path.join(DATA_DIR, "mini_size_cache.csv"),
+    family_vocab_path=os.path.join(DATA_DIR, "mini_family_vocab.csv"),
+)
+
+N = len(unique_model_id)
+assert xm0["frozen"].shape == (N, 64 + DESC_DIM)
+assert not np.isnan(xm0["frozen"]).any()
+
+# row-order contract spot check: row 0 must be mappedID 0's name || desc
+e_name_0 = build_name_embeddings([model_list[0]], token_dim=64)[0]
+assert np.allclose(xm0["frozen"][0, :xm0["name_dim"]], e_name_0)
+assert np.allclose(xm0["frozen"][0, xm0["name_dim"]:], mini_desc_embs[model_list[0]])
+
+# 11.7M params -> log10 = 7.07 -> bucket 5; NaN -> unknown bucket 0
+assert xm0["size_bucket_id"].tolist() == [5, 5, 0], xm0["size_bucket_id"]
+fam_resnet = xm0["family_vocab"]["ResNet"]
+assert xm0["family_id"].tolist() == [fam_resnet] * N, xm0["family_id"]
+
+print(f"\n[xm0] frozen: {xm0['frozen'].shape}  "
+      f"(name {xm0['name_dim']} || desc {xm0['desc_dim']})")
+print(f"[xm0] size_bucket_id: {xm0['size_bucket_id'].tolist()}  "
+      f"family_id: {xm0['family_id'].tolist()} (ResNet={fam_resnet})")
+print("[xm0] sanity checks passed")
+
+# ── 8. Build HGraph ───────────────────────────────────────────────────────────
 
 max_dataset_idx = int(unique_dataset_id["mappedID"].max())
 model_idx       = unique_model_id["mappedID"].values
@@ -129,7 +200,7 @@ graph = HGraph(
     max_dataset_idx=max_dataset_idx,
     model_idx=model_idx,
     unique_model_id=unique_model_id,
-    model_features=[],            # contain_model_feature=False -> random x
+    model_features=xm0["frozen"],          # frozen half -> data['model'].x
     unique_dataset_id=unique_dataset_id,
     dataset_features=dataset_features,
     edge_index_accu_model_to_dataset=edge_index_accu,
@@ -143,10 +214,46 @@ graph = HGraph(
     negative_pairs=None,
     contain_data_similarity=True,
     contain_dataset_feature=False,
-    contain_model_feature=False,
+    contain_model_feature=True,
+    model_size_bucket_id=xm0["size_bucket_id"],   # learnable half: indices only
+    model_family_id=xm0["family_id"],
 )
 
-# ── 8. Dump readable ──────────────────────────────────────────────────────────
+assert graph.data["model"].x.shape == (N, xm0["frozen"].shape[1])
+assert torch.equal(graph.data["model"].size_bucket_id,
+                   torch.from_numpy(xm0["size_bucket_id"]))
+assert torch.equal(graph.data["model"].family_id,
+                   torch.from_numpy(xm0["family_id"]))
+
+# ── 9. ModelNodeEncoder: training-time concat completing x_m^(0) ─────────────
+
+torch.manual_seed(0)
+encoder = ModelNodeEncoder(
+    frozen_dim=xm0["frozen"].shape[1],
+    num_size_buckets=xm0["num_size_buckets"],
+    num_families=xm0["num_families"],
+    size_dim=16,
+    family_dim=16,
+)
+x_m0 = encoder(
+    graph.data["model"].x,
+    graph.data["model"].size_bucket_id,
+    graph.data["model"].family_id,
+)
+assert x_m0.shape == (N, encoder.out_dim)
+
+# frozen/learnable separation: gradients must reach the two embedding tables,
+# while the graph's x stays a plain non-learnable tensor
+x_m0.sum().backward()
+assert encoder.size_embedding.weight.grad.abs().sum() > 0
+assert encoder.family_embedding.weight.grad.abs().sum() > 0
+assert not graph.data["model"].x.requires_grad
+
+print(f"[encoder] x_m^(0): {tuple(x_m0.shape)}  "
+      f"(frozen {encoder.frozen_dim} || size 16 || family 16)")
+print("[encoder] gradient flow checks passed")
+
+# ── 10. Dump readable ─────────────────────────────────────────────────────────
 
 model_names   = dict(zip(unique_model_id["mappedID"],   unique_model_id["model"]))
 dataset_names = dict(zip(unique_dataset_id["mappedID"], unique_dataset_id["dataset"]))

@@ -36,7 +36,9 @@ class HGraph:
             contain_data_similarity=True,
             contain_dataset_feature=False,
             contain_model_feature=False,
-            custom_negative_sampling=False
+            custom_negative_sampling=False,
+            model_size_bucket_id=None,
+            model_family_id=None,
     ):
         self.custom_negative_sampling = custom_negative_sampling
         self.model_idx = model_idx
@@ -63,9 +65,34 @@ class HGraph:
             features.append(dataset_features[unique_dataset_id[unique_dataset_id['mappedID'] == i]['dataset'].values[0]])
 
         if contain_model_feature:
+            model_features = np.asarray(model_features, dtype=np.float32)
+            assert model_features.shape[0] == len(unique_model_id), (
+                f"model_features has {model_features.shape[0]} rows but "
+                f"unique_model_id has {len(unique_model_id)} models — "
+                "row i must be the feature of the model with mappedID i"
+            )
             self.data["model"].x = torch.from_numpy(model_features).to(torch.float)
         else:
             self.data['model'].x = torch.rand((len(unique_model_id), data_feature_shape))
+
+        # Learnable-component indices (size bucket / family) ride on the model
+        # node store as [num_models] int columns: NeighborLoader slices any
+        # attribute whose first dim equals num_nodes together with x, so
+        # mini-batches keep row alignment automatically. The embedding tables
+        # themselves live in the GNN (ModelNodeEncoder), NOT here — storing
+        # pre-computed vectors in x would silently freeze them.
+        if model_size_bucket_id is not None:
+            ids = torch.as_tensor(np.asarray(model_size_bucket_id), dtype=torch.long)
+            assert ids.shape == (len(unique_model_id),), (
+                f"model_size_bucket_id shape {tuple(ids.shape)} != ({len(unique_model_id)},)"
+            )
+            self.data["model"].size_bucket_id = ids
+        if model_family_id is not None:
+            ids = torch.as_tensor(np.asarray(model_family_id), dtype=torch.long)
+            assert ids.shape == (len(unique_model_id),), (
+                f"model_family_id shape {tuple(ids.shape)} != ({len(unique_model_id)},)"
+            )
+            self.data["model"].family_id = ids
 
         # self.data["dataset"].x = dataset_features
         # self.data["dataset"].x = torch.from_numpy(dataset_features).to(torch.float)
@@ -167,9 +194,18 @@ class HGraph:
         lines.append("\nNodes")
         lines.append("-" * 32)
         for nt in self.data.node_types:
-            num = self.data[nt].num_nodes
+            store = self.data[nt]
+            num = store.num_nodes
             names = [node_name_maps.get(nt, {}).get(i, str(i)) for i in range(num)]
             lines.append(f"  {nt:10s}: {num}  [{', '.join(names)}]")
+            if hasattr(store, 'x'):
+                lines.append(f"             x: {tuple(store.x.shape)} {store.x.dtype}")
+            for col in ('size_bucket_id', 'family_id'):
+                if hasattr(store, col):
+                    vals = ', '.join(
+                        f"{label(nt, i)}={store[col][i].item()}" for i in range(num)
+                    )
+                    lines.append(f"             {col}: [{vals}]")
 
         lines.append("\nEdges  (after ToUndirected)")
         lines.append("-" * 32)

@@ -1,0 +1,4 @@
+model,param_count
+resnet18,11689512.0
+resnet18_ft,11689512.0
+resnet18_q,

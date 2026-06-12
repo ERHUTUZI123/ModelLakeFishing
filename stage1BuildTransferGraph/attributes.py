@@ -539,6 +539,37 @@ class GraphAttributes():
         # return model feature matrix and skipped model list
         return model_feature, model_list  # delete_model_row_idx
 
+    # x_m^(0) model features (LLM-lake path) — successor of the vision-specific
+    # attribution-map get_model_features above.
+    def get_xm0_features(self):
+        """
+        Build the x_m^(0) package for every model in unique_model_id.
+
+        MUST run after drop_nodes() (mappedIDs final) and BEFORE the homo-mode
+        `mappedID += max_dataset_idx + 1` shift — the builders assert a 0-based
+        consecutive mappedID range, which is what keeps the row-order contract
+        checkable.
+
+        The returned dict splits along the frozen/learnable boundary:
+          'frozen'                      -> HGraph model_features
+                                           (contain_model_feature=True)
+          'size_bucket_id'/'family_id'  -> HGraph model_size_bucket_id /
+                                           model_family_id kwargs
+          'num_size_buckets'/'num_families'/'family_vocab'
+                                        -> ModelNodeEncoder at training time
+        """
+        from dataset_embed.xm0_builder import build_xm0
+
+        cache_dir = os.path.join('.', 'dataset_embed', 'data')
+        return build_xm0(
+            self.unique_model_id,
+            desc_cache_path=os.path.join(cache_dir, 'model_descriptions.csv'),
+            desc_emb_cache_path=os.path.join(cache_dir, 'model_desc_emb.npz'),
+            size_cache_path=os.path.join(cache_dir, 'model_param_counts.csv'),
+            family_cache_path=os.path.join(cache_dir, 'model_families.csv'),
+            family_vocab_path=os.path.join(cache_dir, 'family_vocab.csv'),
+        )
+
     def get_dataset_list(self):
         dataset_list = {}
         # delete_dataset_row_idx = []
@@ -797,15 +828,31 @@ class GraphAttributesWithDomainSimilarity(GraphAttributes):
         self.dataset_list = self.get_dataset_list()
 
         self.data_features = self.get_dataset_features(self.args.dataset_reference_model)
-        if 'node2vec' in args.gnn_method or (not args.contain_model_featureure):
-            self.model_features = []
-            self.model_list = self.unique_model_id['model'].unique()
-        else:
-            self.model_features, self.model_list = self.get_model_features()
+        # x_m^(0) features are built AFTER drop_nodes (below), because the
+        # builders key every row to the FINAL mappedID order. Unlike the
+        # attribution-map path, no model is ever dropped for missing data —
+        # every model gets a feature (zero-vector / unknown-bucket fallbacks) —
+        # so model_list is simply all models.
+        self.contain_model_feature = (
+            'node2vec' not in args.gnn_method and args.contain_model_feature
+        )
+        self.model_features = []
+        self.model_list = self.unique_model_id['model'].unique()
+        self.model_size_bucket_id = None
+        self.model_family_id = None
+        self.xm0 = None
 
         # get common nodes
         self.drop_nodes()
         self.max_dataset_idx = self.unique_dataset_id['mappedID'].max()
+
+        if self.contain_model_feature:
+            # mappedIDs are final and still 0-based here (the homo-mode shift
+            # below has not happened yet) — exactly what build_xm0 asserts.
+            self.xm0 = self.get_xm0_features()
+            self.model_features = self.xm0['frozen']
+            self.model_size_bucket_id = self.xm0['size_bucket_id']
+            self.model_family_id = self.xm0['family_id']
 
         # get specific dataset index
         if args.test_dataset != '':

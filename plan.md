@@ -1,163 +1,91 @@
-# xm0_builder 构建指南
+# GraphSAGE Training 构建指南
 
-目标：把模型节点特征从随机占位换成真实的四分量 $\mathbf{x}_m^{(0)} = [\mathbf{e}_m^{\text{name}} \| \mathbf{e}_m^{\text{desc}} \| \mathbf{e}_m^{\text{size}} \| \mathbf{e}_m^{\text{fam}}]$，让 GraphSAGE 有真实的节点特征可聚合。
-
----
-
-
-**第零步：先确认接口契约（最重要的对齐点）**
-
-在动手之前，先看清楚 `HGraph` 现在怎么接收模型特征。在你 attach 的测试里，`model_features=[]` 且 `contain_model_feature=False`，于是 `HGraph` 内部用 `torch.rand` 生成随机特征。
-
-`xm0_builder` 的唯一职责就是产出一个能替换那个随机张量的东西：一个形状为 `[num_models, feature_dim]` 的矩阵，**行顺序严格对应 `unique_model_id` 的 mappedID 顺序**。这是整条链路的契约——第 i 行必须是 mappedID 为 i 的那个模型的特征。任何顺序错位都会让每个模型的特征张冠李戴，而且不报错，是最危险的 bug。所以 builder 的输入必须是 `unique_model_id` 这张表，输出按它的行序排列。
+目标：在已建好的 HGraph 上训练一个 inductive 的异构 GraphSAGE，产出模型节点 embedding $\mathbf{z}_m$（供 HNSW 索引）和数据集节点 embedding $\mathbf{z}_d$（查询时编码目标数据集），训练目标为 $\mathcal{L} = \lambda_{\text{perf}}\mathcal{L}_{\text{perf}} + \lambda_{\text{contrast}}\mathcal{L}_{\text{contrast}}$。
 
 ---
 
-**第一步：数据从哪里来**
+**第零步：先确认接口契约（和 xm0 阶段同一条铁律）**
 
-四个分量有两个不同的数据源。
+训练阶段从上一阶段接收三样东西，缺一不可：
 
-name 和 fam 可以直接从模型名字字符串里得到——模型名（如 `google/gemma-4-31B-it`）你已经有了，就在 `unique_model_id['model']` 这一列里，不需要额外抓取。
+1. `HGraph.data` — `data['model'].x` 是 frozen 的 `[e_name || e_desc]` 矩阵；`data['model'].size_bucket_id` 和 `data['model'].family_id` 是两列离散索引，挂在节点上随采样自动切片；四类边（含 ToUndirected 自动生成的反向边）。
+2. `xm0` 字典里的元信息 — `num_size_buckets`、`num_families`、`family_vocab`。前两个是 embedding 表的行数，最后一个是行身份的唯一凭证。
+3. `ModelNodeEncoder` — 这是 xm0 阶段留给你的口子，训练时完成 $\mathbf{x}_m^{(0)} = [\text{frozen} \| \mathbf{e}_m^{\text{size}} \| \mathbf{e}_m^{\text{fam}}]$ 的最终拼接。
 
-desc 和 size 需要从 HuggingFace 抓取——desc 来自 model card 的 README 文本，size 来自模型的参数量元数据。这一步要在 `attributes.py` 之外，写一个独立的抓取脚本（和你抓 lineage 的 `base_model` 那个脚本平级），把每个模型的 README 和参数量抓下来存成一张 CSV，结构类似：`model`、`description_text`、`param_count`。这张表和 lineage 表一样，是 builder 的"原始输入"。
-
----
-
-**第二步：四个分量分别怎么算**
-
-**name 分量。** 把模型名喂进一个轻量句子编码器（sentence-transformers 那类），得到一个固定维度向量。这是 frozen 的，算一次就不变。要决定的设计点：整名编码还是按分隔符切分后编码——先看实际输出再定。
-
-**desc 分量。** 把 README 文本喂进同一个编码器，得到 frozen 向量。这是四个分量里最脏的一个，边界情况最多：README 为空、过长（要截断）、非英文。每种情况都要有一个一致的兜底策略。这一步也是整个 builder 里最耗时的离线步骤，必须做断点续跑和缓存，否则中断一次重头来代价极高。
-
-**size 分量。** 参数量先做 log10 变换（因为跨四个数量级），再离散化成若干 bucket，每个 bucket 对应一个**可学习**的 embedding。注意这里和 name/desc 不同——size 是 learnable 的，不是 frozen 的。参数量缺失的模型统一进一个 "unknown" bucket。
-
-**fam 分量。** 从模型名字和 tags 用规则表推断家族（含 `llama`→LLaMA 系，含 `qwen`→Qwen 系等），每个家族对应一个**可学习**的 embedding。识别不出的进 "Other"。同样是 learnable。
+输出侧的契约和输入侧对称：最终导出的 $\mathbf{z}_m$ 矩阵第 i 行必须是 mappedID 为 i 的模型——HNSW 索引、reranker、评测全都依赖这个行序，错位不报错但全盘皆错。
 
 ---
 
-**第三步：frozen 和 learnable 必须分开存储（关键架构决定）**
+**第一步：模型结构**
 
-这是和 lineage 那套流程最不一样的地方，要特别注意。
+三段式：节点编码 → 异构消息传递 → 输出头。
 
-name 和 desc 是 frozen 的——预训练编码器算出来就固定，不参与梯度。size 和 fam 是 learnable 的——它们是 embedding 查找表，训练时会更新。
+**节点编码层。** model 侧就是 `ModelNodeEncoder`（输出 128 维量级）；dataset 侧把 probe embedding 过一个线性投影。两类节点的初始维度不必相等（异构卷积允许每类节点不同输入维度），但都要投到同一个隐层维度再进消息传递，否则后面每层都要维护两套尺寸。
 
-这意味着 builder 的产出不是一个拼好的完整矩阵，而应该分两部分：frozen 部分（name+desc）离线算好存成文件，直接当作固定特征；learnable 部分（size bucket id 和 family id）只需要存**离散的索引**（第几个 bucket、第几个家族），真正的 embedding 向量在 GraphSAGE 训练时才动态查表生成。
+**消息传递层。** 2 层 GraphSAGE（先别更深——hub 周围的衍生模型本来就容易 over-smoothing，层数是最直接的旋钮）。异构化方式用 PyG 的 to_hetero 或 HeteroConv，让四类边各自有独立的聚合权重——lineage 边和 performance 边语义完全不同，绝不能共享一套 SAGE 权重。
 
-如果你把 size 和 fam 也提前算成固定向量塞进特征矩阵，它们就变成 frozen 的了，失去了"可学习"的意义——这违背了我们设计 $\mathbf{e}_m^{\text{size}}$ 和 $\mathbf{e}_m^{\text{fam}}$ 作为可训练 embedding 的初衷。所以这一步的产出实际上是：一个 frozen 特征矩阵 + 两列离散索引（size_bucket_id、family_id）。
+**输出头。** 一个投影到最终 embedding 维度 + L2 归一化（HNSW 用余弦/内积，归一化让训练目标和检索度量一致）。
 
----
-
-**第四步：维度对齐**
-
-name 和 desc 如果用同一个编码器，维度一致；如果用不同编码器，拼接前要先投影到统一维度。整个 $\mathbf{x}_m^{(0)}$ 的最终维度会一路传到 GraphSAGE，影响计算量，要心里有数控制在合理范围（参考你数据集特征的维度量级，别让模型侧维度爆炸性地大于数据集侧）。
+整个模型里**不允许出现任何按 mappedID 查表的 ID embedding**——这是 inductive 的底线，破了它新模型就无法零样本接入，我们对 ModelLens 的扩展性优势就没了。
 
 ---
 
-**第五步：接进 HGraph**
+**第二步：learnable embeddings 怎么用（本阶段最关键的衔接点）**
 
-现有 `HGraph` 在 `contain_model_feature=True` 时会读传进来的 `model_features`。所以你要做两件事：把 `contain_model_feature` 打开；把 builder 产出的 frozen 特征矩阵传进 `model_features` 参数。
+xm0 阶段把 size 和 family 存成离散索引，就是为了在这里兑现"可学习"。具体用法：
 
-但 learnable 的 size/fam 索引不能走 `model_features` 这个口子——它走的是固定特征的路径。size/fam 的 embedding 层需要在 GraphSAGE 模型内部定义，训练时用索引查表，再和 frozen 特征拼接。所以这一步实际上跨越了"建图"和"建模型"两个阶段：frozen 部分进图作为节点特征，learnable 部分的索引要作为额外信息带到模型定义里。这是你接下来写 GraphSAGE 时要接的口子，builder 现在只需要把这两列索引准备好。
+**归属。** `size_embedding` 和 `family_embedding` 两张 `nn.Embedding` 表住在 `ModelNodeEncoder` 里，而 encoder 是 GraphSAGE 模型的子模块——所以它们自动进同一个 optimizer 的参数组，和 SAGE 卷积权重一起被梯度更新。不需要也不应该为它们单独建 optimizer 或设特殊学习率（先用默认，有证据再调）。
 
----
+**前向。** 每个 batch 里，采样子图的 model store 自带切片好的 `size_bucket_id` / `family_id`（这就是当初把索引挂在节点上的原因），encoder 查表、拼接、送进第一层卷积。frozen 的 x 原样通过，不在任何参数组里，永远收不到梯度——最小测试里的梯度检查验证的就是这条边界。
 
-**第六步：最小验证**
+**反向。** 损失的梯度沿 GNN 一路传回两张表。注意梯度是稀疏的：一个 batch 只更新被采到的 bucket/family 行。由此有两个要盯的点：(i) unknown bucket（id 0）和 Other family（id 0）是高频行，会被更新得最多，它们学到的是"缺失本身的先验"，这是特性不是 bug；(ii) 稀有 bucket/family 的行更新极少，训练末期检查这些行的范数，如果和初始化几乎没动，说明它们实际上没学到东西——这正是当初设 FAMILY_MIN_COUNT 门槛的原因，门槛之下进 Other 比留一行噪声好。
 
-仿照你 lineage 的 sanity check 思路。在小图（那 3 个模型）上：
+**保存。** checkpoint 必须把 encoder 权重和 `family_vocab.csv` 绑在一起存——vocab 文件是 embedding 行身份的唯一凭证，丢了它，训练好的 family 行就成了无主孤儿（xm0 阶段反复强调过，这里是真正兑付的地方）。size 表不需要 vocab（bucket 边界是固定常数），但 bucket 常数变了同样要求重训。
 
-确认 frozen 特征矩阵的行数等于模型数，行序和 `unique_model_id` 的 mappedID 对得上（抽查第 0 行是不是 mappedID=0 那个模型的特征）。确认 size_bucket_id 和 family_id 两列没有意外的 NaN，缺失值都正确落进了 unknown/Other。确认维度符合预期。
-
-这一步只验证 builder 的产出本身正确，不涉及训练——和你验证 lineage 边"确实进了图"是同一层级的检查。
+**推理 / 零样本新模型。** 新模型接入时：frozen 部分由 builder 离线算出；size/family 走同一套规则得到索引——参数量缺失进 unknown bucket，家族不在 vocab 里进 Other。然后用**训好的**表查出向量拼接，过**训好的** GNN 得到 $\mathbf{z}_m$。新家族只有积累到门槛、vocab 扩行、表扩行并增量训练之后才有自己的行——在那之前它就是 Other，这是设计内的降级而非故障。
 
 ---
 
-**整条链路对照一下你已经做过的 lineage 流程**
+**第三步：两个损失分别监督什么**
 
-数据源：lineage 的 `base_model` 字段 → 这里的 README 文本 + 参数量（外部抓取脚本，平级）。
-载入时机：lineage 在 `get_node_id` 之后载入 → 这里 builder 也依赖 `unique_model_id` 已生成。
-核心操作：lineage 是双重 merge 建边 → 这里是四分量编码 + 拼接建节点特征。
-关键区别点：lineage 的关键是"权重不归一化" → 这里的关键是"frozen 与 learnable 分开存储"。
-接进图：lineage 注册 `is_base_of` 边 → 这里 frozen 特征走 `model_features` 进图，learnable 索引留给模型定义。
+**$\mathcal{L}_{\text{perf}}$（性能回归）。** 在 `trained_on` 边上做监督：用 $\mathbf{z}_m$ 和 $\mathbf{z}_d$ 的打分（点积或小 MLP）回归归一化后的 accuracy 边权。这是主任务，让 embedding 空间编码"谁在哪类数据上表现好"。边的 train/val/test 切分用 HGraph 已有的 split（RandomLinkSplit），注意把对应的反向边类型一并交给 split 处理，否则反向边会把测试标签泄漏回训练图。
 
-每一步都有你 lineage 流程的对应物。最该警惕的两个点：行序对齐（第零步）和 frozen/learnable 分离（第三步）——前者错了会静默地张冠李戴，后者错了会让两个本该训练的 embedding 退化成固定值。
+**$\mathcal{L}_{\text{contrast}}$（任务结构对比）。** 正样本对：在同一数据集/任务上都表现好的模型；负样本：不同任务的模型，并且**刻意加重同 hub 衍生模型之间的负样本**——这是对抗 over-smoothing 的主动手段，否则 lineage 边会把一个家族的几十个衍生模型聚成一个点，HNSW 在 hub 附近就废了。这一项注入任务结构，是单索引下 HNSW 具备 task-sensitivity 的全部来源。
 
-# Model Feature Embeddings — $\mathbf{x}_m^{(0)}$
-
-$$\mathbf{x}_m^{(0)} = [\mathbf{e}_m^{\text{name}} \| \mathbf{e}_m^{\text{desc}} \| \mathbf{e}_m^{\text{size}} \| \mathbf{e}_m^{\text{fam}}]$$
+$\lambda$ 配比从 1:1 起步，看两个损失的下降曲线再调，不要预先精调。
 
 ---
 
-## $\mathbf{e}_m^{\text{name}}$
+**第四步：采样与 edge dropout**
 
-**来源**：`module/model/modelNameEncoder.py:6–122` — `ModelNameAvgEncoder.forward()`
+用 LinkNeighborLoader 围绕监督边采子图。两列索引和 frozen x 都会随子图自动对齐切片，不需要任何手工 gather——如果你发现自己在写按全局 id 查索引的代码，说明走错路了。
 
-| 步骤 | 操作 |
-|------|------|
-| 1 | 模型名按 `-` / `_` / `/` / 空格切词 |
-| 2 | 每个 token 用 MD5 hash → 映射到 10000-bucket |
-| 3 | 查 learned `tok_emb: nn.Embedding(10000, token_dim)` |
-| 4 | 所有 token embedding 取平均 → `[B, token_dim]` |
+edge dropout 在训练时随机丢弃输入图的边（监督边除外），模拟长尾模型的稀疏邻域，强迫模型在邻居缺失时仍能从节点自身特征（恰恰是四分量 $\mathbf{x}_m^{(0)}$）恢复信号。这是我们对 ModelLens ID-dropout 的结构等价物：他们丢 ID 强迫依赖语义特征，我们丢边强迫依赖节点特征，目的相同、机制对偶。lineage 边建议单独设较低的 drop 率——它是冷启动模型唯一的边，丢光了等于自废卖点。
 
 ---
 
-## $\mathbf{e}_m^{\text{id}}$
+**第五步：训练循环与验证顺序**
 
-**来源**：`module/model/MLP.py:688–693` — `self._id_emb`
+先在小图（3 模型的 mini 图）上跑通**机制**：损失能降、两张表的梯度非零、frozen x 无梯度、checkpoint 能存能载。再上 TransferGraph zoo（348 模型）跑通**效果**，按 CLAUDE.md 的清单做 sanity check：
 
-```python
-self._id_emb = nn.Embedding(num_models + 1, model_dim)
-```
+UMAP 按任务着色看聚类；同 hub 衍生模型两两余弦距离——若全部趋零即 over-smoothing，回头加重对比损失或减层；HNSW recall@50 对暴力检索 > 90%，hub 附近和远离 hub 分开测；held-out 边上的 $\mathcal{L}_{\text{perf}}$ 与 Kendall's τ。
 
-- 直接 learned embedding，按 `model_id` 查表
-- 训练时以 `model_id_dropout_rate` 概率替换为 `[UNK]`，强迫模型依赖 name/desc/size 信号以支持 zero-shot 泛化
-- 与 $\mathbf{e}_m^{\text{name}}$ 一同在 `encode_model()` 内拼接后输出
+全部通过之前不碰 47K 模型的 ModelLens benchmark。
 
 ---
 
-## $\mathbf{e}_m^{\text{desc}}$
+**第六步：产出物清单**
 
-**来源**：`module/model/MLP.py:67–101` (`_build_desc_matrix`) + `MLP.py:706–713`
-
-```python
-self.register_buffer("model_desc_matrix", model_desc_matrix)  # frozen
-```
-
-- 从外部 `.npz` 文件预加载（字段：`model_names` + `embeddings`）
-- 预计算文本 embedding，维度 1536（likely OpenAI / sentence-transformer）
-- 注册为 `register_buffer`，**不参与反向传播**
-- 推理时按 `model_id` 直接行索引 → `[B, 1536]`
+训练结束要落盘的东西，按"重建推理链路需要什么"列全：GNN 权重（含 encoder 两张表）、`family_vocab.csv`、size bucket 常数（在代码里，记录版本即可）、name 编码的 seed 和 token_dim、desc 编码器名称、最终 $\mathbf{z}_m$ 矩阵（mappedID 行序）+ 对应的 `unique_model_id` 快照。少任何一样，三个月后的你都无法复现今天的索引。
 
 ---
 
-## $\mathbf{e}_m^{\text{size}}$
+**整条链路对照 xm0 阶段**
 
-**来源**：`module/model/MLP.py:116`
+接口契约：xm0 是 mappedID 行序进 → 这里是 mappedID 行序出（$\mathbf{z}_m$）。
+关键分离：xm0 是 frozen/learnable 分开存储 → 这里是 frozen 无梯度通过 / learnable 入参数组更新。
+身份凭证：xm0 写下 family_vocab → 这里和 checkpoint 绑定保存。
+冷启动伏笔：xm0 留 unknown/Other 兜底行 → 这里靠 edge dropout 把兜底行训练成有用的先验。
+最小验证：xm0 验证产出本身 → 这里验证梯度边界 + 嵌入空间结构。
 
-```python
-self.size_embedding = nn.Embedding(num_size_buckets, size_dim)
-```
-
-- 模型参数量预先离散化为若干 bucket，编为整数 `size_id`
-- 按 `size_id` 查 learned embedding → `[B, size_dim]`
-
----
-
-## $\mathbf{e}_m^{\text{fam}}$
-
-**来源**：`module/model/MLP.py:123–126`
-
-```python
-self.family_embedding = nn.Embedding(num_families, family_dim)
-```
-
-- 模型所属 family（如 LLaMA、Mistral 等）预先编为整数 `family_id`
-- 按 `family_id` 查 learned embedding → `[B, family_dim]`
-
----
-
-## 拼接位置
-
-| 阶段 | 位置 | 内容 |
-|------|------|------|
-| `encode_model()` | `MLP.py:879–911` | `name \|\| id \|\| desc` → `h_model` |
-| `forward()` | `MLP.py:950–964` | `h_model \|\| h_size \|\| h_family \|\| ...` → `residual_inp` |
+最该警惕的三个点：输出行序错位（静默全错）、vocab 文件与 checkpoint 脱钩（learnable 行成孤儿）、over-smoothing（lineage 边的副作用，靠对比损失里的同 hub 负样本压制）。

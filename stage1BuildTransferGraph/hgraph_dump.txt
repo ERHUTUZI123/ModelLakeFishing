@@ -5,7 +5,11 @@ HGraph Readable Dump
 Nodes
 --------------------------------
   dataset   : 2  [cifar10, flowers]
+             x: (2, 4) torch.float32
   model     : 3  [resnet18, resnet18_ft, resnet18_q]
+             x: (3, 96) torch.float32
+             size_bucket_id: [resnet18(0)=5, resnet18_ft(1)=5, resnet18_q(2)=0]
+             family_id: [resnet18(0)=51, resnet18_ft(1)=51, resnet18_q(2)=51]
 
 Edges  (after ToUndirected)
 --------------------------------
