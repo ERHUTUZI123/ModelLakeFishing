@@ -175,8 +175,16 @@ class HGraph:
         # print(self.data["model", "trained_on", "dataset"].edge_label)
         print()
 
-    def dump_readable(self, model_names=None, dataset_names=None, out_path="hgraph_dump.txt"):
-        """Write a human-readable edge list to a text file and stdout."""
+    def dump_readable(self, model_names=None, dataset_names=None, out_path="hgraph_dump.txt",
+                      x_parts=None, family_names=None, size_bucket_names=None):
+        """Write a human-readable edge list to a text file and stdout.
+
+        Optional annotations:
+          x_parts           : {node_type: {component_name: dim, ...}} — renders the
+                              composition of x, e.g. "x: (3, 96) = e_name(64) || e_desc(32)"
+          family_names      : {family_id: family_string} (invert the builder's vocab)
+          size_bucket_names : {bucket_id: label}, e.g. {0: "unknown", 10: "1e9.5~1e10"}
+        """
         node_name_maps = {
             'model': model_names or {},
             'dataset': dataset_names or {},
@@ -199,11 +207,18 @@ class HGraph:
             names = [node_name_maps.get(nt, {}).get(i, str(i)) for i in range(num)]
             lines.append(f"  {nt:10s}: {num}  [{', '.join(names)}]")
             if hasattr(store, 'x'):
-                lines.append(f"             x: {tuple(store.x.shape)} {store.x.dtype}")
-            for col in ('size_bucket_id', 'family_id'):
+                parts = (x_parts or {}).get(nt)
+                breakdown = ""
+                if parts:
+                    breakdown = "  = " + " || ".join(f"{k}({v})" for k, v in parts.items())
+                lines.append(f"             x: {tuple(store.x.shape)} {store.x.dtype}{breakdown}")
+            for col, id_names in (('size_bucket_id', size_bucket_names),
+                                  ('family_id', family_names)):
                 if hasattr(store, col):
+                    def show(v):
+                        return f"{id_names[v]}({v})" if id_names and v in id_names else str(v)
                     vals = ', '.join(
-                        f"{label(nt, i)}={store[col][i].item()}" for i in range(num)
+                        f"{label(nt, i)}={show(store[col][i].item())}" for i in range(num)
                     )
                     lines.append(f"             {col}: [{vals}]")
 

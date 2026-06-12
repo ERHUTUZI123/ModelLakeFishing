@@ -11,10 +11,10 @@ import pandas as pd
 import scipy.spatial.distance as distance
 import torch
 
-from utils.config import get_root_path_string
-from utils.embed_utils import DatasetEmbeddingMethod
-from utils.embedder import determine_directory_embedded_dataset, determine_file_name_embedded_dataset
-from utils.task import TaskType
+from dataset_embed.utils.config import get_root_path_string
+from dataset_embed.utils.embed_utils import DatasetEmbeddingMethod
+from dataset_embed.utils.embedder import determine_directory_embedded_dataset, determine_file_name_embedded_dataset
+from dataset_embed.utils.task import TaskType
 
 logger = logging.getLogger(__name__)
 
@@ -39,7 +39,11 @@ class GraphAttributes():
         self.args = args
         self.resource_path = os.path.join(get_root_path_string(), "resources/experiments", args.task_type.value)
         self.record_path = os.path.join(self.resource_path, "records.csv")
-        self.lineage_record_path = os.path.join('.', 'dataset_embed', 'data', 'lineage_records.csv')
+        # anchored to this file, not the CWD, so the entry script can be
+        # launched from anywhere
+        self.lineage_record_path = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)), 'dataset_embed', 'data', 'lineage_records.csv'
+        )
         self.model_config_path = os.path.join(self.resource_path, "model_config_dataset.csv")
         self.peft_method = args.peft_method
 
@@ -100,14 +104,18 @@ class GraphAttributes():
             # correlation distance is a distance method based
             # on intuition "if you are correlated and then you are nearby each other"
             # AKA # 1 - correlation(x,y) = distance_correlation
+            # NOTE: result must NOT be assigned to a name called `distance` —
+            # that shadows the scipy.spatial.distance module import and breaks
+            # the function with UnboundLocalError (the original repo uses a
+            # separate local for exactly this reason)
             if sim_method == 'correlation':
                 # correlation distance between e1 and e1 should be 0
-                distance = distance.correlation(e1, e1)
+                dist_val = distance.correlation(e1, e1)
             elif sim_method == 'euclidean':
                 # euclidean disance between e1 and e1 should also be 0
-                distance = distance.euclidean(e1, e1)
+                dist_val = distance.euclidean(e1, e1)
             # fill in matrix all (i,i) with distance 0
-            distance_matrix[i, i] = distance
+            distance_matrix[i, i] = dist_val
             '''
             so basically, this code fills all matix(i,i) with 0 (calculated)
             '''
@@ -128,16 +136,16 @@ class GraphAttributes():
             # if we use correlation distance method
             if sim_method == 'correlation':
                 # correlation distance between two datasets
-                distance = distance.correlation(e1, e2)
+                dist_val = distance.correlation(e1, e2)
             # if we use euclidean distance method
             elif sim_method == 'euclidean':
                 # euclidean distance between two datasets
-                distance = distance.euclidean(e1, e2)
-            
+                dist_val = distance.euclidean(e1, e2)
+
             # fill distance in the distance matrix
-            distance_matrix[p, q] = distance
+            distance_matrix[p, q] = dist_val
             # symmetry
-            distance_matrix[q, p] = distance
+            distance_matrix[q, p] = dist_val
             # edge from p
             data_source.append(p)
             # edge to q
@@ -147,7 +155,7 @@ class GraphAttributes():
             distance small -> similar -> high weight AND weight = 1 - distance is high
             distance bg -> not similar -> low weight AND weight = 1 - distance is low
             '''
-            weight = 1 - distance
+            weight = 1 - dist_val
             attr.append(weight)
         
         # data normalization
@@ -560,7 +568,7 @@ class GraphAttributes():
         """
         from dataset_embed.xm0_builder import build_xm0
 
-        cache_dir = os.path.join('.', 'dataset_embed', 'data')
+        cache_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'dataset_embed', 'data')
         return build_xm0(
             self.unique_model_id,
             desc_cache_path=os.path.join(cache_dir, 'model_descriptions.csv'),
@@ -898,6 +906,14 @@ class GraphAttributesWithDomainSimilarity(GraphAttributes):
             threshold=args.distance_thres,
             sim_method=args.dataset_distance_method
         )
+
+        # model-model lineage edges (our contribution). Empty until a lineage
+        # records file covering the zoo models exists — the records are
+        # filtered against model_config, so foreign models produce 0 edges,
+        # never wrong ones.
+        self.edge_index_model_to_model, self.edge_attr_model_to_model = self.get_model_model_edge_index()
+        logger.info(f"lineage edges: {self.edge_index_model_to_model.shape[1]}")
+
         logger.info(f"len(unique_model_id): {len(self.unique_model_id)}")
         logger.info(f'len(unique_dataset_id): {len(self.unique_dataset_id)}')
 

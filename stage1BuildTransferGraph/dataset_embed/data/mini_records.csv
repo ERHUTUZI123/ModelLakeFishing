@@ -1,5 +1,9 @@
 model,dataset,accuracy
-resnet18,cifar10,0.80
-resnet18_ft,cifar10,0.60
-resnet18_ft,flowers,0.90
-resnet18_q,flowers,0.70
+openai-community/gpt2,sst2,0.88
+openai-community/gpt2,imdb,0.85
+google/gemma-2-9b,imdb,0.90
+google/gemma-2-9b-it,sst2,0.93
+meta-llama/Llama-3.1-8B,imdb,0.91
+meta-llama/Llama-3.1-8B-Instruct,sst2,0.95
+meta-llama/Llama-3.1-8B-Instruct,imdb,0.94
+unsloth/Llama-3.1-8B-Instruct-GGUF,sst2,0.92

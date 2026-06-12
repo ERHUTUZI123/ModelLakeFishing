@@ -8,12 +8,10 @@ CSV files
   mini_lineage_records.csv  model, relation, base_model
   mini_dataset_features.csv dataset, f0, f1, f2, f3
 
-Offline x_m^(0) fixtures (written by this script — synthetic models do not
-exist on HuggingFace, so the raw-data caches are pre-seeded and the builders
-never touch the network or load sentence-transformers):
+x_m^(0) caches (REAL HuggingFace data; fetched on first run, offline after):
   mini_desc_cache.csv       model, description       (README text cache)
-  mini_desc_emb_cache.npz   model_names, embeddings  (desc embedding cache)
-  mini_size_cache.csv       model, param_count       (NaN -> unknown bucket)
+  mini_desc_emb_cache.npz   model_names, embeddings  (MiniLM desc embeddings)
+  mini_size_cache.csv       model, param_count       (safetensors metadata)
   mini_family_vocab.csv     family, family_id        (append-only vocab)
 
 Validates (plan.md step 6): row-order contract, frozen concat dims, no NaN,
@@ -38,7 +36,9 @@ import torch
 
 sys.path.insert(0, os.path.dirname(__file__))
 from dataset_embed.utils.graph import HGraph
-from dataset_embed.xm0_builder import build_xm0, build_name_embeddings
+from dataset_embed.xm0_builder import (
+    build_xm0, build_name_embeddings, SIZE_LOG10_MIN, SIZE_BUCKET_WIDTH,
+)
 from dataset_embed.TRAINING_model_node_encoder import ModelNodeEncoder
 
 # ── paths ─────────────────────────────────────────────────────────────────────
@@ -133,33 +133,10 @@ edge_index_mm = torch.tensor([lin["base_id"].values,
                                lin["derived_id"].values], dtype=torch.long)
 edge_attr_mm  = torch.tensor(lin["weight"].values, dtype=torch.float)
 
-# ── 7. x_m^(0) node features: seed offline caches, build, sanity-check ───────
-
-DESC_DIM = 32
-mini_descs = {
-    "resnet18":    "ResNet-18 trained on ImageNet. Baseline vision backbone.",
-    "resnet18_ft": "ResNet-18 fine-tuned on flowers and cifar10.",
-    "resnet18_q":  "Quantized adapter variant of resnet18_ft.",
-}
-pd.DataFrame(
-    {"model": list(mini_descs), "description": list(mini_descs.values())}
-).to_csv(os.path.join(DATA_DIR, "mini_desc_cache.csv"), index=False)
-
-rng = np.random.default_rng(7)
-mini_desc_embs = {m: rng.standard_normal(DESC_DIM).astype(np.float32)
-                  for m in mini_descs}
-# stored in REVERSED name order on purpose: cache rows are keyed by model
-# name, so the builder must realign them to mappedID order — the row-order
-# spot check below catches it if alignment ever silently breaks
-rev = list(reversed(list(mini_desc_embs)))
-np.savez(os.path.join(DATA_DIR, "mini_desc_emb_cache.npz"),
-         model_names=np.array(rev),
-         embeddings=np.stack([mini_desc_embs[m] for m in rev]))
-
-pd.DataFrame({
-    "model":       ["resnet18", "resnet18_ft", "resnet18_q"],
-    "param_count": [11689512,   11689512,      np.nan],  # NaN -> unknown bucket
-}).to_csv(os.path.join(DATA_DIR, "mini_size_cache.csv"), index=False)
+# ── 7. x_m^(0) node features: REAL HuggingFace fetch, build, sanity-check ────
+# First run fetches README + param count for the 6 models from HF and encodes
+# descriptions with sentence-transformers (downloads all-MiniLM-L6-v2 once).
+# Everything is cached under dataset_embed/data/, so reruns are offline.
 
 xm0 = build_xm0(
     unique_model_id,
@@ -171,23 +148,35 @@ xm0 = build_xm0(
 )
 
 N = len(unique_model_id)
-assert xm0["frozen"].shape == (N, 64 + DESC_DIM)
+assert xm0["frozen"].shape == (N, 64 + xm0["desc_dim"])
 assert not np.isnan(xm0["frozen"]).any()
+# real READMEs exist for all 6 models -> no desc row may collapse to zeros
+assert (np.abs(xm0["frozen"][:, xm0["name_dim"]:]).sum(axis=1) > 0).all(), \
+    "some model got a zero desc embedding — README fetch failed?"
 
-# row-order contract spot check: row 0 must be mappedID 0's name || desc
+# row-order contract check: name half recomputable, desc half must match the
+# .npz cache entry keyed by that model's name, for every row
 e_name_0 = build_name_embeddings([model_list[0]], token_dim=64)[0]
 assert np.allclose(xm0["frozen"][0, :xm0["name_dim"]], e_name_0)
-assert np.allclose(xm0["frozen"][0, xm0["name_dim"]:], mini_desc_embs[model_list[0]])
+npz = np.load(os.path.join(DATA_DIR, "mini_desc_emb_cache.npz"), allow_pickle=True)
+cached_desc = dict(zip(npz["model_names"].tolist(), npz["embeddings"]))
+for i, m in enumerate(model_list):
+    assert np.allclose(xm0["frozen"][i, xm0["name_dim"]:], cached_desc[m]), \
+        f"desc row misaligned for mappedID {i} ({m})"
 
-# 11.7M params -> log10 = 7.07 -> bucket 5; NaN -> unknown bucket 0
-assert xm0["size_bucket_id"].tolist() == [5, 5, 0], xm0["size_bucket_id"]
-fam_resnet = xm0["family_vocab"]["ResNet"]
-assert xm0["family_id"].tolist() == [fam_resnet] * N, xm0["family_id"]
+# ~9B/8B params -> log10 ~ 9.9 -> bucket 10; 124M -> 8.09 -> bucket 7;
+# NaN (GGUF) -> unknown bucket 0  (mappedID order = sorted model names)
+assert xm0["size_bucket_id"].tolist() == [10, 10, 10, 10, 7, 0], xm0["size_bucket_id"]
+vocab = xm0["family_vocab"]
+expected_families = [vocab["Gemma"], vocab["Gemma"], vocab["LLaMA"],
+                     vocab["LLaMA"], vocab["GPT-2"], vocab["LLaMA"]]
+assert xm0["family_id"].tolist() == expected_families, xm0["family_id"]
 
 print(f"\n[xm0] frozen: {xm0['frozen'].shape}  "
       f"(name {xm0['name_dim']} || desc {xm0['desc_dim']})")
 print(f"[xm0] size_bucket_id: {xm0['size_bucket_id'].tolist()}  "
-      f"family_id: {xm0['family_id'].tolist()} (ResNet={fam_resnet})")
+      f"family_id: {xm0['family_id'].tolist()} "
+      f"(Gemma={vocab['Gemma']}, LLaMA={vocab['LLaMA']}, GPT-2={vocab['GPT-2']})")
 print("[xm0] sanity checks passed")
 
 # ── 8. Build HGraph ───────────────────────────────────────────────────────────
@@ -258,6 +247,21 @@ print("[encoder] gradient flow checks passed")
 model_names   = dict(zip(unique_model_id["mappedID"],   unique_model_id["model"]))
 dataset_names = dict(zip(unique_dataset_id["mappedID"], unique_dataset_id["dataset"]))
 
+# human-readable labels for the two learnable-index columns
+fam_names = {v: k for k, v in xm0["family_vocab"].items()}
+size_names = {0: "unknown"}
+for b in range(1, xm0["num_size_buckets"]):
+    lo = SIZE_LOG10_MIN + (b - 1) * SIZE_BUCKET_WIDTH
+    size_names[b] = f"1e{lo:g}~1e{lo + SIZE_BUCKET_WIDTH:g}"
+
 out_path = os.path.join(os.path.dirname(__file__), "hgraph_dump.txt")
-graph.dump_readable(model_names=model_names, dataset_names=dataset_names,
-                    out_path=out_path)
+graph.dump_readable(
+    model_names=model_names, dataset_names=dataset_names,
+    x_parts={
+        "model":   {"e_name": xm0["name_dim"], "e_desc": xm0["desc_dim"]},
+        "dataset": {"probe_feat": FEAT_DIM},
+    },
+    family_names=fam_names,
+    size_bucket_names=size_names,
+    out_path=out_path,
+)

@@ -1,4 +1,7 @@
 model,param_count
-resnet18,11689512.0
-resnet18_ft,11689512.0
-resnet18_q,
+google/gemma-2-9b,9241705984.0
+google/gemma-2-9b-it,9241705984.0
+meta-llama/Llama-3.1-8B,8030261248.0
+meta-llama/Llama-3.1-8B-Instruct,8030261248.0
+openai-community/gpt2,137022720.0
+unsloth/Llama-3.1-8B-Instruct-GGUF,

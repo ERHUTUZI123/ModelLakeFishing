@@ -4,42 +4,52 @@ HGraph Readable Dump
 
 Nodes
 --------------------------------
-  dataset   : 2  [cifar10, flowers]
-             x: (2, 4) torch.float32
-  model     : 3  [resnet18, resnet18_ft, resnet18_q]
-             x: (3, 96) torch.float32
-             size_bucket_id: [resnet18(0)=5, resnet18_ft(1)=5, resnet18_q(2)=0]
-             family_id: [resnet18(0)=51, resnet18_ft(1)=51, resnet18_q(2)=51]
+  dataset   : 2  [imdb, sst2]
+             x: (2, 4) torch.float32  = probe_feat(4)
+  model     : 6  [google/gemma-2-9b, google/gemma-2-9b-it, meta-llama/Llama-3.1-8B, meta-llama/Llama-3.1-8B-Instruct, openai-community/gpt2, unsloth/Llama-3.1-8B-Instruct-GGUF]
+             x: (6, 448) torch.float32  = e_name(64) || e_desc(384)
+             size_bucket_id: [google/gemma-2-9b(0)=1e9.5~1e10(10), google/gemma-2-9b-it(1)=1e9.5~1e10(10), meta-llama/Llama-3.1-8B(2)=1e9.5~1e10(10), meta-llama/Llama-3.1-8B-Instruct(3)=1e9.5~1e10(10), openai-community/gpt2(4)=1e8~1e8.5(7), unsloth/Llama-3.1-8B-Instruct-GGUF(5)=unknown(0)]
+             family_id: [google/gemma-2-9b(0)=Gemma(22), google/gemma-2-9b-it(1)=Gemma(22), meta-llama/Llama-3.1-8B(2)=LLaMA(2), meta-llama/Llama-3.1-8B-Instruct(3)=LLaMA(2), openai-community/gpt2(4)=GPT-2(90), unsloth/Llama-3.1-8B-Instruct-GGUF(5)=LLaMA(2)]
 
 Edges  (after ToUndirected)
 --------------------------------
 
-  [model] --trained_on--> [dataset]  (4 edges)
-    resnet18(0) --> cifar10(0)  w=1.0000
-    resnet18_ft(1) --> cifar10(0)  w=0.0000
-    resnet18_ft(1) --> flowers(1)  w=1.0000
-    resnet18_q(2) --> flowers(1)  w=0.0000
+  [model] --trained_on--> [dataset]  (8 edges)
+    openai-community/gpt2(4) --> sst2(1)  w=0.0000
+    openai-community/gpt2(4) --> imdb(0)  w=0.0000
+    google/gemma-2-9b(0) --> imdb(0)  w=0.5556
+    google/gemma-2-9b-it(1) --> sst2(1)  w=0.7143
+    meta-llama/Llama-3.1-8B(2) --> imdb(0)  w=0.6667
+    meta-llama/Llama-3.1-8B-Instruct(3) --> sst2(1)  w=1.0000
+    meta-llama/Llama-3.1-8B-Instruct(3) --> imdb(0)  w=1.0000
+    unsloth/Llama-3.1-8B-Instruct-GGUF(5) --> sst2(1)  w=0.5714
 
   [dataset] --similar_to--> [dataset]  (2 edges)
-    cifar10(0) --> flowers(1)  w=0.8374
-    flowers(1) --> cifar10(0)  w=0.8374
+    imdb(0) --> sst2(1)  w=0.9875
+    sst2(1) --> imdb(0)  w=0.9875
 
-  [model] --is_base_of--> [model]  (4 edges)
-    resnet18(0) --> resnet18_ft(1)  w=0.5000
-    resnet18_ft(1) --> resnet18(0)  w=0.5000
-    resnet18_ft(1) --> resnet18_q(2)  w=0.7000
-    resnet18_q(2) --> resnet18_ft(1)  w=0.7000
+  [model] --is_base_of--> [model]  (6 edges)
+    google/gemma-2-9b(0) --> google/gemma-2-9b-it(1)  w=0.5000
+    google/gemma-2-9b-it(1) --> google/gemma-2-9b(0)  w=0.5000
+    meta-llama/Llama-3.1-8B(2) --> meta-llama/Llama-3.1-8B-Instruct(3)  w=0.5000
+    meta-llama/Llama-3.1-8B-Instruct(3) --> meta-llama/Llama-3.1-8B(2)  w=0.5000
+    meta-llama/Llama-3.1-8B-Instruct(3) --> unsloth/Llama-3.1-8B-Instruct-GGUF(5)  w=0.9000
+    unsloth/Llama-3.1-8B-Instruct-GGUF(5) --> meta-llama/Llama-3.1-8B-Instruct(3)  w=0.9000
 
   [model] --transfer_to--> [dataset]  (2 edges)
-    resnet18(0) --> flowers(1)  w=0.5000
-    resnet18_q(2) --> cifar10(0)  w=0.4000
+    google/gemma-2-9b(0) --> sst2(1)  w=0.5500
+    unsloth/Llama-3.1-8B-Instruct-GGUF(5) --> imdb(0)  w=0.4500
 
-  [dataset] --rev_trained_on--> [model]  (4 edges)  [auto-reverse]
-    cifar10(0) --> resnet18(0)  w=1.0000
-    cifar10(0) --> resnet18_ft(1)  w=0.0000
-    flowers(1) --> resnet18_ft(1)  w=1.0000
-    flowers(1) --> resnet18_q(2)  w=0.0000
+  [dataset] --rev_trained_on--> [model]  (8 edges)  [auto-reverse]
+    sst2(1) --> openai-community/gpt2(4)  w=0.0000
+    imdb(0) --> openai-community/gpt2(4)  w=0.0000
+    imdb(0) --> google/gemma-2-9b(0)  w=0.5556
+    sst2(1) --> google/gemma-2-9b-it(1)  w=0.7143
+    imdb(0) --> meta-llama/Llama-3.1-8B(2)  w=0.6667
+    sst2(1) --> meta-llama/Llama-3.1-8B-Instruct(3)  w=1.0000
+    imdb(0) --> meta-llama/Llama-3.1-8B-Instruct(3)  w=1.0000
+    sst2(1) --> unsloth/Llama-3.1-8B-Instruct-GGUF(5)  w=0.5714
 
   [dataset] --rev_transfer_to--> [model]  (2 edges)  [auto-reverse]
-    flowers(1) --> resnet18(0)  w=0.5000
-    cifar10(0) --> resnet18_q(2)  w=0.4000
+    sst2(1) --> google/gemma-2-9b(0)  w=0.5500
+    imdb(0) --> unsloth/Llama-3.1-8B-Instruct-GGUF(5)  w=0.4500
