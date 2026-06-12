@@ -11,7 +11,6 @@ import pandas as pd
 import scipy.spatial.distance as distance
 import torch
 
-from dataset_embed.utils.config import get_root_path_string
 from dataset_embed.utils.embed_utils import DatasetEmbeddingMethod
 from dataset_embed.utils.embedder import determine_directory_embedded_dataset, determine_file_name_embedded_dataset
 from dataset_embed.utils.task import TaskType
@@ -37,14 +36,14 @@ class GraphAttributes():
 
     def __init__(self, args):
         self.args = args
-        self.resource_path = os.path.join(get_root_path_string(), "resources/experiments", args.task_type.value)
-        self.record_path = os.path.join(self.resource_path, "records.csv")
-        # anchored to this file, not the CWD, so the entry script can be
-        # launched from anywhere
-        self.lineage_record_path = os.path.join(
-            os.path.dirname(os.path.abspath(__file__)), 'dataset_embed', 'data', 'lineage_records.csv'
-        )
-        self.model_config_path = os.path.join(self.resource_path, "model_config_dataset.csv")
+        # all data now lives in stage1/dataset_embed/data — self-contained,
+        # no external dependencies on transfergraph checkout
+        self.data_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'dataset_embed', 'data')
+        # transferability csv + cached correlation/feature files live here too
+        self.resource_path = self.data_path
+        self.record_path = os.path.join(self.data_path, "records.csv")
+        self.lineage_record_path = os.path.join(self.data_path, 'lineage_records.csv')
+        self.model_config_path = os.path.join(self.data_path, "model_config_dataset.csv")
         self.peft_method = args.peft_method
 
         if 'model_ratio' in self.args.gnn_method:

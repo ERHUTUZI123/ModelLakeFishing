@@ -1,5 +1,35 @@
-.venv
+.venv/
+__pycache__/
+*.pyc
+
 CLAUDE.md
 plan.txt
 plan.md
-.gitignore
+
+release_assets/
+
+# Stage-1 release-managed inputs
+stage1BuildTransferGraph/dataset_embed/data/records.csv
+stage1BuildTransferGraph/dataset_embed/data/model_config_dataset.csv
+stage1BuildTransferGraph/dataset_embed/data/lineage_records.csv
+stage1BuildTransferGraph/dataset_embed/data/transferability_score_records.csv
+stage1BuildTransferGraph/dataset_embed/data/embedded_dataset/
+
+# Stage-1 generated graph outputs
+stage1BuildTransferGraph/*.pt
+stage1BuildTransferGraph/*_viz.png
+stage1BuildTransferGraph/*_viz.pdf
+stage1BuildTransferGraph/*_viz.svg
+
+# Stage-1 generated caches
+stage1BuildTransferGraph/dataset_embed/data/corr_*.csv
+stage1BuildTransferGraph/dataset_embed/data/features/
+stage1BuildTransferGraph/dataset_embed/data/backup_before_family_pack/
+
+# xm0 generated metadata/cache
+stage1BuildTransferGraph/dataset_embed/data/model_descriptions.csv
+stage1BuildTransferGraph/dataset_embed/data/model_desc_emb.npz
+stage1BuildTransferGraph/dataset_embed/data/model_param_counts.csv
+stage1BuildTransferGraph/dataset_embed/data/model_families.csv
+stage1BuildTransferGraph/dataset_embed/data/family_vocab.csv
+notes.md

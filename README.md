@@ -10,6 +10,14 @@ cd stage1BuildTransferGraph
 
 python test_hgraph_minimal.py
 
-python build_graph.py --contain_model_feature True
+REAL
 
-python visualize_hgraph_zoo.py --pt hgraph_zoo.pt --top_models 35
+python build_graph.py --contain_model_feature True --out hgraph_zoo_xm0.pt
+
+python visualize_hgraph.py --pt hgraph_zoo_xm0.pt --out hgraph_zoo_xm0_viz.png
+
+NOT REAL
+
+python build_graph.py --contain_model_feature False --out hgraph_zoo.pt
+
+python visualize_hgraph.py --pt hgraph_zoo.pt --out hgraph_zoo_viz.png

@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 from transformers import PreTrainedModel
 
-from .config import get_root_path_string
+from .config import get_directory_experiments
 from .base_dataset import BaseDataset
 from .embed_utils import DatasetEmbeddingMethod
 from .task import TaskType
@@ -65,12 +65,10 @@ def determine_file_name_embedded_dataset(directory: str, dataset_name: str):
 
 def determine_directory_embedded_dataset(probe_model_name: str, task_type: TaskType, embedding_method: DatasetEmbeddingMethod):
     model_name_sanitized = probe_model_name.replace('/', '_')
+    # self-contained layout: dataset_embed/data/embedded_dataset/<method>/<probe>/
     return os.path.join(
-        get_root_path_string(),
-        "resources",
-        "experiments",
-        task_type.value,
-        'embedded_dataset/',
+        get_directory_experiments(task_type),
+        'embedded_dataset',
         embedding_method.value,
         model_name_sanitized
     )
