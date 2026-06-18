@@ -60,23 +60,28 @@ def load_hgraph(path: str = _HGRAPH_PATH):
 
 class _SAGEBackbone(nn.Module):
     """
-    Homogeneous 2-layer GraphSAGE — the body `to_hetero` clones per relation.
+    Homogeneous shallow GraphSAGE — the body `to_hetero` clones per relation.
 
-    Kept at a fixed hidden width (non-lazy) on purpose: lazy SAGEConv((-1,-1))
-    has no parameters until the first forward, which would silently exclude the
-    conv weights from the optimizer / first checkpoint if either is created
-    before a warm-up pass. Both node types are already projected to
-    `hidden_channels` upstream, so a fixed width is all we need.
+    `num_layers` is 1 or 2 (depth is the most direct over-smoothing knob; we do
+    not go deeper). Kept at a fixed hidden width (non-lazy) on purpose: lazy
+    SAGEConv((-1,-1)) has no parameters until the first forward, which would
+    silently exclude the conv weights from the optimizer / first checkpoint if
+    either is created before a warm-up pass. Both node types are already
+    projected to `hidden_channels` upstream, so a fixed width is all we need.
     """
 
-    def __init__(self, hidden_channels: int):
+    def __init__(self, hidden_channels: int, num_layers: int = 2):
         super().__init__()
-        self.conv1 = SAGEConv(hidden_channels, hidden_channels)
-        self.conv2 = SAGEConv(hidden_channels, hidden_channels)
+        assert num_layers in (1, 2), "keep depth shallow: num_layers must be 1 or 2"
+        self.convs = nn.ModuleList(
+            SAGEConv(hidden_channels, hidden_channels) for _ in range(num_layers)
+        )
 
     def forward(self, x, edge_index):
-        x = F.relu(self.conv1(x, edge_index))
-        x = self.conv2(x, edge_index)
+        for i, conv in enumerate(self.convs):
+            x = conv(x, edge_index)
+            if i < len(self.convs) - 1:        # ReLU between layers, not after the last
+                x = F.relu(x)
         return x
 
 
@@ -108,8 +113,10 @@ class HeteroGraphSAGE(nn.Module):
         out_dim: int = 128,
         size_dim: int = 16,
         family_dim: int = 16,
+        num_layers: int = 2,
     ):
         super().__init__()
+        self.num_layers = num_layers
 
         # ── segment 1: node encoding -> common hidden dim ────────────────────
         self.model_encoder = ModelNodeEncoder(
@@ -129,7 +136,7 @@ class HeteroGraphSAGE(nn.Module):
         # Keep `metadata` so a checkpoint can rebuild an identical hetero module
         # (same relations => same state_dict keys) — see learnable.save_checkpoint.
         self.graph_metadata = metadata
-        self.gnn = to_hetero(_SAGEBackbone(hidden_channels), metadata, aggr="sum")
+        self.gnn = to_hetero(_SAGEBackbone(hidden_channels, num_layers), metadata, aggr="sum")
 
         # ── segment 3: shared output head + L2 norm ──────────────────────────
         # one head for both node types keeps z_m / z_d in a single metric space.
