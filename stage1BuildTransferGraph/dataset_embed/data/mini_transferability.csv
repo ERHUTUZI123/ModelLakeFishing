@@ -1,3 +1,0 @@
-model,target_dataset,score
-google/gemma-2-9b,sst2,0.55
-unsloth/Llama-3.1-8B-Instruct-GGUF,imdb,0.45

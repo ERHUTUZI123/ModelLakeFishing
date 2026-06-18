@@ -1,0 +1,351 @@
+"""
+learnable.py — Stage 2, Step 2: the learnable-embedding "cash-in".
+
+The two nn.Embedding tables (size_bucket, family) and the frozen/learnable split
+already LIVE in ModelNodeEncoder and are exercised by model.py:
+  - ownership: they are submodules of HeteroGraphSAGE, so they are already
+    inside model.parameters() — one optimizer, one param group, no special LR.
+  - forward:  encoder looks them up, concats with frozen x, feeds conv1.
+  - the gradient boundary (frozen x gets no grad, tables do) is asserted by
+    model.py's smoke test.
+
+This file adds the parts of Step 2 that are NOT yet code:
+
+  A. save    — checkpoint that BINDS encoder weights to family_vocab
+                        (+ the reproducibility metadata from Step 6). Loading
+                        refuses a vocab whose length no longer matches the family
+                        table — the guard against orphaned learnable rows.
+  B. zero-shot — build a NEW model's encoder inputs with the SAME rules the
+                        builder used: missing param_count -> unknown bucket (0),
+                        family absent from vocab -> Other (0). No retraining, no
+                        new rows until a family clears FAMILY_MIN_COUNT upstream.
+  C. diagnostics — sparse-gradient health: which bucket/family rows actually
+                        moved from init (rare rows that never moved learned
+                        nothing — the FAMILY_MIN_COUNT rationale), and whether the
+                        high-frequency unknown/Other rows are being trained.
+
+Run the mechanism smoke test:  python -m ModelLakeFishing.stage2TrainGraphSAGE.learnable
+"""
+
+import os
+import sys
+import csv
+
+import torch
+
+_HERE = os.path.dirname(os.path.abspath(__file__))
+_REPO_ROOT = os.path.abspath(os.path.join(_HERE, "..", ".."))
+_STAGE1 = os.path.join(_REPO_ROOT, "ModelLakeFishing", "stage1BuildTransferGraph")
+for _p in (_REPO_ROOT, _STAGE1):
+    if _p not in sys.path:
+        sys.path.insert(0, _p)
+
+from ModelLakeFishing.stage2TrainGraphSAGE.model import HeteroGraphSAGE  # noqa: E402
+# size-bucket rules + constants: the SINGLE source of truth, reused for both
+# the checkpoint's repro record and the zero-shot input construction.
+from stage1BuildTransferGraph.dataset_embed.xm0_builder import (  # noqa: E402
+    param_count_to_size_bucket,
+    FAMILY_ID_OTHER,
+    FAMILY_OTHER,
+    NUM_SIZE_BUCKETS,
+    SIZE_LOG10_MIN,
+    SIZE_LOG10_MAX,
+    SIZE_BUCKET_WIDTH,
+    HASH_BUCKETS,
+)
+
+# build_xm0 defaults — recorded so the frozen half can be recomputed identically
+# for a new model three months from now (CLAUDE.md Step 6).
+DEFAULT_ENAME_SEED = 42
+DEFAULT_ENAME_TOKEN_DIM = 64
+DEFAULT_EDESC_ENCODER = "all-MiniLM-L6-v2"
+
+
+# ── A. — bind weights to family_vocab ───────────────────────────────
+
+def _repro_metadata(extra: dict | None = None) -> dict:
+    """Everything needed to recompute features for a new model later."""
+    repro = {
+        "size_bucket_constants": {
+            "NUM_SIZE_BUCKETS": NUM_SIZE_BUCKETS,
+            "SIZE_LOG10_MIN": SIZE_LOG10_MIN,
+            "SIZE_LOG10_MAX": SIZE_LOG10_MAX,
+            "SIZE_BUCKET_WIDTH": SIZE_BUCKET_WIDTH,
+        },
+        "e_name_seed": DEFAULT_ENAME_SEED,
+        "e_name_token_dim": DEFAULT_ENAME_TOKEN_DIM,
+        "e_name_hash_buckets": HASH_BUCKETS,
+        "e_desc_encoder": DEFAULT_EDESC_ENCODER,
+    }
+    if extra:
+        repro.update(extra)
+    return repro
+
+
+def _arch_of(model: HeteroGraphSAGE) -> dict:
+    """Dims needed to rebuild an identical model before load_state_dict."""
+    enc = model.model_encoder
+    return {
+        "metadata": model.graph_metadata,
+        "frozen_dim": enc.frozen_dim,
+        "num_size_buckets": enc.size_embedding.num_embeddings,
+        "num_families": enc.family_embedding.num_embeddings,
+        "size_dim": enc.size_embedding.embedding_dim,
+        "family_dim": enc.family_embedding.embedding_dim,
+        "dataset_in_dim": model.dataset_proj.in_features,
+        "hidden_channels": model.model_proj.out_features,
+        "out_dim": model.head.out_features,
+    }
+
+
+def save_checkpoint(model, family_vocab: dict, out_path: str, *, extra_repro=None):
+    """
+    Save weights + family_vocab + repro metadata as ONE bound artifact, and also
+    drop a sidecar family_vocab.csv next to it (the vocab is the only credential
+    for embedding-row identity — never let it drift away from the weights).
+
+    family_vocab : the SAME dict xm0 produced (family -> id). len(family_vocab)
+                   must equal the family table's row count, or the rows are
+                   already orphaned — we assert that here, at save time.
+    """
+    enc = model.model_encoder
+    assert len(family_vocab) == enc.family_embedding.num_embeddings, (
+        f"family_vocab has {len(family_vocab)} entries but the family table has "
+        f"{enc.family_embedding.num_embeddings} rows — refusing to save a "
+        "checkpoint whose vocab cannot name every learnable row."
+    )
+
+    os.makedirs(os.path.dirname(os.path.abspath(out_path)), exist_ok=True)
+    torch.save(
+        {
+            "state_dict": model.state_dict(),
+            "family_vocab": family_vocab,
+            "arch": _arch_of(model),
+            "repro": _repro_metadata(extra_repro),
+        },
+        out_path,
+    )
+
+    # sidecar CSV (human-readable, and the format xm0's vocab loader expects)
+    csv_path = os.path.join(os.path.dirname(os.path.abspath(out_path)), "family_vocab.csv")
+    with open(csv_path, "w", newline="", encoding="utf-8") as f:
+        w = csv.writer(f)
+        w.writerow(["family", "family_id"])
+        for fam, fid in sorted(family_vocab.items(), key=lambda kv: kv[1]):
+            w.writerow([fam, fid])
+    return out_path
+
+
+def load_checkpoint(path: str, *, map_location="cpu"):
+    """
+    Rebuild the model from the stored arch, load weights, and verify the
+    weights<->vocab binding. Returns (model, family_vocab, repro).
+    """
+    ckpt = torch.load(path, map_location=map_location, weights_only=False)
+    arch = ckpt["arch"]
+    model = HeteroGraphSAGE(
+        metadata=arch["metadata"],
+        frozen_dim=arch["frozen_dim"],
+        num_size_buckets=arch["num_size_buckets"],
+        num_families=arch["num_families"],
+        dataset_in_dim=arch["dataset_in_dim"],
+        hidden_channels=arch["hidden_channels"],
+        out_dim=arch["out_dim"],
+        size_dim=arch["size_dim"],
+        family_dim=arch["family_dim"],
+    )
+    model.load_state_dict(ckpt["state_dict"])
+    model.eval()
+
+    vocab = ckpt["family_vocab"]
+    rows = model.model_encoder.family_embedding.num_embeddings
+    if len(vocab) != rows:
+        raise ValueError(
+            f"vocab/weight mismatch: checkpoint family_vocab has {len(vocab)} "
+            f"entries but the family table has {rows} rows. The trained family "
+            "rows are orphaned — do NOT use this checkpoint for inference."
+        )
+    return model, vocab, ckpt["repro"]
+
+
+# ── B. — same rules as the builder, unseen family -> Other ─────────
+
+def new_model_input(frozen_vec, param_count, family, family_vocab, *, device=None):
+    """
+    Map a NEW (possibly never-seen) model to encoder inputs, by the SAME rules
+    xm0 used so a cold-start model is treated identically to a trained one:
+
+      param_count missing/None  -> size bucket 0 (unknown)
+      family not in family_vocab -> family id 0 (Other)   [designed degradation]
+
+    Returns (x_frozen[1, frozen_dim], size_bucket_id[1], family_id[1]).
+    """
+    fv = torch.as_tensor(frozen_vec, dtype=torch.float32).reshape(1, -1)
+    size_id = torch.tensor([param_count_to_size_bucket(param_count)], dtype=torch.long)
+    fam_id = torch.tensor([family_vocab.get(family, FAMILY_ID_OTHER)], dtype=torch.long)
+    if device is not None:
+        fv, size_id, fam_id = fv.to(device), size_id.to(device), fam_id.to(device)
+    return fv, size_id, fam_id
+
+
+@torch.no_grad()
+def encode_new_model(model, frozen_vec, param_count, family, family_vocab):
+    """
+    Run a new model through the TRAINED ModelNodeEncoder (frozen || size || fam).
+    This is the x_m^(0) of a cold-start model; the full z_m additionally needs the
+    GNN with the node joined into the graph (serving-time, Step 6). Returned here
+    at encoder level so the zero-shot routing (unseen family -> Other) is testable
+    without faking graph structure.
+    """
+    fv, size_id, fam_id = new_model_input(frozen_vec, param_count, family, family_vocab)
+    return model.model_encoder(fv, size_id, fam_id)
+
+
+# ── C. — sparse-gradient health of the two tables ──────────────────────────
+
+def snapshot_weights(encoder) -> dict:
+    """Clone both tables' weights — call BEFORE training to compare against later."""
+    return {
+        "size": encoder.size_embedding.weight.detach().clone(),
+        "family": encoder.family_embedding.weight.detach().clone(),
+    }
+
+
+def embedding_health(encoder, init_weights: dict | None = None, *, move_atol: float = 1e-6) -> dict:
+    """
+    Report, per table, what the sparse gradients actually touched.
+
+    With init_weights (a snapshot_weights from before training):
+      unmoved_rows  — rows whose weight barely changed from init. A RARE family
+                      row that never moved learned nothing (FAMILY_MIN_COUNT
+                      rationale: below threshold, folding into Other beats a noise
+                      row). Expect many unmoved family rows on the small zoo —
+                      only the families actually present among the models move.
+      row0_move     — how much the unknown-bucket / Other-family row (id 0) moved;
+                      as the highest-frequency row it should be among the most
+                      updated ("the prior of missingness", a feature not a bug).
+    """
+    report = {}
+    tables = {"size": encoder.size_embedding, "family": encoder.family_embedding}
+    for name, emb in tables.items():
+        w = emb.weight.detach()
+        norms = w.norm(dim=1)
+        entry = {
+            "rows": int(w.shape[0]),
+            "row0_norm": float(norms[0]),
+            "mean_norm": float(norms.mean()),
+        }
+        if init_weights is not None:
+            move = (w - init_weights[name]).norm(dim=1)
+            unmoved = (move <= move_atol).nonzero().flatten().tolist()
+            entry.update(
+                unmoved_rows=unmoved,
+                n_unmoved=len(unmoved),
+                n_moved=int(w.shape[0]) - len(unmoved),
+                row0_move=float(move[0]),
+                max_move=float(move.max()),
+            )
+        report[name] = entry
+    return report
+
+
+# ── mechanism smoke test ────────────────────────────────────────────────────
+if __name__ == "__main__":
+    import tempfile
+    from ModelLakeFishing.stage2TrainGraphSAGE.model import load_hgraph
+
+    data, xm0, _umi = load_hgraph()
+    vocab = xm0["family_vocab"]
+    model = HeteroGraphSAGE(
+        metadata=data.metadata(),
+        frozen_dim=data["model"].x.shape[1],
+        num_size_buckets=xm0["num_size_buckets"],
+        num_families=xm0["num_families"],
+        dataset_in_dim=data["dataset"].x.shape[1],
+    )
+
+    failures = []
+
+    def check(cond, msg):
+        print(f"  [{'OK  ' if cond else 'FAIL'}] {msg}")
+        if not cond:
+            failures.append(msg)
+
+    # --- ownership: both tables are inside the single model.parameters() set ---
+    print("\n=== ownership: one optimizer covers the tables ===")
+    param_ids = {id(p) for p in model.parameters()}
+    check(id(model.model_encoder.size_embedding.weight) in param_ids,
+          "size_embedding.weight in model.parameters()")
+    check(id(model.model_encoder.family_embedding.weight) in param_ids,
+          "family_embedding.weight in model.parameters()")
+
+    # --- backward: snapshot, one optim step on the full graph, then health ---
+    print("\n=== backward: sparse-gradient health ===")
+    init_w = snapshot_weights(model.model_encoder)
+    optimizer = torch.optim.Adam(model.parameters(), lr=1e-2)  # one group, defaults
+    z = model(data)
+    (z["model"].sum() + z["dataset"].sum()).backward()
+    optimizer.step()
+    health = embedding_health(model.model_encoder, init_w)
+    sz, fam = health["size"], health["family"]
+    print(f"      size  : {sz['n_moved']}/{sz['rows']} rows moved, "
+          f"{sz['n_unmoved']} unmoved, row0_move={sz['row0_move']:.4g}")
+    print(f"      family: {fam['n_moved']}/{fam['rows']} rows moved, "
+          f"{fam['n_unmoved']} unmoved, row0_move={fam['row0_move']:.4g}")
+    check(fam["row0_move"] > 0, "Other-family row (id 0) was updated (high-frequency row)")
+    check(fam["n_unmoved"] > 0,
+          "some rare family rows never moved (expected on the zoo -- FAMILY_MIN_COUNT rationale)")
+    check(sz["row0_move"] >= 0 and fam["max_move"] > 0, "family table received real updates")
+
+    # --- B. zero-shot routing ---
+    print("\n=== zero-shot input rules ===")
+    frozen_dim = data["model"].x.shape[1]
+    fake_frozen = torch.zeros(frozen_dim)
+    # unseen family -> Other(0); missing param_count -> unknown bucket(0)
+    _, s_id, f_id = new_model_input(fake_frozen, None, "totally-new-family-xyz", vocab)
+    check(int(f_id) == FAMILY_ID_OTHER, "unseen family -> Other (id 0)")
+    check(int(s_id) == 0, "missing param_count -> unknown size bucket (id 0)")
+    # a known family resolves to its real row; a real param count to a real bucket
+    known_fam = next(k for k, v in vocab.items() if v != 0)
+    _, s_id2, f_id2 = new_model_input(fake_frozen, 7_000_000_000, known_fam, vocab)
+    check(int(f_id2) == vocab[known_fam], f"known family '{known_fam}' -> id {vocab[known_fam]}")
+    check(int(s_id2) == param_count_to_size_bucket(7_000_000_000), "7B param_count -> its real bucket")
+    enc_out = encode_new_model(model, fake_frozen, None, "totally-new-family-xyz", vocab)
+    check(tuple(enc_out.shape) == (1, model.model_encoder.out_dim),
+          f"encoder output for a new model == (1, {model.model_encoder.out_dim})")
+
+    # --- A. save / load roundtrip + vocab-binding guard ---
+    print("\n=== save / load: weights bound to vocab ===")
+    model.eval()
+    with torch.no_grad():
+        z_ref = model(data)["model"].clone()
+    tmpdir = tempfile.mkdtemp()
+    ckpt_path = os.path.join(tmpdir, "stage2.pt")
+    save_checkpoint(model, vocab, ckpt_path)
+    check(os.path.exists(os.path.join(tmpdir, "family_vocab.csv")),
+          "sidecar family_vocab.csv written next to the checkpoint")
+    model2, vocab2, repro = load_checkpoint(ckpt_path)
+    with torch.no_grad():
+        z_re = model2(data)["model"]
+    check(torch.allclose(z_ref, z_re, atol=1e-6), "reloaded model reproduces z_m exactly")
+    check(vocab2 == vocab, "family_vocab survived the roundtrip")
+    check("size_bucket_constants" in repro and repro["e_desc_encoder"] == DEFAULT_EDESC_ENCODER,
+          "repro metadata (size constants + e_desc encoder) persisted")
+    # binding guard: a checkpoint whose vocab length no longer matches must be rejected
+    bad = torch.load(ckpt_path, map_location="cpu", weights_only=False)
+    bad["family_vocab"] = dict(list(vocab.items())[:-1])  # drop one entry
+    bad_path = os.path.join(tmpdir, "bad.pt")
+    torch.save(bad, bad_path)
+    try:
+        load_checkpoint(bad_path)
+        check(False, "load_checkpoint should reject a vocab/weight length mismatch")
+    except ValueError:
+        check(True, "load_checkpoint rejects a vocab/weight length mismatch (orphan guard)")
+
+    print("\n" + "=" * 52)
+    if failures:
+        print(f"SMOKE TEST FAILED — {len(failures)} check(s):")
+        for f in failures:
+            print(f"  - {f}")
+        sys.exit(1)
+    print("SMOKE TEST OK -- save/vocab-binding, zero-shot routing, grad-health verified.")

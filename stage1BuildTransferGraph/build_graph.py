@@ -53,7 +53,7 @@ def parse_args():
     p = argparse.ArgumentParser(description="Build the stage-1 HGraph from zoo records")
     p.add_argument('--task_type', default=TaskType.SEQUENCE_CLASSIFICATION, type=TaskType)
     p.add_argument('--gnn_method', default='SAGEConv', type=str)
-    p.add_argument('--test_dataset', default='glue/sst2', type=str,
+    p.add_argument('--test_dataset', default=None, type=str,
                    help='dataset whose accuracy edges are held out of the graph')
     p.add_argument('--contain_dataset_feature', default='True', type=str2bool)
     p.add_argument('--contain_data_similarity', default='True', type=str2bool)

@@ -130,11 +130,21 @@ class HGraph:
         if edge_attr_dataset_to_dataset != None:
             self.data['dataset', 'similar_to', 'dataset'].edge_attr = edge_attr_dataset_to_dataset  # TODO
 
+        # Lineage is DIRECTED (base -> derivative). We do NOT add it to the
+        # graph here: T.ToUndirected(merge=True) symmetrizes same-node-type
+        # relations in place, which would fold both directions into one
+        # shared-weight is_base_of relation and erase the base/derivative
+        # direction the lineage encodes. Instead we stash it and install a
+        # directed pair (is_base_of + rev_is_base_of) AFTER ToUndirected, so
+        # each direction keeps its own aggregation weights. (similar_to is
+        # genuinely symmetric and is intentionally left to ToUndirected.)
+        self._lineage_edge_index = None
+        self._lineage_edge_attr = None
         if 'without_transfer' not in gnn_method:
             # if 'homo' not in gnn_method:
             #     edge_index_tran_model_to_dataset[0] -= max_dataset_idx
-            self.data["model", "is_base_of", "model"].edge_index = edge_index_model_to_model
-            self.data["model", "is_base_of", "model"].edge_attr = edge_attr_model_to_model
+            self._lineage_edge_index = edge_index_model_to_model
+            self._lineage_edge_attr = edge_attr_model_to_model
             self.data["model", "transfer_to", "dataset"].edge_index = edge_index_tran_model_to_dataset  # TODO
             self.data["model", "transfer_to", "dataset"].edge_attr = edge_attr_tran_model_to_dataset  # TODO
 
@@ -154,6 +164,27 @@ class HGraph:
         self.data = T.ToUndirected()(self.data)
         # self.data = T.AddSelfLoops()(self.data)
         # self.data = T.NormalizeFeatures()(self.data)
+        self._add_directed_lineage()
+
+    def _add_directed_lineage(self):
+        """Install lineage as two DIRECTED relations with independent weights.
+
+        Runs after ToUndirected so the base->derivative direction survives
+        (merge=True would otherwise collapse both directions into one
+        shared-weight is_base_of relation). PyG SAGEConv has the destination
+        aggregate from the source, so under is_base_of a derivative pulls from
+        its base, and under rev_is_base_of a base aggregates from its
+        derivatives — two semantically distinct flows, two weight sets.
+        """
+        ei = self._lineage_edge_index            # base -> derivative
+        if ei is None:
+            return
+        ea = self._lineage_edge_attr
+        self.data["model", "is_base_of", "model"].edge_index = ei
+        self.data["model", "rev_is_base_of", "model"].edge_index = ei.flip(0)  # derivative -> base
+        if ea is not None:
+            self.data["model", "is_base_of", "model"].edge_attr = ea
+            self.data["model", "rev_is_base_of", "model"].edge_attr = ea.clone()
 
     def _print(self):
         print()

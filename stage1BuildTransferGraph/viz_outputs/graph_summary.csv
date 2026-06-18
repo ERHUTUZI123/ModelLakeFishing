@@ -1,9 +1,0 @@
-category,count
-edge: model-is_base_of->model,0
-node: dataset,23
-node: model,164
-edge: dataset-similar_to->dataset,504
-edge: dataset-rev_transfer_to->model,1348
-edge: model-transfer_to->dataset,1348
-edge: model-trained_on->dataset,1382
-edge: dataset-rev_trained_on->model,1382
