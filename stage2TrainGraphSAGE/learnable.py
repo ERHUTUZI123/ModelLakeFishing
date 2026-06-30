@@ -116,24 +116,45 @@ def _repro_metadata(extra: dict | None = None) -> dict:
 def _arch_of(model: HeteroGraphSAGE) -> dict:
     """Dims needed to rebuild an identical model before load_state_dict."""
     enc = model.model_encoder
-    return {
+    arch = {
         "metadata": model.graph_metadata,
         "frozen_dim": enc.frozen_dim,
         "num_size_buckets": enc.size_embedding.num_embeddings,
         "num_families": enc.family_embedding.num_embeddings,
         "size_dim": enc.size_embedding.embedding_dim,
         "family_dim": enc.family_embedding.embedding_dim,
-        "dataset_in_dim": model.dataset_proj.in_features,
         "hidden_channels": model.model_proj.out_features,
-        "out_dim": model.head.out_features,
+        "out_dim": (model.model_head.out_features
+                    if getattr(model, "separate_heads", False) else model.head.out_features),
+        "separate_heads": getattr(model, "separate_heads", False),
         # model-reconstruction metadata (NOT the vocab<->weights binding): records
         # the SAGE depth so a 1-layer checkpoint reloads with matching state_dict
         # keys. Backward-compatible: old checkpoints lack it -> default 2 on load.
         "num_layers": getattr(model, "num_layers", 2),
+        # Phase 2 edge-aware flags (default False keeps old checkpoints valid)
+        "edge_aware": getattr(model, "edge_aware", False),
+        "weighted_relations": getattr(model, "weighted_relations", None),
     }
+    # dataset side: xd0 DatasetNodeEncoder (when present) needs its own dims +
+    # the frozen dataset width. When absent, record the plain dataset_proj input.
+    if getattr(model, "use_dataset_encoder", False):
+        de = model.dataset_encoder
+        arch.update({
+            "dataset_in_dim": de.frozen_dim,
+            "num_task_types": de.task_type_embedding.num_embeddings,
+            "n_class_buckets": de.n_class_embedding.num_embeddings,
+            "num_arities": de.arity_embedding.num_embeddings,
+            "task_dim": de.task_type_embedding.embedding_dim,
+            "nclass_dim": de.n_class_embedding.embedding_dim,
+            "arity_dim": de.arity_embedding.embedding_dim,
+        })
+    else:
+        arch["dataset_in_dim"] = model.dataset_proj.in_features
+    return arch
 
 
-def save_checkpoint(model, family_vocab: dict, out_path: str, *, extra_repro=None):
+def save_checkpoint(model, family_vocab: dict, out_path: str, *, extra_repro=None,
+                    task_type_vocab: dict | None = None):
     """
     Save weights + family_vocab + repro metadata as ONE bound artifact, and also
     drop a sidecar family_vocab.csv next to it (the vocab is the only credential
@@ -142,20 +163,30 @@ def save_checkpoint(model, family_vocab: dict, out_path: str, *, extra_repro=Non
     family_vocab : the SAME dict xm0 produced (family -> id). len(family_vocab)
                    must equal the family table's row count, or the rows are
                    already orphaned — we assert that here, at save time.
+    task_type_vocab : OPTIONAL — the xd0 dataset task_type vocab. When the model
+                   has a DatasetNodeEncoder it is the credential for the
+                   task_type embedding rows; bound and validated like family_vocab.
     """
     enc = model.model_encoder
     _validate_vocab_binding(family_vocab, enc.family_embedding.num_embeddings)
 
+    payload = {
+        "state_dict": model.state_dict(),
+        "family_vocab": family_vocab,
+        "arch": _arch_of(model),
+        "repro": _repro_metadata(extra_repro),
+    }
+    if getattr(model, "use_dataset_encoder", False):
+        rows = model.dataset_encoder.task_type_embedding.num_embeddings
+        if task_type_vocab is not None:
+            assert len(task_type_vocab) == rows and task_type_vocab.get("Other") == 0, (
+                f"task_type_vocab ({len(task_type_vocab)}) must have {rows} entries "
+                "with Other->0 (orphan-row guard for the dataset task_type table)"
+            )
+            payload["task_type_vocab"] = task_type_vocab
+
     os.makedirs(os.path.dirname(os.path.abspath(out_path)), exist_ok=True)
-    torch.save(
-        {
-            "state_dict": model.state_dict(),
-            "family_vocab": family_vocab,
-            "arch": _arch_of(model),
-            "repro": _repro_metadata(extra_repro),
-        },
-        out_path,
-    )
+    torch.save(payload, out_path)
 
     # sidecar CSV (human-readable, and the format xm0's vocab loader expects).
     # Named after the checkpoint stem so multiple checkpoints in one directory do
@@ -168,6 +199,15 @@ def save_checkpoint(model, family_vocab: dict, out_path: str, *, extra_repro=Non
         w.writerow(["family", "family_id"])
         for fam, fid in sorted(family_vocab.items(), key=lambda kv: kv[1]):
             w.writerow([fam, fid])
+
+    # sidecar for the dataset task_type vocab (when the model has an xd0 encoder)
+    if task_type_vocab is not None and getattr(model, "use_dataset_encoder", False):
+        tt_path = os.path.join(os.path.dirname(abs_out), f"{stem}.task_type_vocab.csv")
+        with open(tt_path, "w", newline="", encoding="utf-8") as f:
+            w = csv.writer(f)
+            w.writerow(["task_type", "task_type_id"])
+            for tt, tid in sorted(task_type_vocab.items(), key=lambda kv: kv[1]):
+                w.writerow([tt, tid])
     return out_path
 
 
@@ -189,6 +229,16 @@ def load_checkpoint(path: str, *, map_location="cpu"):
         size_dim=arch["size_dim"],
         family_dim=arch["family_dim"],
         num_layers=arch.get("num_layers", 2),   # default keeps old checkpoints valid
+        edge_aware=arch.get("edge_aware", False),
+        weighted_relations=arch.get("weighted_relations", None),
+        separate_heads=arch.get("separate_heads", False),
+        # dataset side (xd0): None for old checkpoints -> plain dataset_proj
+        num_task_types=arch.get("num_task_types"),
+        n_class_buckets=arch.get("n_class_buckets"),
+        num_arities=arch.get("num_arities"),
+        task_dim=arch.get("task_dim", 16),
+        nclass_dim=arch.get("nclass_dim", 8),
+        arity_dim=arch.get("arity_dim", 4),
     )
     model.load_state_dict(ckpt["state_dict"])
     model.eval()
@@ -196,7 +246,12 @@ def load_checkpoint(path: str, *, map_location="cpu"):
     vocab = ckpt["family_vocab"]
     rows = model.model_encoder.family_embedding.num_embeddings
     _validate_vocab_binding(vocab, rows)
-    return model, vocab, ckpt["repro"]
+    # surface the dataset task_type vocab (if bound) via repro, keeping the
+    # 3-tuple return signature every caller already unpacks.
+    repro = dict(ckpt["repro"])
+    if "task_type_vocab" in ckpt:
+        repro["task_type_vocab"] = ckpt["task_type_vocab"]
+    return model, vocab, repro
 
 
 # ── B. — same rules as the builder, unseen family -> Other ─────────

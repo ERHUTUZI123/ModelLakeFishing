@@ -59,6 +59,9 @@ def parse_args():
     p.add_argument('--contain_data_similarity', default='True', type=str2bool)
     p.add_argument('--contain_model_feature', default='False', type=str2bool,
                    help='True triggers the x_m^(0) build (HuggingFace fetching on first run)')
+    p.add_argument('--contain_rich_dataset_feature', default='False', type=str2bool,
+                   help='True triggers the x_d^(0) build (multi-view dataset node features '
+                        '+ discrete task_type/n_class/arity columns; default OFF -> gpt-neo centroid)')
     p.add_argument('--dataset_reference_model', default='EleutherAI_gpt-neo-125m', type=str)
     p.add_argument('--dataset_embed_method', default=DatasetEmbeddingMethod.DOMAIN_SIMILARITY,
                    type=DatasetEmbeddingMethod)
@@ -92,7 +95,7 @@ def main():
         ga.unique_model_id,
         ga.model_features,
         ga.unique_dataset_id,
-        ga.data_features,
+        ga.dataset_node_features,
         ga.edge_index_accu_model_to_dataset,
         ga.edge_attr_accu_model_to_dataset,
         ga.edge_index_dataset_to_dataset,
@@ -107,6 +110,9 @@ def main():
         contain_model_feature=args.contain_model_feature,
         model_size_bucket_id=ga.model_size_bucket_id,
         model_family_id=ga.model_family_id,
+        dataset_task_type_id=ga.dataset_task_type_id,
+        dataset_n_class_bucket_id=ga.dataset_n_class_bucket_id,
+        dataset_arity_id=ga.dataset_arity_id,
     )
 
     out_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), args.out)
@@ -126,6 +132,19 @@ def main():
             'family_vocab': ga.xm0['family_vocab'],
             'name_dim': ga.xm0['name_dim'],
             'desc_dim': ga.xm0['desc_dim'],
+        }
+    if getattr(ga, 'xd0', None) is not None:
+        # dataset-side contract (symmetric to xm0_meta): the discrete columns live
+        # on data['dataset']; these are the vocab/row-count credentials a future
+        # DatasetNodeEncoder binds to.
+        payload['xd0_meta'] = {
+            'num_task_types': ga.xd0['num_task_types'],
+            'task_type_vocab': ga.xd0['task_type_vocab'],
+            'n_class_buckets': ga.xd0['n_class_buckets'],
+            'num_arities': ga.xd0['num_arities'],
+            'arity_vocab': ga.xd0['arity_vocab'],
+            'view_dims': ga.xd0['view_dims'],
+            'encoder_name': ga.xd0['encoder_name'],
         }
     torch.save(payload, out_path)
 

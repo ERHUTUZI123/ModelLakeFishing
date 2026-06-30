@@ -164,8 +164,8 @@ def perf_ranking_loss(scorer, z_dict, edge_label_index, edge_label, *,
             continue
         a = acc[sel]
         cap = min(max_pairs_per_dataset, n * (n - 1))
-        p = torch.randint(n, (cap,), generator=generator)
-        q = torch.randint(n, (cap,), generator=generator)
+        p = torch.randint(n, (cap,), generator=generator, device=z_m.device)
+        q = torch.randint(n, (cap,), generator=generator, device=z_m.device)
         good = a[p] > a[q] + min_gap                # p strictly better than q
         if bool(good.any()):
             hi.append(sel[p[good]])
@@ -180,6 +180,84 @@ def perf_ranking_loss(scorer, z_dict, edge_label_index, edge_label, *,
     loss = torch.relu(margin - (s_hi - s_lo)).mean()
     if return_stats:
         return loss, {"n_pairs": int(hi.numel()), "n_datasets": n_datasets}
+    return loss
+
+
+def raw_dot_ranknet_loss(z_dict, edge_label_index, edge_label, *,
+                         temperature: float = 0.1, min_gap: float = 0.0,
+                         max_pairs_per_dataset: int = 256, min_models_per_dataset: int = 2,
+                         gap_weighted: bool = False, hard_frac: float = 0.5,
+                         generator=None, return_stats: bool = False):
+    """
+    RankNet-style logistic ranking on the RAW dot score HNSW ranks (Phase 4).
+
+        s(d, m) = <z_m, z_d>            # raw cosine of unit vectors -- NO scale/bias/sigmoid
+        L_d     = mean softplus(-(s(d, hi) - s(d, lo)) / temperature)   over pairs in d
+        L       = mean_d L_d                                            # macro over datasets
+
+    Unlike perf_ranking_loss (hinge on sigmoid(scale*dot+bias)), this trains the
+    EXACT geometry HNSW serves (the unit-vector inner product), so there is no
+    monotone surrogate between the loss and the retrieval score.
+
+    Pairs are formed WITHIN each dataset from the supervision triples the batch
+    carries. Small candidate lists enumerate all unique non-tied pairs; large ones
+    sample, biased toward HARD pairs (currently-inverted or near-tie under the
+    model's own prediction) via `hard_frac`. `min_gap` treats |acc_hi-acc_lo| <=
+    min_gap as a tie (skip) so measurement noise is not a strict preference.
+    `gap_weighted` optionally scales each pair by its (capped) accuracy gap; the
+    default is unweighted because Kendall gives every non-tied pair equal weight.
+    `temperature` must be > 0.
+    """
+    assert temperature > 0, "temperature must be positive"
+    z_m, z_d = z_dict["model"], z_dict["dataset"]
+    src, dst, acc = edge_label_index[0], edge_label_index[1], edge_label.float()
+    # raw dot per supervision edge (unit vectors -> cosine == inner product)
+    s_all = (z_m[src] * z_d[dst]).sum(-1)
+
+    losses, n_pairs, n_datasets = [], 0, 0
+    for d in torch.unique(dst).tolist():
+        sel = (dst == d).nonzero().flatten()
+        n = int(sel.numel())
+        if n < min_models_per_dataset:
+            continue
+        a = acc[sel]
+        s = s_all[sel]
+        # all ordered pairs (i better than j) with a strict accuracy gap
+        ai, aj = a.unsqueeze(1), a.unsqueeze(0)
+        better = (ai - aj) > min_gap            # [n, n]; i strictly better than j
+        ii, jj = better.nonzero(as_tuple=True)
+        if ii.numel() == 0:
+            continue
+        if ii.numel() > max_pairs_per_dataset:
+            # hard-pair mining: rank candidate pairs by how INVERTED they are now
+            # (s_hi - s_lo small or negative == hard); take a hard_frac head + random tail
+            margin = (s[ii] - s[jj]).detach()
+            n_hard = int(round(hard_frac * max_pairs_per_dataset))
+            order = torch.argsort(margin)                  # most inverted first
+            hard = order[:n_hard]
+            rest = order[n_hard:]
+            if rest.numel() > 0:
+                perm = torch.randperm(rest.numel(), generator=generator, device=rest.device)
+                rand = rest[perm[:max_pairs_per_dataset - n_hard]]
+                keep = torch.cat([hard, rand])
+            else:
+                keep = hard
+            ii, jj = ii[keep], jj[keep]
+        diff = s[ii] - s[jj]
+        pair_loss = F.softplus(-diff / temperature)
+        if gap_weighted:
+            w = (a[ii] - a[jj]).clamp(max=1.0)
+            pair_loss = pair_loss * w
+        losses.append(pair_loss.mean())
+        n_pairs += int(ii.numel())
+        n_datasets += 1
+
+    if not losses:
+        loss = z_m.new_zeros(())
+        return (loss, {"n_pairs": 0, "n_datasets": 0}) if return_stats else loss
+    loss = torch.stack(losses).mean()              # macro over datasets (equal weight)
+    if return_stats:
+        return loss, {"n_pairs": n_pairs, "n_datasets": n_datasets}
     return loss
 
 
@@ -327,7 +405,10 @@ def pair_density(pos_mask) -> float:
 
 def lineage_components(data, num_models):
     """Component id per model over is_base_of (singletons get unique roots, so
-    comp[i]==comp[j] for i!=j is true ONLY for a real shared hub)."""
+    comp[i]==comp[j] for i!=j is true ONLY for a real shared hub). A graph with no
+    lineage edges yields all-singleton components (no same-hub structure)."""
+    if IS_BASE_OF not in data.edge_types or data[IS_BASE_OF].num_edges == 0:
+        return torch.arange(num_models)
     return _union_find_components(data[IS_BASE_OF].edge_index, num_models)
 
 
@@ -423,6 +504,94 @@ def contrastive_loss(z_model, pos_mask, hub_mask, *,
 
 
 # ── combined ─────────────────────────────────────────────────────────────────
+
+def dataset_to_model_contrastive(z_dict, trained_on_index, M, *,
+                                 temperature: float = 0.1, hard_neg_weight: float = 1.0,
+                                 min_pos: int = 1, return_stats: bool = False):
+    """
+    Phase 6: contrastive loss on the SERVING relation z_d -> z_m (InfoNCE per
+    dataset query). The shipped contrastive_loss trains z_m -> z_m only; it never
+    pulls a dataset query toward its good models. This does exactly that.
+
+    For each dataset d:
+      candidates = models with a TRAIN-VISIBLE trained_on edge to d (observed);
+      positives  = those marked top-performer in M[:, d];
+      negatives  = the remaining OBSERVED candidates (reliable negatives) --
+                   unobserved pairs are NOT treated as negatives (missing != neg).
+      loss_d = -log( sum_{p in pos} e^{s_dp/τ} / sum_{c in cand} w_c e^{s_dc/τ} )
+    with s = <z_d, z_m> (the exact retrieval score). Same-candidate high-scoring
+    negatives dominate the denominator naturally; hard_neg_weight (>1) optionally
+    up-weights all negatives. Macro-averaged over datasets (equal weight).
+
+    Leakage-safe: pass TRAIN-VISIBLE trained_on_index and a TRAIN-VISIBLE M.
+    """
+    z_m, z_d = z_dict["model"], z_dict["dataset"]
+    dst = trained_on_index[1]
+    src = trained_on_index[0]
+    losses, n_datasets, n_pos_total = [], 0, 0
+    for d in torch.unique(dst).tolist():
+        cand = torch.unique(src[dst == d])
+        if cand.numel() < 2:
+            continue
+        pos_flag = M[cand, d] > 0
+        if int(pos_flag.sum()) < min_pos or int(pos_flag.sum()) == cand.numel():
+            continue                                   # need both positives and negatives
+        s = (z_m[cand] @ z_d[d]) / temperature         # [n_cand]
+        w = torch.ones_like(s)
+        w[~pos_flag] = hard_neg_weight
+        logits = s + torch.log(w.clamp_min(1e-12))
+        denom = torch.logsumexp(logits, dim=0)
+        num = torch.logsumexp(s[pos_flag], dim=0)      # positives carry weight 1
+        losses.append(denom - num)
+        n_datasets += 1
+        n_pos_total += int(pos_flag.sum())
+    if not losses:
+        loss = z_m.new_zeros(())
+        return (loss, {"n_datasets": 0, "n_pos": 0}) if return_stats else loss
+    loss = torch.stack(losses).mean()
+    if return_stats:
+        return loss, {"n_datasets": n_datasets, "n_pos": n_pos_total}
+    return loss
+
+
+def dataset_to_model_contrastive_from_edges(z_dict, edge_label_index, edge_label, *,
+                                            top_frac=0.10, temperature=0.1,
+                                            min_models=2, return_stats=False):
+    """Phase 6, batch-friendly: dataset->model InfoNCE built directly from a
+    batch's supervision triples (model, dataset, accuracy) -- works in the winning
+    per-batch RankNet regime (no full-graph M needed).
+
+    Per dataset d in the batch: candidates = its supervised models; positives =
+    the top ceil(top_frac*n) by accuracy; negatives = the rest (observed only --
+    missing pairs are never negatives). InfoNCE on s=<z_d,z_m>; macro over datasets.
+    """
+    z_m, z_d = z_dict["model"], z_dict["dataset"]
+    src, dst, acc = edge_label_index[0], edge_label_index[1], edge_label.float()
+    losses, n_datasets = [], 0
+    for d in torch.unique(dst).tolist():
+        sel = (dst == d).nonzero().flatten()
+        n = int(sel.numel())
+        if n < min_models:
+            continue
+        models_d = src[sel]
+        a = acc[sel]
+        kk = max(1, int(round(top_frac * n)))
+        if kk >= n:
+            continue                                   # need at least one negative
+        pos_idx = torch.topk(a, kk).indices
+        pos_flag = torch.zeros(n, dtype=torch.bool, device=z_m.device)
+        pos_flag[pos_idx] = True
+        s = (z_m[models_d] @ z_d[d]) / temperature
+        denom = torch.logsumexp(s, dim=0)
+        num = torch.logsumexp(s[pos_flag], dim=0)
+        losses.append(denom - num)
+        n_datasets += 1
+    if not losses:
+        loss = z_m.new_zeros(())
+        return (loss, {"n_datasets": 0}) if return_stats else loss
+    loss = torch.stack(losses).mean()
+    return (loss, {"n_datasets": n_datasets}) if return_stats else loss
+
 
 def combined_loss(l_perf, l_contrast, *, lambda_perf=1.0, lambda_contrast=1.0):
     total = lambda_perf * l_perf + lambda_contrast * l_contrast

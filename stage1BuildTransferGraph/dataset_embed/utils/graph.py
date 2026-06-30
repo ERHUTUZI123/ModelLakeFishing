@@ -39,6 +39,9 @@ class HGraph:
             custom_negative_sampling=False,
             model_size_bucket_id=None,
             model_family_id=None,
+            dataset_task_type_id=None,
+            dataset_n_class_bucket_id=None,
+            dataset_arity_id=None,
     ):
         self.custom_negative_sampling = custom_negative_sampling
         self.model_idx = model_idx
@@ -94,6 +97,20 @@ class HGraph:
             )
             self.data["model"].family_id = ids
 
+        # Dataset-side learnable discrete columns (xd0), symmetric to the model
+        # side: they ride on the dataset node store as [num_datasets] int columns,
+        # auto-slicing with sampled subgraphs. The embedding tables live in a
+        # future DatasetNodeEncoder, NOT here. Default None -> unchanged behavior.
+        for _col, _vals in (("task_type_id", dataset_task_type_id),
+                            ("n_class_bucket_id", dataset_n_class_bucket_id),
+                            ("arity_id", dataset_arity_id)):
+            if _vals is not None:
+                _ids = torch.as_tensor(np.asarray(_vals), dtype=torch.long)
+                assert _ids.shape == (len(unique_dataset_id),), (
+                    f"dataset {_col} shape {tuple(_ids.shape)} != ({len(unique_dataset_id)},)"
+                )
+                self.data["dataset"][_col] = _ids
+
         # self.data["dataset"].x = dataset_features
         # self.data["dataset"].x = torch.from_numpy(dataset_features).to(torch.float)
         # datset_features = np.around(np.random.random_sample((len(dataset_features), 128))+0.00001,3)
@@ -140,11 +157,14 @@ class HGraph:
         # genuinely symmetric and is intentionally left to ToUndirected.)
         self._lineage_edge_index = None
         self._lineage_edge_attr = None
-        if 'without_transfer' not in gnn_method:
-            # if 'homo' not in gnn_method:
-            #     edge_index_tran_model_to_dataset[0] -= max_dataset_idx
+        # Lineage (model-model, base->derivative) is REAL metadata and independent of
+        # transferability: install it whenever lineage edges exist, regardless of
+        # without_transfer. Only the transfer_to (LogME) edges -- which we do not have
+        # without fabrication -- are gated by the without_transfer flag.
+        if edge_index_model_to_model is not None and edge_index_model_to_model.numel() > 0:
             self._lineage_edge_index = edge_index_model_to_model
             self._lineage_edge_attr = edge_attr_model_to_model
+        if 'without_transfer' not in gnn_method:
             self.data["model", "transfer_to", "dataset"].edge_index = edge_index_tran_model_to_dataset  # TODO
             self.data["model", "transfer_to", "dataset"].edge_attr = edge_attr_tran_model_to_dataset  # TODO
 

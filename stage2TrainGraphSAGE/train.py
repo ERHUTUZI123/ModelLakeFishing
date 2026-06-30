@@ -42,8 +42,10 @@ import torch.nn.functional as F  # noqa: E402
 from ModelLakeFishing.stage2TrainGraphSAGE.model import HeteroGraphSAGE, load_hgraph  # noqa: E402
 from ModelLakeFishing.stage2TrainGraphSAGE.losses import (  # noqa: E402
     TRAINED_ON, PerfScorer, accuracy_lookup, perf_supervision, perf_loss,
-    perf_ranking_loss, split_trained_on, topk_membership, lineage_components,
-    per_dataset_density, global_positive_density, contrastive_loss, uniformity_loss,
+    perf_ranking_loss, raw_dot_ranknet_loss, split_trained_on, topk_membership,
+    lineage_components, per_dataset_density, global_positive_density,
+    contrastive_loss, dataset_to_model_contrastive,
+    dataset_to_model_contrastive_from_edges, uniformity_loss,
 )
 from ModelLakeFishing.stage2TrainGraphSAGE.sampling import (  # noqa: E402
     make_link_loader, apply_edge_dropout, batch_contrastive_masks,
@@ -57,10 +59,24 @@ ARTIFACTS = os.path.join(_HERE, "artifacts")
 
 # ── training ─────────────────────────────────────────────────────────────────
 
+def _val_tau_macro(model, scorer, val_data, lookup, device):
+    """Within-dataset macro Kendall tau on a val split (for early stopping)."""
+    from ModelLakeFishing.stage2TrainGraphSAGE.eval_harness import per_dataset_tau
+    model.eval()
+    with torch.no_grad():
+        z = {k: v for k, v in model(val_data.clone().to(device)).items()}
+    macro, _ = per_dataset_tau(scorer, z, val_data, lookup)
+    return macro if macro == macro else -1.0          # NaN -> -1
+
+
 def train(model, scorer, train_data, eli, target, M, comp, *,
           epochs=40, lr=1e-2, lambda_mse=0.0, lambda_rank=1.0, lambda_contrast=1.0,
           lambda_uniform=0.0, rank_margin=0.05, p=0.3, p_lineage=0.05,
-          num_neighbors=(10, 10), batch_size=128):
+          num_neighbors=(10, 10), batch_size=128, device=None,
+          rank_loss="hinge", rank_temperature=0.1, rank_min_gap=0.0,
+          rank_gap_weighted=False,
+          val_data=None, val_lookup=None, patience=0, eval_every=1,
+          lambda_dm_contrast=0.0, dm_temperature=0.1, dm_top_frac=0.10):
     """
     Per batch: lambda_rank * ranking + lambda_contrast * contrast (+ optional
     lambda_mse * MSE, + optional lambda_uniform * uniformity). Ranking (not MSE)
@@ -70,14 +86,20 @@ def train(model, scorer, train_data, eli, target, M, comp, *,
     no global N x N. lambda_uniform defaults to 0 (anti-collapse regularizer is a
     diagnostic, not tuned here). One optimizer; epochs/lambda kept modest.
     """
+    if device is None:
+        device = next(model.parameters()).device
     opt = torch.optim.Adam(list(model.parameters()) + list(scorer.parameters()), lr=lr)
     loader = make_link_loader(train_data, eli, target,
                               num_neighbors=num_neighbors, batch_size=batch_size)
     history = []
+    use_val = val_data is not None and val_lookup is not None
+    best_val, best_state, bad_epochs = -2.0, None, 0
+    import copy
     for epoch in range(epochs):
         model.train()
         ep = []
         for batch in loader:
+            batch = batch.to(device)                    # GPU: sample on CPU, train on device
             apply_edge_dropout(batch, p=p, p_lineage=p_lineage)
             opt.zero_grad()
             z = model(batch)
@@ -90,12 +112,22 @@ def train(model, scorer, train_data, eli, target, M, comp, *,
                 total = total + lambda_mse * lmse
                 parts["mse"] = float(lmse.detach())
             if lambda_rank > 0:
-                lrank = perf_ranking_loss(scorer, z, eli_b, el_b, margin=rank_margin)
+                if rank_loss == "ranknet":
+                    lrank = raw_dot_ranknet_loss(
+                        z, eli_b, el_b, temperature=rank_temperature,
+                        min_gap=rank_min_gap, gap_weighted=rank_gap_weighted)
+                else:
+                    lrank = perf_ranking_loss(scorer, z, eli_b, el_b, margin=rank_margin)
                 total = total + lambda_rank * lrank
                 parts["rank"] = float(lrank.detach())
             lc = contrastive_loss(z["model"], pb, hb)
             total = total + lambda_contrast * lc
             parts["contrast"] = float(lc.detach())
+            if lambda_dm_contrast > 0:
+                ldm = dataset_to_model_contrastive_from_edges(
+                    z, eli_b, el_b, top_frac=dm_top_frac, temperature=dm_temperature)
+                total = total + lambda_dm_contrast * ldm
+                parts["dm_contrast"] = float(ldm.detach())
             if lambda_uniform > 0:
                 lu = uniformity_loss(z["model"])
                 total = total + lambda_uniform * lu
@@ -106,7 +138,114 @@ def train(model, scorer, train_data, eli, target, M, comp, *,
             opt.step()
             ep.append(parts)
         history.append({k: float(np.mean([d[k] for d in ep])) for k in ep[0]})
+        # ── Phase 7: select the best-validation epoch (early stopping) ──────────
+        if use_val and (epoch % eval_every == 0 or epoch == epochs - 1):
+            v = _val_tau_macro(model, scorer, val_data, val_lookup, device)
+            history[-1]["val_tau"] = v
+            if v > best_val:
+                best_val, bad_epochs = v, 0
+                best_state = (copy.deepcopy(model.state_dict()),
+                              copy.deepcopy(scorer.state_dict()))
+            else:
+                bad_epochs += 1
+                if patience and bad_epochs >= patience:
+                    break
+            model.train()
+    if use_val and best_state is not None:
+        model.load_state_dict(best_state[0])
+        scorer.load_state_dict(best_state[1])
     return history, loader
+
+
+def _full_masks(M, comp):
+    """Dense [N,N] pos/hub masks from membership M and components comp (used by
+    full-batch macro training; fine at the 2000-model scale, NOT at 47K)."""
+    pos = (M @ M.t()) > 0
+    pos.fill_diagonal_(False)
+    hub = comp.unsqueeze(0) == comp.unsqueeze(1)
+    hub.fill_diagonal_(False)
+    counts = torch.bincount(comp, minlength=comp.numel())
+    singleton = counts[comp] <= 1
+    hub[singleton, :] = False
+    hub[:, singleton] = False
+    return pos, hub
+
+
+def train_grouped(model, scorer, train_data, eli, target, M, comp, *,
+                  epochs=40, lr=1e-2, lambda_mse=0.0, lambda_rank=1.0, lambda_contrast=1.0,
+                  lambda_uniform=0.0, rank_margin=0.05, p=0.3, p_lineage=0.05, device=None,
+                  rank_loss="ranknet", rank_temperature=0.1, rank_min_gap=0.0,
+                  rank_gap_weighted=False, log_every=0,
+                  ti=None, lambda_dm_contrast=0.0, dm_temperature=0.1,
+                  dm_hard_neg_weight=1.0, dm_warmup=0):
+    """Phase 3: dataset-grouped, MACRO-BALANCED training (every dataset equal weight).
+
+    Instead of globally-shuffled edge batches (where pair-rich datasets dominate
+    the gradient while tau_macro weights datasets equally), this does ONE full-graph
+    step per epoch over ALL supervision edges, and the ranking loss macro-averages
+    over datasets (raw_dot_ranknet_loss / perf_ranking_loss both compute one mean
+    per dataset, then mean over datasets). Edge dropout is applied to a fresh clone
+    of the message graph each epoch (cold-start hardening preserved). Exact macro
+    balance at the 2000-model scale; for 47K, switch to a sampled dataset-grouped
+    loader (same per-dataset-then-mean reduction).
+
+    Returns (history, stats) where stats logs datasets/pairs contributing per epoch.
+    """
+    if device is None:
+        device = next(model.parameters()).device
+    opt = torch.optim.Adam(list(model.parameters()) + list(scorer.parameters()), lr=lr)
+    base = train_data.clone().to(device)
+    eli, target = eli.to(device), target.to(device)
+    M, comp = M.to(device), comp.to(device)
+    if ti is not None:
+        ti = ti.to(device)
+    pos_mask, hub_mask = _full_masks(M, comp)
+    history, last_stats = [], {}
+    for epoch in range(epochs):
+        model.train()
+        g = base.clone()
+        apply_edge_dropout(g, p=p, p_lineage=p_lineage)
+        opt.zero_grad()
+        z = model(g)
+        parts, total = {}, z["model"].new_zeros(())
+        if lambda_mse > 0:
+            lmse = perf_loss(scorer, z, eli, target)
+            total = total + lambda_mse * lmse
+            parts["mse"] = float(lmse.detach())
+        if lambda_rank > 0:
+            if rank_loss == "ranknet":
+                lrank, st = raw_dot_ranknet_loss(
+                    z, eli, target, temperature=rank_temperature, min_gap=rank_min_gap,
+                    gap_weighted=rank_gap_weighted, return_stats=True)
+            else:
+                lrank, st = perf_ranking_loss(scorer, z, eli, target, margin=rank_margin,
+                                              return_stats=True)
+            total = total + lambda_rank * lrank
+            parts["rank"] = float(lrank.detach())
+            last_stats = st
+        lc = contrastive_loss(z["model"], pos_mask, hub_mask)
+        total = total + lambda_contrast * lc
+        parts["contrast"] = float(lc.detach())
+        if lambda_dm_contrast > 0 and ti is not None:
+            # ranking warm-up: anneal the dataset->model contrastive weight from 0
+            ramp = min(1.0, (epoch + 1) / dm_warmup) if dm_warmup > 0 else 1.0
+            ldm = dataset_to_model_contrastive(
+                z, ti, M, temperature=dm_temperature, hard_neg_weight=dm_hard_neg_weight)
+            total = total + (lambda_dm_contrast * ramp) * ldm
+            parts["dm_contrast"] = float(ldm.detach())
+        if lambda_uniform > 0:
+            lu = uniformity_loss(z["model"])
+            total = total + lambda_uniform * lu
+            parts["uniform"] = float(lu.detach())
+        parts["total"] = float(total.detach())
+        total.backward()
+        opt.step()
+        history.append(parts)
+        if log_every and (epoch % log_every == 0 or epoch == epochs - 1):
+            print(f"      [grouped ep{epoch}] total={parts['total']:.4f} "
+                  f"rank={parts.get('rank', 0):.4f} datasets={last_stats.get('n_datasets')} "
+                  f"pairs={last_stats.get('n_pairs')}")
+    return history, last_stats
 
 
 def collapse_report(z_model) -> float:
@@ -129,12 +268,14 @@ def eval_perf(model, scorer, split_data, lookup, *, min_per_dataset=3):
                         given dataset, are the models ranked correctly.
     """
     model.eval()
+    dev = next(model.parameters()).device
     with torch.no_grad():
-        z = model(split_data)
+        z = model(split_data.clone().to(dev))           # clone: .to() is in-place in PyG
         eli, target = perf_supervision(split_data[TRAINED_ON], lookup)
+        eli, target = eli.to(dev), target.to(dev)
         pred = scorer(z["model"], z["dataset"], eli)
         mse = torch.mean((pred - target) ** 2).item()
-    pr, tg, ds = pred.numpy(), target.numpy(), eli[1].numpy()
+    pr, tg, ds = pred.cpu().numpy(), target.cpu().numpy(), eli[1].cpu().numpy()
     tau, _ = kendalltau(pr, tg)
     taus = []
     for d in np.unique(ds):

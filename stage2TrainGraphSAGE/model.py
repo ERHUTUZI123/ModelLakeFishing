@@ -42,6 +42,7 @@ if _REPO_ROOT not in sys.path:
 
 from ModelLakeFishing.stage1BuildTransferGraph.dataset_embed.model_node_encoder import (  # noqa: E402
     ModelNodeEncoder,
+    DatasetNodeEncoder,
 )
 
 # Stage 1 already ships the directed lineage pair (is_base_of base->derivative
@@ -114,9 +115,33 @@ class HeteroGraphSAGE(nn.Module):
         size_dim: int = 16,
         family_dim: int = 16,
         num_layers: int = 2,
+        # ── dataset side (xd0): optional, backward-compatible ────────────────
+        # When num_task_types is given, the dataset node is encoded by a
+        # DatasetNodeEncoder (frozen xd0 views || learnable task_type/n_class/
+        # arity rows), symmetric to the model side. When None (old xm0-only
+        # graphs), the dataset side stays a plain Linear on data['dataset'].x.
+        num_task_types: int | None = None,
+        n_class_buckets: int | None = None,
+        num_arities: int | None = None,
+        task_dim: int = 16,
+        nclass_dim: int = 8,
+        arity_dim: int = 4,
+        # ── Phase 2 (edge-aware message passing): optional, backward-compatible ──
+        # edge_aware=False -> the shipped to_hetero(SAGEConv) path (ignores
+        # edge_attr). edge_aware=True -> EdgeAwareHetero, consuming edge_attr for
+        # the relations named in `weighted_relations` (by middle relation name,
+        # e.g. {"similar_to", "trained_on"}). None -> weight every relation.
+        edge_aware: bool = False,
+        weighted_relations=None,
+        # ── Phase 5: separate model/dataset projection heads (still pure MIPS) ──
+        separate_heads: bool = False,
     ):
         super().__init__()
         self.num_layers = num_layers
+        self.separate_heads = separate_heads
+        self.edge_aware = edge_aware
+        self.weighted_relations = (
+            list(weighted_relations) if weighted_relations is not None else None)
 
         # ── segment 1: node encoding -> common hidden dim ────────────────────
         self.model_encoder = ModelNodeEncoder(
@@ -127,7 +152,22 @@ class HeteroGraphSAGE(nn.Module):
             family_dim=family_dim,
         )
         self.model_proj = nn.Linear(self.model_encoder.out_dim, hidden_channels)
-        self.dataset_proj = nn.Linear(dataset_in_dim, hidden_channels)
+
+        self.use_dataset_encoder = num_task_types is not None
+        if self.use_dataset_encoder:
+            self.dataset_encoder = DatasetNodeEncoder(
+                frozen_dim=dataset_in_dim,
+                num_task_types=num_task_types,
+                n_class_buckets=n_class_buckets,
+                num_arities=num_arities,
+                task_dim=task_dim,
+                nclass_dim=nclass_dim,
+                arity_dim=arity_dim,
+            )
+            self.dataset_proj = nn.Linear(self.dataset_encoder.out_dim, hidden_channels)
+        else:
+            self.dataset_encoder = None
+            self.dataset_proj = nn.Linear(dataset_in_dim, hidden_channels)
 
         # ── segment 2: heterogeneous 2-layer GraphSAGE ───────────────────────
         # to_hetero duplicates the backbone's convs per relation in `metadata`,
@@ -136,19 +176,43 @@ class HeteroGraphSAGE(nn.Module):
         # Keep `metadata` so a checkpoint can rebuild an identical hetero module
         # (same relations => same state_dict keys) — see learnable.save_checkpoint.
         self.graph_metadata = metadata
-        self.gnn = to_hetero(_SAGEBackbone(hidden_channels, num_layers), metadata, aggr="sum")
+        if edge_aware:
+            from ModelLakeFishing.stage2TrainGraphSAGE.edge_aware import EdgeAwareHetero
+            # resolve weighted_relations (middle names) to full edge_types
+            rels = None
+            if self.weighted_relations is not None:
+                wr = set(self.weighted_relations)
+                rels = [et for et in metadata[1] if et[1] in wr]
+            self.gnn = EdgeAwareHetero(hidden_channels, metadata,
+                                       num_layers=num_layers, relation_weights=rels)
+        else:
+            self.gnn = to_hetero(_SAGEBackbone(hidden_channels, num_layers), metadata, aggr="sum")
 
-        # ── segment 3: shared output head + L2 norm ──────────────────────────
-        # one head for both node types keeps z_m / z_d in a single metric space.
-        self.head = nn.Linear(hidden_channels, out_dim)
+        # ── segment 3: output head(s) + L2 norm ──────────────────────────────
+        # shared head keeps z_m / z_d in one metric space; separate heads give
+        # each node type its own projection. BOTH stay pure MIPS: score = z_d . z_m
+        # on unit vectors, so HNSW geometry is identical either way (Phase 5).
+        if separate_heads:
+            self.model_head = nn.Linear(hidden_channels, out_dim)
+            self.dataset_head = nn.Linear(hidden_channels, out_dim)
+        else:
+            self.head = nn.Linear(hidden_channels, out_dim)
 
     def encode_nodes(self, data) -> dict:
-        """Segment 1, per node type. Frozen model.x rides through untouched."""
+        """Segment 1, per node type. Frozen model.x rides through untouched.
+        Dataset side uses DatasetNodeEncoder when xd0 columns are present, else a
+        plain Linear on the frozen dataset features (backward-compatible)."""
         m = data["model"]
         x_model = self.model_encoder(m.x, m.size_bucket_id, m.family_id)
+        d = data["dataset"]
+        if self.use_dataset_encoder:
+            x_dataset = self.dataset_encoder(
+                d.x, d.task_type_id, d.n_class_bucket_id, d.arity_id)
+        else:
+            x_dataset = d.x
         return {
             "model": self.model_proj(x_model),
-            "dataset": self.dataset_proj(data["dataset"].x),
+            "dataset": self.dataset_proj(x_dataset),
         }
 
     def forward(self, data) -> dict:
@@ -160,5 +224,17 @@ class HeteroGraphSAGE(nn.Module):
         matches the node order in `data` (full graph => mappedID order).
         """
         x_dict = self.encode_nodes(data)
-        h_dict = self.gnn(x_dict, data.edge_index_dict)
+        if self.edge_aware:
+            edge_attr_dict = {
+                et: data[et].edge_attr for et in data.edge_types
+                if getattr(data[et], "edge_attr", None) is not None
+            }
+            h_dict = self.gnn(x_dict, data.edge_index_dict, edge_attr_dict)
+        else:
+            h_dict = self.gnn(x_dict, data.edge_index_dict)
+        if self.separate_heads:
+            return {
+                "model": F.normalize(self.model_head(h_dict["model"]), p=2, dim=-1),
+                "dataset": F.normalize(self.dataset_head(h_dict["dataset"]), p=2, dim=-1),
+            }
         return {nt: F.normalize(self.head(h), p=2, dim=-1) for nt, h in h_dict.items()}

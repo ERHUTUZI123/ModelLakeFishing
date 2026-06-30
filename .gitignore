@@ -5,7 +5,10 @@ __pycache__/
 CLAUDE.md
 plan.txt
 plan.md
-
+**/hf_cache/
+**/embedded_dataset/
+**/backup_before_family_pack/
+*.log
 release_assets/
 
 # Stage-1 release-managed inputs
@@ -14,6 +17,12 @@ stage1BuildTransferGraph/dataset_embed/data/model_config_dataset.csv
 stage1BuildTransferGraph/dataset_embed/data/lineage_records.csv
 stage1BuildTransferGraph/dataset_embed/data/transferability_score_records.csv
 stage1BuildTransferGraph/dataset_embed/data/embedded_dataset/
+stage1BuildTransferGraph/dataset_embed/data_diverse/
+stage1BuildTransferGraph/dataset_embed/data_hf1000d_2000m/
+stage1BuildTransferGraph/dataset_embed/data_hf300m_100d/
+stage1BuildTransferGraph/hf1000d_2000m
+stage1BuildTransferGraph/hf300m_100d
+stage1BuildTransferGraph/legacy
 
 # Stage-1 generated graph outputs
 stage1BuildTransferGraph/*.pt
@@ -33,3 +42,5 @@ stage1BuildTransferGraph/dataset_embed/data/model_param_counts.csv
 stage1BuildTransferGraph/dataset_embed/data/model_families.csv
 stage1BuildTransferGraph/dataset_embed/data/family_vocab.csv
 notes.md
+
+stage2TrainGraphSAGE/artifacts

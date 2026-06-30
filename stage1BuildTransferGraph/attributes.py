@@ -37,8 +37,12 @@ class GraphAttributes():
     def __init__(self, args):
         self.args = args
         # all data now lives in stage1/dataset_embed/data — self-contained,
-        # no external dependencies on transfergraph checkout
-        self.data_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'dataset_embed', 'data')
+        # no external dependencies on transfergraph checkout.
+        # Path-only override (no logic change): MLF_DATA_DIR points the whole
+        # build at an alternate self-contained data dir (e.g. the diverse zoo)
+        # without touching data/ or any artifact. Unset -> original path.
+        self.data_path = os.environ.get('MLF_DATA_DIR') or os.path.join(
+            os.path.dirname(os.path.abspath(__file__)), 'dataset_embed', 'data')
         # transferability csv + cached correlation/feature files live here too
         self.resource_path = self.data_path
         self.record_path = os.path.join(self.data_path, "records.csv")
@@ -71,8 +75,15 @@ class GraphAttributes():
         else:
             raise Exception(f'Unexpected reference model {args.dataset_reference_model}')
 
-    def get_dataset_edge_index(self, threshold=0.3, base_dataset='imagenet', sim_method='cosine'):
-        threshold = 1
+    def get_dataset_edge_index(self, threshold=0.3, base_dataset='imagenet', sim_method='cosine',
+                               top_k=None):
+        # NOTE: the line `threshold = 1` used to live here and silently overrode
+        # the caller-provided threshold, making the dataset graph nearly complete
+        # (~130k similar_to edges on hf1000d/2000m) — Kendall action guide bug #1.
+        # It is removed so `threshold` (and the new `top_k`) are now effective.
+        # `top_k` is read from args when not passed explicitly.
+        if top_k is None:
+            top_k = getattr(self.args, 'dataset_top_k', None)
 
         # get number of datasets
         n = len(self.data_features)
@@ -159,14 +170,44 @@ class GraphAttributes():
         
         # data normalization
         attr = np.asarray([(float(i) - min(attr)) / (max(attr) - min(attr)) for i in attr])
-        # pruning
-        # only those edges with weight bigger than 1 - threshold can be kept
-        index = np.where(attr > (1 - threshold))
-        attr = attr[index]
-        # keep only source of edges with weight bigger than 1 - threshold in data_source array
-        data_source = np.asarray(data_source)[index]
-        # keep only target of edges with weight bigger than 1 - threshold in data_target array
-        data_target = np.asarray(data_target)[index]
+        data_source = np.asarray(data_source)
+        data_target = np.asarray(data_target)
+
+        if top_k is not None:
+            # bounded top-k graph (preferred over a global threshold — Kendall
+            # action guide Phase 1). Build a symmetric weight matrix, then keep the
+            # top_k highest-similarity neighbours per source dataset (directed,
+            # self excluded). similarity is preserved as edge_attr.
+            W = np.zeros([n, n], dtype=float)
+            W[data_source, data_target] = attr
+            W[data_target, data_source] = attr          # symmetric similarity
+            np.fill_diagonal(W, -np.inf)                # never keep a self edge
+            kk = int(min(top_k, n - 1))
+            src_list, tgt_list, w_list = [], [], []
+            for i in range(n):
+                nbr = np.argsort(-W[i])[:kk]
+                for j in nbr:
+                    if np.isfinite(W[i, j]):
+                        src_list.append(i)
+                        tgt_list.append(int(j))
+                        w_list.append(float(W[i, j]))
+            data_source = np.asarray(src_list)
+            data_target = np.asarray(tgt_list)
+            attr = np.asarray(w_list)
+            # fail loudly if a "sparse" top-k graph came out nearly complete
+            max_deg = int(np.bincount(data_source, minlength=n).max()) if data_source.size else 0
+            assert max_deg <= kk, f"top-k graph degree {max_deg} exceeds k={kk}"
+            assert max_deg < n - 1, (
+                f"top-k graph is nearly complete (deg {max_deg} of {n-1}); "
+                "check top_k — Phase 1 expects a SPARSE dataset graph")
+        else:
+            # pruning by global threshold: keep edges with weight > 1 - threshold.
+            # (threshold=1 keeps everything -> near-complete graph; use top_k or a
+            # threshold < 1 for a sparse graph.)
+            index = np.where(attr > (1 - threshold))
+            attr = attr[index]
+            data_source = data_source[index]
+            data_target = data_target[index]
 
         # ROOT / embed_method_reference model.csv
         path = f'{self.resource_path}/corr_{self.args.dataset_embed_method.value}_{self.args.dataset_reference_model}_{base_dataset}.csv'
@@ -567,7 +608,8 @@ class GraphAttributes():
         """
         from dataset_embed.xm0_builder import build_xm0
 
-        cache_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'dataset_embed', 'data')
+        cache_dir = os.environ.get('MLF_DATA_DIR') or os.path.join(
+            os.path.dirname(os.path.abspath(__file__)), 'dataset_embed', 'data')
         return build_xm0(
             self.unique_model_id,
             desc_cache_path=os.path.join(cache_dir, 'model_descriptions.csv'),
@@ -575,6 +617,48 @@ class GraphAttributes():
             size_cache_path=os.path.join(cache_dir, 'model_param_counts.csv'),
             family_cache_path=os.path.join(cache_dir, 'model_families.csv'),
             family_vocab_path=os.path.join(cache_dir, 'family_vocab.csv'),
+        )
+
+    def get_xd0_features(self):
+        """Build the x_d^(0) package — dataset-side analogue of get_xm0_features.
+
+        MUST run after drop_nodes() (dataset mappedIDs final) and before any homo
+        id shift. Reuses the existing per-example domain .npy and adds the
+        label/card/stats views + discrete task descriptors (see
+        dataset_embed/xd0_builder.py and dataset_embedding_redesign.md). Returns
+        the xd0 dict; frozen rows / discrete columns are in mappedID order.
+        """
+        import ast
+        from collections import Counter
+        from dataset_embed.xd0_builder import build_xd0
+
+        cache_dir = os.environ.get('MLF_DATA_DIR') or os.path.join(
+            os.path.dirname(os.path.abspath(__file__)), 'dataset_embed', 'data')
+        emb_dir = determine_directory_embedded_dataset(
+            self.args.dataset_reference_model, self.args.task_type,
+            DatasetEmbeddingMethod.DOMAIN_SIMILARITY)
+
+        # observed labels per dataset from model_config (fallback for datasets not
+        # in the curated map; generic LABEL_x sets are filtered inside build_xd0)
+        observed = {}
+        if {'labels', 'dataset'}.issubset(self.model_config.columns):
+            tmp = {}
+            for ds, lab in zip(self.model_config['dataset'], self.model_config['labels']):
+                if pd.isna(ds) or pd.isna(lab):
+                    continue
+                try:
+                    parsed = ast.literal_eval(lab)
+                except Exception:
+                    continue
+                if isinstance(parsed, list) and parsed:
+                    tmp.setdefault(ds, Counter())[tuple(map(str, parsed))] += 1
+            observed = {ds: list(c.most_common(1)[0][0]) for ds, c in tmp.items()}
+
+        return build_xd0(
+            self.unique_dataset_id, emb_dir,
+            observed_labels=observed,
+            card_cache_path=os.path.join(cache_dir, 'dataset_card_descriptions.csv'),
+            task_type_vocab_path=os.path.join(cache_dir, 'task_type_vocab.csv'),
         )
 
     def get_dataset_list(self):
@@ -861,6 +945,22 @@ class GraphAttributesWithDomainSimilarity(GraphAttributes):
             self.model_size_bucket_id = self.xm0['size_bucket_id']
             self.model_family_id = self.xm0['family_id']
 
+        # x_d^(0) rich dataset features (default OFF -> original gpt-neo centroid).
+        # data_features (gpt-neo centroids) stays the source for similar_to EDGES;
+        # only the dataset NODE features (data['dataset'].x) become the rich xd0.
+        self.xd0 = None
+        self.dataset_node_features = self.data_features
+        self.dataset_task_type_id = None
+        self.dataset_n_class_bucket_id = None
+        self.dataset_arity_id = None
+        if getattr(args, 'contain_rich_dataset_feature', False):
+            self.xd0 = self.get_xd0_features()
+            frozen = self.xd0['frozen']
+            self.dataset_node_features = {n: frozen[i] for i, n in enumerate(self.xd0['names'])}
+            self.dataset_task_type_id = self.xd0['task_type_id']
+            self.dataset_n_class_bucket_id = self.xd0['n_class_bucket_id']
+            self.dataset_arity_id = self.xd0['arity_id']
+
         # get specific dataset index
         if args.test_dataset != '':
             try:
@@ -903,7 +1003,8 @@ class GraphAttributesWithDomainSimilarity(GraphAttributes):
         self.edge_index_dataset_to_dataset, self.edge_attr_dataset_to_dataset = self.get_dataset_edge_index(
             base_dataset=self.base_dataset,
             threshold=args.distance_thres,
-            sim_method=args.dataset_distance_method
+            sim_method=args.dataset_distance_method,
+            top_k=getattr(args, 'dataset_top_k', None),
         )
 
         # model-model lineage edges (our contribution). Empty until a lineage

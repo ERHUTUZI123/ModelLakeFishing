@@ -7,7 +7,10 @@ from .task import TaskType
 # completely self-contained, no external dependencies
 # __file__ = .../stage1BuildTransferGraph/dataset_embed/utils/config.py
 # parents[1] = stage1BuildTransferGraph/dataset_embed
-_DATA_DIR = os.path.join(
+# Path-only override (no logic change): set MLF_DATA_DIR to build/serve from an
+# alternate, self-contained data directory (e.g. an augmented "diverse" zoo)
+# without touching the original data/ tree or any artifact. Unset -> original.
+_DATA_DIR = os.environ.get('MLF_DATA_DIR') or os.path.join(
     str(pathlib.Path(__file__).resolve().parents[1]),
     'data'
 )

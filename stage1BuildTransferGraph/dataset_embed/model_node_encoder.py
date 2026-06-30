@@ -89,3 +89,66 @@ class ModelNodeEncoder(nn.Module):
         h_size = self.size_embedding(size_bucket_id)
         h_family = self.family_embedding(family_id)
         return torch.cat([x_frozen, h_size, h_family], dim=-1)
+
+
+class DatasetNodeEncoder(nn.Module):
+    """
+    Dataset-side analogue of ModelNodeEncoder (see xd0_builder.py /
+    dataset_embedding_redesign.md). Cashes in the three discrete xd0 descriptors
+    as LEARNABLE embedding rows:
+
+        x_d^(0) = [ x_frozen(e_domain||e_label||e_card||e_stats)
+                    || task_type_embedding(task_type_id)
+                    || n_class_embedding(n_class_bucket_id)
+                    || arity_embedding(arity_id) ]
+
+    Same design rules as the model side: the frozen multi-view features pass
+    through untouched (no grad into the graph's .x), the three index columns ride
+    on data['dataset'] so loaders slice them with row alignment, and there is NO
+    node-id embedding (inductive). Out-of-range indices crash (no clamp aliasing).
+
+    Parameters
+    ----------
+    frozen_dim      : width of data['dataset'].x (xd0 frozen views)
+    num_task_types  : xd0_meta['num_task_types'] (id 0 = Other; row identity pinned
+                      by task_type_vocab — version it with the checkpoint)
+    n_class_buckets : xd0_meta['n_class_buckets'] (bucket 0 = regression/unknown)
+    num_arities     : xd0_meta['num_arities'] (single / pair / multi)
+    task_dim/nclass_dim/arity_dim : learnable widths; kept modest so the dataset
+                      side does not dwarf the model side.
+    """
+
+    def __init__(
+        self,
+        frozen_dim: int,
+        num_task_types: int,
+        n_class_buckets: int,
+        num_arities: int,
+        task_dim: int = 16,
+        nclass_dim: int = 8,
+        arity_dim: int = 4,
+    ):
+        super().__init__()
+        self.frozen_dim = frozen_dim
+        self.task_type_embedding = nn.Embedding(num_task_types, task_dim)
+        self.n_class_embedding = nn.Embedding(n_class_buckets, nclass_dim)
+        self.arity_embedding = nn.Embedding(num_arities, arity_dim)
+        self.out_dim = frozen_dim + task_dim + nclass_dim + arity_dim
+
+    def forward(
+        self,
+        x_frozen: torch.Tensor,          # [B, frozen_dim] float
+        task_type_id: torch.Tensor,      # [B] long
+        n_class_bucket_id: torch.Tensor, # [B] long
+        arity_id: torch.Tensor,          # [B] long
+    ) -> torch.Tensor:                   # [B, out_dim]
+        assert x_frozen.shape[-1] == self.frozen_dim, (
+            f"frozen width {x_frozen.shape[-1]} != expected {self.frozen_dim}; "
+            "graph dataset.x and encoder were built from different xd0 outputs"
+        )
+        return torch.cat([
+            x_frozen,
+            self.task_type_embedding(task_type_id),
+            self.n_class_embedding(n_class_bucket_id),
+            self.arity_embedding(arity_id),
+        ], dim=-1)

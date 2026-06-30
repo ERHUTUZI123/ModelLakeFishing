@@ -1,0 +1,121 @@
+'unset' 不是内部或外部命令，也不是可运行的程序
+或批处理文件。
+06/19/2026 12:33:12 - INFO - attributes - ---- len(finetune_records_raw): 1743
+06/19/2026 12:33:12 - INFO - attributes - ---- len(finetune_records_after_concatenating_model_config): 2048
+06/19/2026 12:33:12 - INFO - attributes - len(unique_model_id): 306
+06/19/2026 12:33:12 - INFO - attributes - len(unique_dataset_id): 36
+06/19/2026 12:33:13 - WARNING - attributes - No embedding available for nurkayevaa_autonlp_data_bert_covid at path D:/research/model_lake/codes/ModelLakeFishing/stage1BuildTransferGraph/dataset_embed/data_diverse\embedded_dataset\domain_similarity\EleutherAI_gpt-neo-125m\nurkayevaa_autonlp-data-bert-covid_feature.npy. Please run tools/embed_dataset.py first.
+06/19/2026 12:33:13 - WARNING - attributes - No embedding available for nurkayevaa_autonlp_data_bert_covid at path D:/research/model_lake/codes/ModelLakeFishing/stage1BuildTransferGraph/dataset_embed/data_diverse\embedded_dataset\domain_similarity\EleutherAI_gpt-neo-125m\nurkayevaa_autonlp-data-bert-covid_feature.npy, removing node.
+06/19/2026 12:33:13 - WARNING - attributes - No embedding available for badmatr11x_hate_offensive_speech at path D:/research/model_lake/codes/ModelLakeFishing/stage1BuildTransferGraph/dataset_embed/data_diverse\embedded_dataset\domain_similarity\EleutherAI_gpt-neo-125m\badmatr11x_hate-offensive-speech_feature.npy. Please run tools/embed_dataset.py first.
+06/19/2026 12:33:13 - WARNING - attributes - No embedding available for badmatr11x_hate_offensive_speech at path D:/research/model_lake/codes/ModelLakeFishing/stage1BuildTransferGraph/dataset_embed/data_diverse\embedded_dataset\domain_similarity\EleutherAI_gpt-neo-125m\badmatr11x_hate-offensive-speech_feature.npy, removing node.
+06/19/2026 12:33:13 - WARNING - attributes - No embedding available for crcb_autotrain_data_isear_bert at path D:/research/model_lake/codes/ModelLakeFishing/stage1BuildTransferGraph/dataset_embed/data_diverse\embedded_dataset\domain_similarity\EleutherAI_gpt-neo-125m\crcb_autotrain-data-isear_bert_feature.npy. Please run tools/embed_dataset.py first.
+06/19/2026 12:33:13 - WARNING - attributes - No embedding available for crcb_autotrain_data_isear_bert at path D:/research/model_lake/codes/ModelLakeFishing/stage1BuildTransferGraph/dataset_embed/data_diverse\embedded_dataset\domain_similarity\EleutherAI_gpt-neo-125m\crcb_autotrain-data-isear_bert_feature.npy, removing node.
+06/19/2026 12:33:13 - WARNING - attributes - No embedding available for amazon_reviews_multi_en at path D:/research/model_lake/codes/ModelLakeFishing/stage1BuildTransferGraph/dataset_embed/data_diverse\embedded_dataset\domain_similarity\EleutherAI_gpt-neo-125m\amazon_reviews_multi_en_feature.npy. Please run tools/embed_dataset.py first.
+06/19/2026 12:33:13 - WARNING - attributes - No embedding available for amazon_reviews_multi_en at path D:/research/model_lake/codes/ModelLakeFishing/stage1BuildTransferGraph/dataset_embed/data_diverse\embedded_dataset\domain_similarity\EleutherAI_gpt-neo-125m\amazon_reviews_multi_en_feature.npy, removing node.
+06/19/2026 12:33:13 - WARNING - attributes - No embedding available for kaggle_financial_sentiment at path D:/research/model_lake/codes/ModelLakeFishing/stage1BuildTransferGraph/dataset_embed/data_diverse\embedded_dataset\domain_similarity\EleutherAI_gpt-neo-125m\kaggle-financial-sentiment_feature.npy. Please run tools/embed_dataset.py first.
+06/19/2026 12:33:13 - WARNING - attributes - No embedding available for kaggle_financial_sentiment at path D:/research/model_lake/codes/ModelLakeFishing/stage1BuildTransferGraph/dataset_embed/data_diverse\embedded_dataset\domain_similarity\EleutherAI_gpt-neo-125m\kaggle-financial-sentiment_feature.npy, removing node.
+06/19/2026 12:33:17 - WARNING - attributes - No embedding available for wikipedia at path D:/research/model_lake/codes/ModelLakeFishing/stage1BuildTransferGraph/dataset_embed/data_diverse\embedded_dataset\domain_similarity\EleutherAI_gpt-neo-125m\wikipedia_feature.npy. Please run tools/embed_dataset.py first.
+06/19/2026 12:33:17 - WARNING - attributes - No embedding available for wikipedia at path D:/research/model_lake/codes/ModelLakeFishing/stage1BuildTransferGraph/dataset_embed/data_diverse\embedded_dataset\domain_similarity\EleutherAI_gpt-neo-125m\wikipedia_feature.npy, removing node.
+06/19/2026 12:33:17 - WARNING - attributes - No embedding available for quora at path D:/research/model_lake/codes/ModelLakeFishing/stage1BuildTransferGraph/dataset_embed/data_diverse\embedded_dataset\domain_similarity\EleutherAI_gpt-neo-125m\quora_feature.npy. Please run tools/embed_dataset.py first.
+06/19/2026 12:33:17 - WARNING - attributes - No embedding available for quora at path D:/research/model_lake/codes/ModelLakeFishing/stage1BuildTransferGraph/dataset_embed/data_diverse\embedded_dataset\domain_similarity\EleutherAI_gpt-neo-125m\quora_feature.npy, removing node.
+06/19/2026 12:33:17 - WARNING - attributes - No embedding available for sundanese_tweet at path D:/research/model_lake/codes/ModelLakeFishing/stage1BuildTransferGraph/dataset_embed/data_diverse\embedded_dataset\domain_similarity\EleutherAI_gpt-neo-125m\sundanese_tweet_feature.npy. Please run tools/embed_dataset.py first.
+06/19/2026 12:33:17 - WARNING - attributes - No embedding available for sundanese_tweet at path D:/research/model_lake/codes/ModelLakeFishing/stage1BuildTransferGraph/dataset_embed/data_diverse\embedded_dataset\domain_similarity\EleutherAI_gpt-neo-125m\sundanese_tweet_feature.npy, removing node.
+06/19/2026 12:33:17 - WARNING - attributes - No embedding available for hatexplain at path D:/research/model_lake/codes/ModelLakeFishing/stage1BuildTransferGraph/dataset_embed/data_diverse\embedded_dataset\domain_similarity\EleutherAI_gpt-neo-125m\hatexplain_feature.npy. Please run tools/embed_dataset.py first.
+06/19/2026 12:33:17 - WARNING - attributes - No embedding available for hatexplain at path D:/research/model_lake/codes/ModelLakeFishing/stage1BuildTransferGraph/dataset_embed/data_diverse\embedded_dataset\domain_similarity\EleutherAI_gpt-neo-125m\hatexplain_feature.npy, removing node.
+06/19/2026 12:33:19 - WARNING - attributes - No embedding available for xtreme at path D:/research/model_lake/codes/ModelLakeFishing/stage1BuildTransferGraph/dataset_embed/data_diverse\embedded_dataset\domain_similarity\EleutherAI_gpt-neo-125m\xtreme_feature.npy. Please run tools/embed_dataset.py first.
+06/19/2026 12:33:19 - WARNING - attributes - No embedding available for xtreme at path D:/research/model_lake/codes/ModelLakeFishing/stage1BuildTransferGraph/dataset_embed/data_diverse\embedded_dataset\domain_similarity\EleutherAI_gpt-neo-125m\xtreme_feature.npy, removing node.
+06/19/2026 12:33:19 - WARNING - attributes - No embedding available for twitter_unemployment at path D:/research/model_lake/codes/ModelLakeFishing/stage1BuildTransferGraph/dataset_embed/data_diverse\embedded_dataset\domain_similarity\EleutherAI_gpt-neo-125m\twitter-unemployment_feature.npy. Please run tools/embed_dataset.py first.
+06/19/2026 12:33:19 - WARNING - attributes - No embedding available for twitter_unemployment at path D:/research/model_lake/codes/ModelLakeFishing/stage1BuildTransferGraph/dataset_embed/data_diverse\embedded_dataset\domain_similarity\EleutherAI_gpt-neo-125m\twitter-unemployment_feature.npy, removing node.
+06/19/2026 12:33:19 - WARNING - attributes - No embedding available for DKbert_hatespeech_detection at path D:/research/model_lake/codes/ModelLakeFishing/stage1BuildTransferGraph/dataset_embed/data_diverse\embedded_dataset\domain_similarity\EleutherAI_gpt-neo-125m\DKbert-hatespeech-detection_feature.npy. Please run tools/embed_dataset.py first.
+06/19/2026 12:33:19 - WARNING - attributes - No embedding available for DKbert_hatespeech_detection at path D:/research/model_lake/codes/ModelLakeFishing/stage1BuildTransferGraph/dataset_embed/data_diverse\embedded_dataset\domain_similarity\EleutherAI_gpt-neo-125m\DKbert-hatespeech-detection_feature.npy, removing node.
+06/19/2026 12:33:20 - INFO - attributes - absent dataset: {'xtreme', 'quora', 'wikipedia', 'DKbert-hatespeech-detection', 'kaggle-financial-sentiment', 'nurkayevaa/autonlp-data-bert-covid', 'hatexplain', 'sundanese_tweet', 'amazon_reviews_multi/en', 'crcb/autotrain-data-isear_bert', 'twitter-unemployment', 'badmatr11x/hate-offensive-speech'}
+[build_name_embeddings] 0 cached, 306 to compute
+  [306/306] computed
+[get_model_descriptions] 306 cached, 0 to fetch
+[build_desc_embeddings] 306 cached, 0 to encode
+[get_model_param_counts] 306 cached, 0 to fetch
+[get_model_families] 306 cached, 0 to infer
+06/19/2026 12:33:20 - WARNING - attributes - index 0 is out of bounds for axis 0 with size 0
+06/19/2026 12:33:20 - WARNING - attributes - Test dataset None not found. Skipping.
+06/19/2026 12:33:20 - INFO - attributes - df_accu after filtering: 1646
+06/19/2026 12:33:20 - INFO - attributes - 
+len(df) after filtering models by accuracy, positive: 1646
+D:\research\model_lake\codes\ModelLakeFishing\stage1BuildTransferGraph\attributes.py:304: UserWarning: The given NumPy array is not writable, and PyTorch does not support non-writable tensors. This means writing to this tensor will result in undefined behavior. You may want to copy the array to protect its data or make it writable before converting it to a tensor. This type of warning will be suppressed for the rest of this program. (Triggered internally at C:\actions-runner\_work\pytorch\pytorch\torch\csrc\utils\tensor_numpy.cpp:219.)
+  [torch.from_numpy(mapped_model_id['mappedID'].values), torch.from_numpy(mapped_dataset_id['mappedID'].values)],
+06/19/2026 12:33:20 - INFO - attributes - 
+len(df) after filtering models by accuracy, negative: 119
+06/19/2026 12:33:20 - INFO - attributes - 
+length of transferability positive: 1473
+06/19/2026 12:33:20 - INFO - attributes - 
+length of transferability negative: 1473
+06/19/2026 12:33:20 - INFO - attributes - 
+len(df) after filtering models by score, positive: 1473
+06/19/2026 12:33:20 - INFO - attributes - 
+len(df) after filtering models by score, negative: 1544
+06/19/2026 12:33:20 - INFO - attributes - 
+
+ ====  Save correlation to path: D:/research/model_lake/codes/ModelLakeFishing/stage1BuildTransferGraph/dataset_embed/data_diverse/corr_domain_similarity_EleutherAI_gpt-neo-125m_gpt.csv
+06/19/2026 12:33:20 - INFO - attributes - lineage edges: 29
+06/19/2026 12:33:20 - INFO - attributes - len(unique_model_id): 306
+06/19/2026 12:33:20 - INFO - attributes - len(unique_dataset_id): 24
+
+ without_accuary not in gnn_method
+
+
+Data:
+==============
+HeteroData(
+  dataset={
+    node_id=[24],
+    x=[24, 768],
+  },
+  model={
+    node_id=[306],
+    x=[306, 448],
+    size_bucket_id=[306],
+    family_id=[306],
+  },
+  (model, trained_on, dataset)={
+    edge_index=[2, 1646],
+    edge_attr=[1646],
+  },
+  (dataset, similar_to, dataset)={
+    edge_index=[2, 550],
+    edge_attr=[550],
+  },
+  (model, transfer_to, dataset)={
+    edge_index=[2, 1473],
+    edge_attr=[1473],
+  },
+  (dataset, rev_trained_on, model)={
+    edge_index=[2, 1646],
+    edge_attr=[1646],
+  },
+  (dataset, rev_transfer_to, model)={
+    edge_index=[2, 1473],
+    edge_attr=[1473],
+  },
+  (model, is_base_of, model)={
+    edge_index=[2, 29],
+    edge_attr=[29],
+  },
+  (model, rev_is_base_of, model)={
+    edge_index=[2, 29],
+    edge_attr=[29],
+  }
+)
+(['dataset', 'model'], [('model', 'trained_on', 'dataset'), ('dataset', 'similar_to', 'dataset'), ('model', 'transfer_to', 'dataset'), ('dataset', 'rev_trained_on', 'model'), ('dataset', 'rev_transfer_to', 'model'), ('model', 'is_base_of', 'model'), ('model', 'rev_is_base_of', 'model')])
+self.data['dataset'].num_nodes
+24
+self.data['model'].num_nodes
+306
+
+06/19/2026 12:33:20 - INFO - __main__ - saved HeteroData + id tables to D:\research\model_lake\codes\ModelLakeFishing\stage1BuildTransferGraph\hgraph_diverse_xm0.pt
+06/19/2026 12:33:20 - INFO - __main__ - models: 306, datasets: 24
+06/19/2026 12:33:20 - INFO - __main__ -   ('model', 'trained_on', 'dataset'): 1646 edges
+06/19/2026 12:33:20 - INFO - __main__ -   ('dataset', 'similar_to', 'dataset'): 550 edges
+06/19/2026 12:33:20 - INFO - __main__ -   ('model', 'transfer_to', 'dataset'): 1473 edges
+06/19/2026 12:33:20 - INFO - __main__ -   ('dataset', 'rev_trained_on', 'model'): 1646 edges
+06/19/2026 12:33:20 - INFO - __main__ -   ('dataset', 'rev_transfer_to', 'model'): 1473 edges
+06/19/2026 12:33:20 - INFO - __main__ -   ('model', 'is_base_of', 'model'): 29 edges
+06/19/2026 12:33:20 - INFO - __main__ -   ('model', 'rev_is_base_of', 'model'): 29 edges
