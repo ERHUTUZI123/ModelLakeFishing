@@ -20,6 +20,55 @@ preserving similarity as edge_attr. A degree assertion fails loudly if a
 import torch
 
 SIMILAR_TO = ("dataset", "similar_to", "dataset")
+TRAINED_ON = ("model", "trained_on", "dataset")
+REV_TRAINED_ON = ("dataset", "rev_trained_on", "model")
+
+
+def dedup_trained_on(data, *, reduce="max", verbose=False):
+    """Provenance fix (Top-1 guide Phase 0 item 8): collapse duplicate
+    (model, dataset) trained_on edge rows to ONE row per pair.
+
+    Why: the built hf1000d graph carries 12,205 trained_on rows but only 7,056
+    distinct pairs — get_finetuned_records concatenates records.csv (9,305
+    materialized rows, per-dataset-normalized accuracy) with model_config rows
+    (raw / mean-filled accuracy), and records.csv itself holds repeated runs.
+    5,143 duplicated pairs carry CONFLICTING accuracy values, and because
+    RandomLinkSplit permutes ROWS, a pair's duplicate copies straddle splits:
+    on split 0, 44% of test positive pairs also sat in the train message graph
+    (and 73% in the eval-time test message graph) — direct target leakage.
+
+    Fix at load time (graph construction untouched): group rows by pair, keep
+    `reduce` (default max = best observed normalized accuracy) as the single
+    value, and mirror the result onto rev_trained_on. After this, one pair is
+    one row, so no split can see a held-out pair through a duplicate copy.
+    """
+    assert reduce in ("max", "mean")
+    data = data.clone()
+    ei = data[TRAINED_ON].edge_index
+    ea = data[TRAINED_ON].edge_attr.float()
+    key = ei[0].to(torch.int64) * (int(ei[1].max()) + 1) + ei[1].to(torch.int64)
+    uniq, inv = torch.unique(key, return_inverse=True)
+    n = uniq.numel()
+    if reduce == "max":
+        val = torch.full((n,), float("-inf"))
+        val.scatter_reduce_(0, inv, ea, reduce="amax")
+    else:
+        s = torch.zeros(n).scatter_add_(0, inv, ea)
+        c = torch.zeros(n).scatter_add_(0, inv, torch.ones_like(ea))
+        val = s / c
+    # rebuild (model, dataset) from the packed key
+    base = int(ei[1].max()) + 1
+    m = (uniq // base).to(torch.long)
+    d = (uniq % base).to(torch.long)
+    new_ei = torch.stack([m, d])
+    data[TRAINED_ON].edge_index = new_ei
+    data[TRAINED_ON].edge_attr = val
+    data[REV_TRAINED_ON].edge_index = torch.stack([d, m])
+    data[REV_TRAINED_ON].edge_attr = val.clone()
+    if verbose:
+        print(f"dedup_trained_on[{reduce}]: {ei.size(1)} rows -> {n} distinct pairs")
+    assert new_ei.size(1) == n
+    return data
 
 
 def _set_similar_to(data, edge_index, edge_attr):

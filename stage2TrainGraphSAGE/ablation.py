@@ -128,6 +128,20 @@ def train_eval_one(data, xm0, xd0, cfg, split, *, init_seed, epochs, device="cpu
             common.update(lambda_dm_contrast=cfg["lambda_dm_contrast"],
                           dm_temperature=cfg.get("dm_temperature", 0.1),
                           dm_top_frac=cfg.get("top_frac", 0.10))
+        if cfg.get("lambda_global", 0.0) > 0:
+            # Top-1 guide Phase 1: reliable global negatives (train-visible only)
+            from ModelLakeFishing.stage2TrainGraphSAGE.losses import build_global_negative_pools
+            pools, pool_stats = build_global_negative_pools(
+                data["dataset"].task_type_id, ti, ta, M,
+                include_known_low=cfg.get("global_known_low", False),
+                low_frac=cfg.get("global_low_frac", 0.3))
+            print(f"    [global negs] {pool_stats}")
+            common.update(global_ctx=dict(
+                pools=pools, M=M, lambda_g=cfg["lambda_global"],
+                temperature=cfg.get("global_temperature", 0.1),
+                n_neg=cfg.get("global_n_neg", 64),
+                n_datasets=cfg.get("global_n_datasets", 16),
+                hard_frac=cfg.get("global_hard_frac", 0.0)))
         hist, _ = train(model, scorer, train_data, eli, target, M.to(device), comp.to(device),
                         **common)
 

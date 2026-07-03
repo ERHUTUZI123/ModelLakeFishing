@@ -161,17 +161,20 @@ def head_retrieval(z_dict, split_data, lookup, *, ks=DEFAULT_KS,
         top3 = set(truth_order[:n_top3].tolist())
         n_top10 = max(1, int(np.ceil(top_frac * n)))
         top10 = set(truth_order[:n_top10].tolist())
-        ideal_dcg = _dcg(np.sort(a)[::-1])
+        a_sorted_desc = np.sort(a)[::-1]
 
         row = {"n_candidates": n}
         for K in ks:
             k = min(K, n)
             topk = order[:k]
             topk_set = set(topk.tolist())
+            # NDCG@K must divide by IDCG@K (best k), not the full-list DCG
+            # (Kendall/cold guide §6.2 correction).
+            ideal_dcg_k = _dcg(a_sorted_desc[:k])
             row[f"hit@{K}"] = float(true_best in topk_set)
             row[f"recall_top3@{K}"] = len(top3 & topk_set) / len(top3)
             row[f"recall_top10pct@{K}"] = len(top10 & topk_set) / len(top10)
-            row[f"ndcg@{K}"] = (_dcg(a[topk]) / ideal_dcg) if ideal_dcg > 0 else 0.0
+            row[f"ndcg@{K}"] = (_dcg(a[topk]) / ideal_dcg_k) if ideal_dcg_k > 0 else 0.0
             row[f"regret@{K}"] = best_acc - float(a[topk].max())
         per[int(d)] = row
 

@@ -46,6 +46,7 @@ from ModelLakeFishing.stage2TrainGraphSAGE.losses import (  # noqa: E402
     lineage_components, per_dataset_density, global_positive_density,
     contrastive_loss, dataset_to_model_contrastive,
     dataset_to_model_contrastive_from_edges, uniformity_loss,
+    global_retrieval_loss,
 )
 from ModelLakeFishing.stage2TrainGraphSAGE.sampling import (  # noqa: E402
     make_link_loader, apply_edge_dropout, batch_contrastive_masks,
@@ -76,7 +77,8 @@ def train(model, scorer, train_data, eli, target, M, comp, *,
           rank_loss="hinge", rank_temperature=0.1, rank_min_gap=0.0,
           rank_gap_weighted=False,
           val_data=None, val_lookup=None, patience=0, eval_every=1,
-          lambda_dm_contrast=0.0, dm_temperature=0.1, dm_top_frac=0.10):
+          lambda_dm_contrast=0.0, dm_temperature=0.1, dm_top_frac=0.10,
+          global_ctx=None):
     """
     Per batch: lambda_rank * ranking + lambda_contrast * contrast (+ optional
     lambda_mse * MSE, + optional lambda_uniform * uniformity). Ranking (not MSE)
@@ -92,6 +94,15 @@ def train(model, scorer, train_data, eli, target, M, comp, *,
     loader = make_link_loader(train_data, eli, target,
                               num_neighbors=num_neighbors, batch_size=batch_size)
     history = []
+    # ── Top-1 guide Phase 1: global sampled-softmax negatives ────────────────
+    # global_ctx = {pools, M, lambda_g, temperature, n_neg, n_datasets, hard_frac}
+    # The global term scores EVERY indexed model, so it needs a full-graph
+    # forward per step (the batch subgraph lacks the global negatives). The full
+    # train message graph gets its own edge dropout each step.
+    use_global = global_ctx is not None and global_ctx.get("lambda_g", 0.0) > 0
+    if use_global:
+        g_base = train_data.clone().to(device)
+        g_M = global_ctx["M"].to(device)
     use_val = val_data is not None and val_lookup is not None
     best_val, best_state, bad_epochs = -2.0, None, 0
     import copy
@@ -128,6 +139,18 @@ def train(model, scorer, train_data, eli, target, M, comp, *,
                     z, eli_b, el_b, top_frac=dm_top_frac, temperature=dm_temperature)
                 total = total + lambda_dm_contrast * ldm
                 parts["dm_contrast"] = float(ldm.detach())
+            if use_global:
+                g_graph = g_base.clone()
+                apply_edge_dropout(g_graph, p=p, p_lineage=p_lineage)
+                z_full = model(g_graph)
+                lg = global_retrieval_loss(
+                    z_full, g_M, global_ctx["pools"],
+                    temperature=global_ctx.get("temperature", 0.1),
+                    n_neg=global_ctx.get("n_neg", 64),
+                    n_datasets=global_ctx.get("n_datasets", 16),
+                    hard_frac=global_ctx.get("hard_frac", 0.0))
+                total = total + global_ctx["lambda_g"] * lg
+                parts["global"] = float(lg.detach())
             if lambda_uniform > 0:
                 lu = uniformity_loss(z["model"])
                 total = total + lambda_uniform * lu

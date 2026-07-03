@@ -593,6 +593,121 @@ def dataset_to_model_contrastive_from_edges(z_dict, edge_label_index, edge_label
     return (loss, {"n_datasets": n_datasets}) if return_stats else loss
 
 
+def build_global_negative_pools(task_type_id, trained_on_index, trained_on_attr, M, *,
+                                include_known_low=False, low_frac=0.3):
+    """Top-1/global guide Phase 1: RELIABLE global negative pools per dataset.
+
+    task_type_id     : data['dataset'].task_type_id (0 = Other/unknown)
+    trained_on_index : TRAIN-VISIBLE trained_on edges [2, E] (never val/test)
+    trained_on_attr  : their normalized accuracies [E]
+    M                : train-visible top-performer membership [N_model, N_dataset]
+
+    Sources (both are *reliable*; unobserved-but-compatible models are UNKNOWN and
+    never enter any pool -- missing performance is not evidence of poor performance):
+
+      incompatible : models whose train-visible task-type profile is non-empty and
+                     does not include dataset d's task type. Datasets with unknown
+                     task (id 0) get NO incompatible negatives (unreliable).
+      known_low    : (include_known_low=True, the G2 ingredient) models with a
+                     train-visible edge to d whose accuracy is in the bottom
+                     `low_frac` of d's list AND that are not top-performer
+                     positives of d.
+
+    Returns (pools, stats): pools = {dataset_idx: LongTensor of model ids};
+    stats logs composition per source (guide: log the sampler composition).
+    """
+    src, dst, acc = trained_on_index[0], trained_on_index[1], trained_on_attr.float()
+    # model -> set of observed task types (train-visible only)
+    model_tasks = {}
+    for m, d in zip(src.tolist(), dst.tolist()):
+        model_tasks.setdefault(m, set()).add(int(task_type_id[d]))
+    observed = sorted(model_tasks)
+
+    pools, stats = {}, {"datasets": 0, "with_incompat": 0, "with_known_low": 0,
+                        "incompat_total": 0, "known_low_total": 0}
+    for d in torch.unique(dst).tolist():
+        td = int(task_type_id[d])
+        neg = []
+        n_inc = 0
+        if td != 0:                                       # unknown task -> skip source
+            for m in observed:
+                ts = model_tasks[m]
+                if ts and td not in ts:
+                    neg.append(m)
+            n_inc = len(neg)
+        n_low = 0
+        if include_known_low:
+            sel = (dst == d).nonzero().flatten()
+            if sel.numel() >= 3:
+                a = acc[sel]
+                thresh = torch.quantile(a, low_frac)
+                low = src[sel][a <= thresh]
+                low = [int(m) for m in low.tolist() if M[int(m), d] == 0]  # never positives
+                n_low = len(low)
+                neg.extend(low)
+        if neg:
+            pools[int(d)] = torch.tensor(sorted(set(neg)), dtype=torch.long)
+            stats["datasets"] += 1
+            stats["with_incompat"] += int(n_inc > 0)
+            stats["with_known_low"] += int(n_low > 0)
+            stats["incompat_total"] += n_inc
+            stats["known_low_total"] += n_low
+    return pools, stats
+
+
+def global_retrieval_loss(z_dict, M, pools, *, temperature=0.1, n_neg=64,
+                          n_datasets=16, hard_frac=0.0, generator=None,
+                          return_stats=False):
+    """Sampled-softmax global retrieval term (guide Phase 1):
+
+        L_global(d) = -(1/|P_d|) sum_{p in P_d} log
+                       exp(s(d,p)/T) / sum_{a in P_d ∪ N_d} exp(s(d,a)/T)
+
+    s = <z_d, z_m> on the FULL-graph z (the batch subgraph lacks global
+    negatives). P_d = train-visible top performers (M[:, d]); N_d = a bounded
+    sample from the reliable pool: `hard_frac` picked by highest current score
+    (hard mining, G2) and the rest uniform (G1: hard_frac=0). Macro over sampled
+    datasets. Unobserved models never appear (they are not in any pool).
+    """
+    z_m, z_d = z_dict["model"], z_dict["dataset"]
+    ds_all = [d for d in pools if int(M[:, d].sum()) > 0]
+    if not ds_all:
+        loss = z_m.new_zeros(())
+        return (loss, {"n_datasets": 0}) if return_stats else loss
+    if len(ds_all) > n_datasets:
+        idx = torch.randperm(len(ds_all), generator=generator)[:n_datasets]
+        ds_batch = [ds_all[i] for i in idx.tolist()]
+    else:
+        ds_batch = ds_all
+
+    losses, n_negs_used = [], 0
+    for d in ds_batch:
+        pos = (M[:, d] > 0).nonzero().flatten().to(z_m.device)
+        pool = pools[d].to(z_m.device)
+        if pool.numel() > n_neg:
+            if hard_frac > 0:
+                with torch.no_grad():
+                    s_pool = z_m[pool] @ z_d[d]
+                n_hard = int(round(hard_frac * n_neg))
+                hard = pool[torch.argsort(-s_pool)[:n_hard]]
+                rest = pool[torch.randperm(pool.numel(), generator=generator)[:n_neg - n_hard]]
+                neg = torch.unique(torch.cat([hard, rest]))
+            else:
+                neg = pool[torch.randperm(pool.numel(), generator=generator)[:n_neg]]
+        else:
+            neg = pool
+        cand = torch.cat([pos, neg])
+        s = (z_m[cand] @ z_d[d]) / temperature
+        denom = torch.logsumexp(s, dim=0)
+        # -(1/|P|) sum_p log softmax(p) == mean over positives of (denom - s_p)
+        losses.append((denom - s[: pos.numel()]).mean())
+        n_negs_used += int(neg.numel())
+    loss = torch.stack(losses).mean()
+    if return_stats:
+        return loss, {"n_datasets": len(ds_batch), "n_negs_used": n_negs_used}
+    return loss
+
+
 def combined_loss(l_perf, l_contrast, *, lambda_perf=1.0, lambda_contrast=1.0):
     total = lambda_perf * l_perf + lambda_contrast * l_contrast
     return total, {
