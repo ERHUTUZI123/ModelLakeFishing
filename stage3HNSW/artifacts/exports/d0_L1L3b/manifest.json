@@ -1,0 +1,84 @@
+{
+  "export_code_version": "1.1",
+  "created_utc": "2026-07-19T18:50:45.995483+00:00",
+  "graph": {
+    "path": "ModelLakeFishing\\stage1BuildTransferGraph\\hgraph_d0_v1.pt",
+    "sha256": "45c1dd3cffa0a94bc6a5e34263b025c6b113033ced299e2367f2555d60e2c781",
+    "num_models": 9491,
+    "num_datasets": 1463
+  },
+  "checkpoint": {
+    "path": "ModelLakeFishing\\stage2TrainGraphSAGE\\artifacts\\ablation\\d0\\ckpt\\L1L3b_s0_i0.pt",
+    "sha256": "a07628c06b0c1c3ede5d87ce31fcbae7cc6030de95d12a2ad429b6f8ceb9bef5",
+    "config_name": "L1L3b",
+    "split_seed": 0,
+    "init_seed": 0
+  },
+  "vocab": {
+    "family_csv": {
+      "path": "ModelLakeFishing\\stage2TrainGraphSAGE\\artifacts\\ablation\\d0\\ckpt\\L1L3b_s0_i0.family_vocab.csv",
+      "sha256": "1109277b03076fedbc197ae0d094bc1e8b8cb6f0d15f9e8843c93c9baa9fe514",
+      "rows": 371
+    },
+    "task_type_csv": {
+      "path": "ModelLakeFishing\\stage2TrainGraphSAGE\\artifacts\\ablation\\d0\\ckpt\\L1L3b_s0_i0.task_type_vocab.csv",
+      "sha256": "bea3025e04a70bce41bcf96904c7ec9d2eb36fd6c818afef45631593453ec6d1",
+      "rows": 17
+    }
+  },
+  "surgery": {
+    "dedup_trained_on": false,
+    "similar_to_mode": "topk_unweighted",
+    "similar_to_k": 10
+  },
+  "embedding": {
+    "dim": 128,
+    "dtype": "float32",
+    "normalized": true,
+    "score": "cosine == inner product of the stored unit vectors"
+  },
+  "hub_occupancy": {
+    "file": "occupancy.npy",
+    "dtype": "int32",
+    "shape": [
+      9491
+    ],
+    "top_k": 10,
+    "num_dataset_queries": 1463,
+    "score": "exact cosine == inner product of the stored unit vectors",
+    "tie_break": "mappedID ascending",
+    "query_batch_size": 256
+  },
+  "encoders": {
+    "e_name_seed": 42,
+    "e_name_token_dim": 64,
+    "e_name_hash_buckets": 10000,
+    "e_desc_encoder": "all-MiniLM-L6-v2",
+    "size_bucket_constants": {
+      "NUM_SIZE_BUCKETS": 15,
+      "SIZE_LOG10_MIN": 5.0,
+      "SIZE_LOG10_MAX": 12.0,
+      "SIZE_BUCKET_WIDTH": 0.5
+    }
+  },
+  "versions": {
+    "python": "3.13.1",
+    "torch": "2.12.0+cu126",
+    "numpy": "2.4.6",
+    "pandas": "3.0.3"
+  },
+  "verification": {
+    "forward_determinism_bitwise": true,
+    "ids_row_order_ok": true,
+    "spotcheck_rows": 20,
+    "spotcheck_ok": true
+  },
+  "files": {
+    "z_m.npy": "e4ef103768303fe3cd1f22c120d95e23cbeec1b429c5e7200901cdb4290af344",
+    "z_d.npy": "648b461bcb011cd60b22446f84283285ddfb58cc99199ae24d147ce5f9ba5afa",
+    "occupancy.npy": "91834e8d7ddab34c3dd91efa30afac328a03efb00a0b7c91be4688ac14e609f2",
+    "model_ids.csv": "48c9bf0bf0f03d19946f4404ab0e3f9f3719a449c038291a911ffe4c11a78f68",
+    "dataset_ids.csv": "b41c70b2d6af55f0c4921f15c0d174d66e2dffe402a69d1219535904bc8b2641",
+    "model_meta.parquet": "a9121f42eb5c89d731d22933c09b498cabf58b208ef07c6eb888ca8881854196"
+  }
+}

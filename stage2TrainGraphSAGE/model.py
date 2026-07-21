@@ -126,6 +126,8 @@ class HeteroGraphSAGE(nn.Module):
         task_dim: int = 16,
         nclass_dim: int = 8,
         arity_dim: int = 4,
+        # v3 Z1: learnable projection of the frozen xd0 views (None = legacy)
+        dataset_frozen_proj_dim: int | None = None,
         # ── Phase 2 (edge-aware message passing): optional, backward-compatible ──
         # edge_aware=False -> the shipped to_hetero(SAGEConv) path (ignores
         # edge_attr). edge_aware=True -> EdgeAwareHetero, consuming edge_attr for
@@ -135,6 +137,17 @@ class HeteroGraphSAGE(nn.Module):
         weighted_relations=None,
         # ── Phase 5: separate model/dataset projection heads (still pure MIPS) ──
         separate_heads: bool = False,
+        # ── D1 §5.3 feature-rework variants (all defaults = legacy behaviour) ──
+        # name_dim is the slice boundary inside the frozen x (xm0_meta['name_dim']);
+        # required only when use_desc=False or name_proj_dim is set. The variants
+        # cut/reshape the ENCODER's view of x — the graph's .x is never rebuilt.
+        name_dim: int | None = None,
+        use_desc: bool = True,
+        use_family: bool = True,
+        name_proj_dim: int | None = None,
+        name_proj_seed: int = 42,
+        num_model_tasks: int | None = None,
+        model_task_dim: int = 16,
     ):
         super().__init__()
         self.num_layers = num_layers
@@ -150,6 +163,13 @@ class HeteroGraphSAGE(nn.Module):
             num_families=num_families,
             size_dim=size_dim,
             family_dim=family_dim,
+            name_dim=name_dim,
+            use_desc=use_desc,
+            use_family=use_family,
+            name_proj_dim=name_proj_dim,
+            name_proj_seed=name_proj_seed,
+            num_model_tasks=num_model_tasks,
+            task_dim=model_task_dim,
         )
         self.model_proj = nn.Linear(self.model_encoder.out_dim, hidden_channels)
 
@@ -163,6 +183,7 @@ class HeteroGraphSAGE(nn.Module):
                 task_dim=task_dim,
                 nclass_dim=nclass_dim,
                 arity_dim=arity_dim,
+                frozen_proj_dim=dataset_frozen_proj_dim,
             )
             self.dataset_proj = nn.Linear(self.dataset_encoder.out_dim, hidden_channels)
         else:
@@ -203,7 +224,10 @@ class HeteroGraphSAGE(nn.Module):
         Dataset side uses DatasetNodeEncoder when xd0 columns are present, else a
         plain Linear on the frozen dataset features (backward-compatible)."""
         m = data["model"]
-        x_model = self.model_encoder(m.x, m.size_bucket_id, m.family_id)
+        # task_id rides on the model node store exactly like size/family ids
+        # (auto-sliced by loaders); required iff the encoder has a task table.
+        task_id = getattr(m, "task_id", None)
+        x_model = self.model_encoder(m.x, m.size_bucket_id, m.family_id, task_id)
         d = data["dataset"]
         if self.use_dataset_encoder:
             x_dataset = self.dataset_encoder(

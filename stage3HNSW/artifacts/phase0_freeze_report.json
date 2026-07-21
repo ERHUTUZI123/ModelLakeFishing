@@ -1,0 +1,76 @@
+{
+  "graph": "hgraph_hf1000d_2000m_xm0_xd0.pt",
+  "graph_sha256": "25ae333bca0c00b6ae2fe4047115a02a198744284bdcd632419d02b2b16e05c0",
+  "split_seed": 0,
+  "epochs": 25,
+  "device": "cuda",
+  "torch": "2.12.0+cu126",
+  "rows": {
+    "G2": {
+      "ckpt": "ModelLakeFishing\\stage2TrainGraphSAGE\\artifacts\\ablation\\top1\\ckpt\\G2_s0_i0.pt",
+      "ckpt_sha256": "3eade9611c3241f8bc46311f7341f4da7b69e59b5c69ff7bf4add3addf810c5f",
+      "state_dict_sha256_match": false,
+      "rerun_state_dict_sha256": "87cb672b873d4fdf8cab0ea1bdbb3c924b7e6110d9bb7218fcc119d59c9c9b5f",
+      "recorded_state_dict_sha256": "0605e00800cbacca1662c58dd725f85b19be819f6a01d7f87e2a794fc25a3461",
+      "five_metric_max_abs_delta": 1.0,
+      "five_metric_deltas": {
+        "observed_hit1": 0.0,
+        "top3_hit1": 0.0,
+        "regret1": 0.0,
+        "reciprocal_rank": -1.2806425752180661e-06,
+        "full2k_gold@1": 0.0,
+        "full2k_gold@10": 0.0,
+        "full2k_gold@50": 0.0,
+        "full2k_gold@100": 0.0,
+        "median_gold_rank": 1.0,
+        "mean_gold_rank": 0.025641025641021997,
+        "n_datasets": 0
+      },
+      "roundtrip_ok": true
+    },
+    "G1": {
+      "ckpt": "ModelLakeFishing\\stage2TrainGraphSAGE\\artifacts\\ablation\\top1\\ckpt\\G1_s0_i0.pt",
+      "ckpt_sha256": "aac16c0983594b52614aafa0b69dbdbaf4eb16bef5e68aeaf0353da57591f5a0",
+      "state_dict_sha256_match": false,
+      "rerun_state_dict_sha256": "c557fc0aa350e0f176502220509af9283360907c7868d7d7e6d378b6d130f14c",
+      "recorded_state_dict_sha256": "00edd02570d7f2c7174e13d9e4cc6b189b50720cadc5e7327a0f5499bd430c28",
+      "five_metric_max_abs_delta": 0.0,
+      "five_metric_deltas": {
+        "observed_hit1": 0.0,
+        "top3_hit1": 0.0,
+        "regret1": 0.0,
+        "reciprocal_rank": 0.0,
+        "full2k_gold@1": 0.0,
+        "full2k_gold@10": 0.0,
+        "full2k_gold@50": 0.0,
+        "full2k_gold@100": 0.0,
+        "median_gold_rank": 0.0,
+        "mean_gold_rank": 0.0,
+        "n_datasets": 0
+      },
+      "roundtrip_ok": true
+    },
+    "P6_dm10": {
+      "ckpt": "ModelLakeFishing\\stage2TrainGraphSAGE\\artifacts\\ablation\\top1\\ckpt\\P6_dm10_s0_i0.pt",
+      "ckpt_sha256": "d4f00985cb218a686ac8ddf3f546fdb9f396bbba7ca2f704d8eda024c83e47d1",
+      "state_dict_sha256_match": false,
+      "rerun_state_dict_sha256": "7cf1a6909c6ef0a9f106bc69765d63e8be6cf2c88d251713efb9a9ef02ec0d9f",
+      "recorded_state_dict_sha256": "c283628d1ae2a03065a578d606d6c9634927b710345c3e3699f5801b77ea2a85",
+      "five_metric_max_abs_delta": 0.0,
+      "five_metric_deltas": {
+        "observed_hit1": 0.0,
+        "top3_hit1": 0.0,
+        "regret1": 0.0,
+        "reciprocal_rank": 0.0,
+        "full2k_gold@1": 0.0,
+        "full2k_gold@10": 0.0,
+        "full2k_gold@50": 0.0,
+        "full2k_gold@100": 0.0,
+        "median_gold_rank": 0.0,
+        "mean_gold_rank": 0.0,
+        "n_datasets": 0
+      },
+      "roundtrip_ok": true
+    }
+  }
+}

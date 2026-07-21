@@ -72,6 +72,19 @@ def run_configs(cfgs, *, tag, epochs=EPOCHS, extra_note=""):
         for ss in SPLIT_SEEDS:
             data, xm0, umi = load_hgraph(GRAPH)
             names = model_names(umi)
+            if cfg.get("use_model_task"):
+                # D1 e_task: attach ids BEFORE the split so every split view
+                # carries the sliced task_id column (same ride as size/family)
+                from ModelLakeFishing.stage2TrainGraphSAGE.d1_features import attach_model_task_ids
+                vocab = attach_model_task_ids(data, umi)
+                xm0 = dict(xm0, num_model_tasks=len(vocab), model_task_vocab=vocab)
+            xd0_cfg = xd0_full
+            if cfg.get("repair_dataset_task"):
+                # v3 L3: apply the reviewed task_type enrichment patch (runtime
+                # override BEFORE the split; graph .pt untouched)
+                from ModelLakeFishing.stage2TrainGraphSAGE.d1_features import apply_dataset_task_repair
+                xd0_cfg, l3_stats = apply_dataset_task_repair(data, xd0_full)
+                print(f"    [L3 task repair] {l3_stats}")
             data = dedup_trained_on(data)                              # provenance fix
             data = apply_similar_to_mode(data, cfg["similar_to_mode"], k=cfg["similar_to_k"])
             split = make_fixed_splits(data, split_seed=ss)
@@ -79,8 +92,10 @@ def run_configs(cfgs, *, tag, epochs=EPOCHS, extra_note=""):
             lookup = accuracy_lookup(data)
 
             _row, _pt, _ph, model, _sc = train_eval_one(
-                data, xm0, xd0_full, cfg, split, init_seed=INIT_SEED,
+                data, xm0, xd0_cfg, cfg, split, init_seed=INIT_SEED,
                 epochs=epochs, device=device)
+            train_diag = {k: _row[k] for k in
+                          ("tau_macro", "mean_cos", "z_m_pr", "z_d_pr") if k in _row}
             model.eval()
             with torch.no_grad():
                 z = model(test_data.clone().to(device))
@@ -93,6 +108,7 @@ def run_configs(cfgs, *, tag, epochs=EPOCHS, extra_note=""):
             res["splits"][str(ss)] = {
                 "split_seed": ss, "state_dict_sha256": state_dict_sha256(model),
                 "aggregate": agg, "strata": strata_aggregate(per),
+                "train_diag": train_diag,
                 "per_dataset": {str(d): r for d, r in per.items()},
             }
             for d, r in per.items():

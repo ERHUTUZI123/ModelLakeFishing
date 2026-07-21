@@ -1,0 +1,7 @@
+0. 我要引入1万个models，2000个datasets，更大的数据集，这和接下来说的全部加一起差不多重要
+1. 根本问题是hub点膨胀，这一点之前proposal也早有预料
+2. 动刀不要在HNSW结束后精排，要直接动stage1的embedding方式和graph training的逻辑
+3. 关于model embedding，目前是name，desc，size，fam我觉得有效信号只有size和fam，而且fam的作用还不大，导致大约只有25%的有效信号，那么我的想法是，砍的只剩name和size，加入一个task（从HF的json获取），
+并且要modify embedding的方式，让name占的比例近可能的小，要加权
+4. 你提的关于对于hub点在loss function减分的方案有点道理，但我更主张做一个类似于pruning，每个model只能保留最匹配的（强调任务）的几个dataset的连接，或者类似于如果检测到你是个hub点，然后我就给你砍掉无关紧要的边，
+防止hub点这很重要

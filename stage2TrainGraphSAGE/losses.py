@@ -423,6 +423,32 @@ def topk_membership(data, *, top_frac=0.1, top_k=None,
                                      top_frac=top_frac, top_k=top_k)
 
 
+def pool_membership_by_root(M, root_ids):
+    """v6 S1: root-level positive pooling. M_pooled[:, d] = OR over all datasets
+    d' sharing d's root of M[:, d'] -- so the global objective treats "a model
+    good on ANY sibling of the root" as a positive of every root member. Teaches
+    z_d a root-invariant model preference (the training-side dual of S2's
+    serving-time sibling prior).
+
+    Leakage-safe under root-aware splits: M is built from TRAIN-visible edges, so
+    a test root's columns are all-zero and stay all-zero after pooling (their
+    siblings are test too). Only train roots' positive sets grow.
+
+    root_ids : LongTensor [N_dataset] integer root code per dataset (mappedID order).
+    Returns M_pooled (same shape/dtype as M).
+    """
+    M = M.float()
+    out = torch.zeros_like(M)
+    for r in torch.unique(root_ids).tolist():
+        cols = (root_ids == r).nonzero().flatten()
+        if cols.numel() == 1:
+            out[:, cols] = M[:, cols]                 # singleton root: unchanged
+        else:
+            pooled = (M[:, cols].sum(dim=1, keepdim=True) > 0).float()
+            out[:, cols] = pooled                     # broadcast root-union to all members
+    return (out > 0).to(M.dtype) if M.dtype != torch.float32 else out
+
+
 def per_dataset_density(trained_on_index, M, *, min_models=2):
     """Mean within-dataset positive-pair density: for each dataset, C(k,2)/C(n,2)
     where n = models evaluated on it and k = those selected as top performers.
@@ -705,6 +731,224 @@ def global_retrieval_loss(z_dict, M, pools, *, temperature=0.1, n_neg=64,
     loss = torch.stack(losses).mean()
     if return_stats:
         return loss, {"n_datasets": len(ds_batch), "n_negs_used": n_negs_used}
+    return loss
+
+
+def build_lake_logq(trained_on_index, num_models, *, alpha=0.75, n0=1.0):
+    """v3 L1: the whole-lake proposal distribution q(m) for logQ-corrected
+    sampled softmax.
+
+        deg(m) = train-visible trained_on label degree of model m
+        q(m)  ∝ (deg(m) + n0)^alpha
+
+    alpha=0.75 tempers the head (word2vec convention); n0 keeps zero-degree
+    models sampleable (the lake majority is unlabeled -- they ARE legitimate
+    retrieval negatives under InfoNCE semantics, which is the v3 break from the
+    G-phase 'reliable negatives only' rule: sampled-softmax negatives assert
+    'less relevant than the positive on average', not 'known bad').
+
+    Returns (q [N], logq [N]) on CPU.
+    """
+    deg = torch.bincount(trained_on_index[0], minlength=num_models).float()
+    w = (deg + float(n0)) ** float(alpha)
+    q = w / w.sum()
+    return q, q.log()
+
+
+def global_lake_loss(z_dict, M, q, logq, *, temperature=0.1, n_neg=64,
+                     n_datasets=16, hard_sets=None, n_hard=16,
+                     pos_ipw=None, generator=None, return_stats=False):
+    """v3 L1/L2: full-lake sampled softmax with logQ correction.
+
+        L(d) = -(1/|P_d|) sum_{p in P_d} log
+               exp(s_p/T) / [ sum_{p' in P_d} exp(s_{p'}/T)
+                              + sum_{n in S_d} exp(s_n/T - log q(n))
+                              + sum_{h in H_d} exp(s_h/T) ]
+
+    S_d ~ q over the ENTIRE lake (with replacement), positives filtered out.
+    The -log q(n) logit correction (Bengio & Senecal sampled softmax) makes the
+    denominator an unbiased estimate of the FULL-lake softmax: high-degree hubs
+    are sampled often but individually down-weighted -- net effect, every
+    dataset's loss pushes down every non-positive direction, including the
+    unlabeled hubs the supervision blind spot (plan v3 §0.1 E9) never touched.
+
+    H_d (optional, L2) = mined 'currently-beats-gold' negatives, uncorrected
+    logits (mixed negative sampling convention): they are a targeted extra set,
+    not draws from q; mixing breaks strict unbiasedness in exchange for putting
+    the serving failure pairs directly into the objective.
+
+    pos_ipw (optional, v4 L4) = per-model inverse-propensity weights [N_m],
+    e.g. (deg(m)+1)^-beta. The POSITIVE side of the loss is hub-biased too:
+    top-frac positive sets over-contain high-degree models, and every positive
+    term drags the query direction toward them. Weighting the positive average
+    by 1/(deg+1)^beta is the exact dual of the logQ negative correction --
+    the last known popularity-bias source inside this objective. None = uniform
+    (L1L3 behaviour, bit-identical).
+    """
+    z_m, z_d = z_dict["model"], z_dict["dataset"]
+    dev = z_m.device
+    ds_all = (M.sum(0) > 0).nonzero().flatten().tolist()
+    if not ds_all:
+        loss = z_m.new_zeros(())
+        return (loss, {"n_datasets": 0}) if return_stats else loss
+    if len(ds_all) > n_datasets:
+        idx = torch.randperm(len(ds_all), generator=generator)[:n_datasets]
+        ds_batch = [ds_all[i] for i in idx.tolist()]
+    else:
+        ds_batch = ds_all
+
+    q_dev, logq_dev = q.to(dev), logq.to(dev)
+    losses, n_neg_used, n_hard_used = [], 0, 0
+    for d in ds_batch:
+        pos = (M[:, d] > 0).nonzero().flatten().to(dev)
+        samp = torch.multinomial(q_dev, n_neg, replacement=True, generator=generator)
+        samp = samp[~torch.isin(samp, pos)]               # positives never negatives
+        logits = [z_m[pos] @ z_d[d] / temperature,
+                  z_m[samp] @ z_d[d] / temperature - logq_dev[samp]]
+        n_neg_used += int(samp.numel())
+        if hard_sets and d in hard_sets and n_hard > 0:
+            h = hard_sets[d].to(dev)
+            h = h[~torch.isin(h, pos)]
+            if h.numel() > n_hard:
+                h = h[torch.randperm(h.numel(), generator=generator)[:n_hard]]
+            if h.numel():
+                logits.append(z_m[h] @ z_d[d] / temperature)
+                n_hard_used += int(h.numel())
+        s = torch.cat(logits)
+        denom = torch.logsumexp(s, dim=0)
+        per_pos = denom - s[: pos.numel()]
+        if pos_ipw is not None:
+            w = pos_ipw.to(dev)[pos]
+            losses.append((w * per_pos).sum() / w.sum())
+        else:
+            losses.append(per_pos.mean())
+    loss = torch.stack(losses).mean()
+    if return_stats:
+        return loss, {"n_datasets": len(ds_batch), "n_negs_used": n_neg_used,
+                      "n_hard_used": n_hard_used}
+    return loss
+
+
+def mine_hard_negative_sets(z_dict, M, *, hard_k=20):
+    """v3 L2, run ONCE mid-training (anti-feedback-loop discipline, same as the
+    plan's P3 rule): for every supervised dataset, the current top-`hard_k`
+    scoring models on the TRAIN message graph, minus the train-visible
+    positives -- i.e. exactly 'the models currently beating the labeled best'.
+    Returns {dataset_idx: LongTensor[<=hard_k]} (CPU)."""
+    z_m, z_d = z_dict["model"].detach(), z_dict["dataset"].detach()
+    hard = {}
+    for d in (M.sum(0) > 0).nonzero().flatten().tolist():
+        pos = (M[:, d] > 0)
+        s = z_m @ z_d[d]
+        s[pos] = float("-inf")                    # positives can't be hard negatives
+        k = min(hard_k, int((~pos).sum()))
+        hard[d] = torch.topk(s, k).indices.cpu()
+    return hard
+
+
+def mine_alibi_hard_negative_sets(z_dict, M, deg, dataset_task_id, model_tasks, *,
+                                  hard_k=20, deg_quantile=0.9, overshoot=3):
+    """v4 L2b: hard negatives WITH AN ALIBI -- the fix for L2's self-sabotage.
+
+    L2 mined 'models currently beating the labeled best' and excluded only the
+    labeled positives; when the TRUE gold (unlabeled, low-degree, task-matching)
+    had already been pushed into the top-k by L1, L2 pushed it back down.
+
+    L2b keeps a mined model m for dataset d only if there is EVIDENCE it is a
+    popularity artifact rather than hidden gold:
+
+        alibi(m, d) = deg(m) >= P{deg_quantile}(deg | labeled models)   (hub suspect)
+                    ∨ (model_tasks[m] non-empty ∧ task(d) known
+                       ∧ task(d) ∉ model_tasks[m])                      (task mismatch)
+
+    A low-degree model whose observed task profile is compatible with d -- the
+    exact signature of hidden gold -- is never mined. Mining goes `overshoot`×
+    deeper than hard_k so the filter has candidates to reject.
+
+    deg          : [N_m] train-visible label degree (build once from ti)
+    dataset_task_id : [N_d] (repaired) task ids, 0 = unknown
+    model_tasks  : {model_idx: set(task_id)} train-visible task profile
+    Returns {dataset_idx: LongTensor[<=hard_k]} (CPU).
+    """
+    z_m, z_d = z_dict["model"].detach(), z_dict["dataset"].detach()
+    lab = deg[deg > 0].float()
+    thresh = torch.quantile(lab, deg_quantile) if lab.numel() else torch.tensor(1.0)
+    hard = {}
+    for d in (M.sum(0) > 0).nonzero().flatten().tolist():
+        pos = (M[:, d] > 0)
+        s = z_m @ z_d[d]
+        s[pos] = float("-inf")
+        k_mine = min(hard_k * overshoot, int((~pos).sum()))
+        cand = torch.topk(s, k_mine).indices.cpu()
+        td = int(dataset_task_id[d])
+        keep = []
+        for m in cand.tolist():
+            hubby = bool(deg[m] >= thresh)
+            ts = model_tasks.get(m, set())
+            mismatch = bool(ts) and td != 0 and td not in ts
+            if hubby or mismatch:
+                keep.append(m)
+            if len(keep) == hard_k:
+                break
+        if keep:
+            hard[d] = torch.tensor(keep, dtype=torch.long)
+    return hard
+
+
+def build_model_task_profiles(trained_on_index, task_type_id):
+    """{model_idx: set of observed dataset task ids (known only)} from
+    train-visible trained_on edges -- the same profile build_global_negative_pools
+    uses, exposed for L2b's alibi filter."""
+    prof = {}
+    for m, d in zip(trained_on_index[0].tolist(), trained_on_index[1].tolist()):
+        t = int(task_type_id[d])
+        if t != 0:
+            prof.setdefault(m, set()).add(t)
+    return prof
+
+
+def dataset_push_apart_loss(z_d, task_type_id, *, margin=0.2, n_anchor=32,
+                            n_neg=16, generator=None, return_stats=False):
+    """v3 Z2: dataset-dataset repulsion for z_d conditioning.
+
+        L = mean_{a, n : task(a) != task(n), both known}  relu(<z_a, z_n> - margin)
+
+    Today NOTHING pushes two datasets apart: similar_to edges only pull
+    together, trained_on supervision shapes z_d only through shared models --
+    z_d intrinsic dim ~= 2 is the direct consequence of this one-directional
+    force (plan v3 §0.3). This term makes different-TASK dataset pairs repel
+    until their cosine falls below `margin`; same-task pairs and datasets with
+    unknown task (id 0, post-L3 ~28%) are never touched (no false repulsion).
+    Hinge rather than InfoNCE: repulsion-only by design -- we assert different
+    tasks should be separable, NOT that same-task datasets are interchangeable.
+    """
+    known = (task_type_id > 0).nonzero().flatten()
+    if known.numel() < 2:
+        loss = z_d.new_zeros(())
+        return (loss, {"n_pairs": 0}) if return_stats else loss
+    if known.numel() > n_anchor:
+        pick = torch.randperm(known.numel(), generator=generator)[:n_anchor]
+        anchors = known[pick.to(known.device)]
+    else:
+        anchors = known
+    tt = task_type_id
+    terms, n_pairs = [], 0
+    for a in anchors.tolist():
+        diff = known[tt[known] != tt[a]]
+        if diff.numel() == 0:
+            continue
+        if diff.numel() > n_neg:
+            pick = torch.randperm(diff.numel(), generator=generator)[:n_neg]
+            diff = diff[pick.to(diff.device)]
+        cos = z_d[diff] @ z_d[a]
+        terms.append(torch.relu(cos - margin).mean())
+        n_pairs += int(diff.numel())
+    if not terms:
+        loss = z_d.new_zeros(())
+        return (loss, {"n_pairs": 0}) if return_stats else loss
+    loss = torch.stack(terms).mean()
+    if return_stats:
+        return loss, {"n_pairs": n_pairs, "n_anchors": len(terms)}
     return loss
 
 

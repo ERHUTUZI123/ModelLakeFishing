@@ -1,0 +1,10 @@
+task,task_id
+Other,0
+feature-extraction,1
+fill-mask,2
+question-answering,3
+sentence-similarity,4
+text-classification,5
+text-generation,6
+token-classification,7
+translation,8

@@ -120,9 +120,21 @@ def _arch_of(model: HeteroGraphSAGE) -> dict:
         "metadata": model.graph_metadata,
         "frozen_dim": enc.frozen_dim,
         "num_size_buckets": enc.size_embedding.num_embeddings,
-        "num_families": enc.family_embedding.num_embeddings,
+        # family table may be absent (D1 use_family=False); 0 marks "no table"
+        "num_families": (enc.family_embedding.num_embeddings
+                         if enc.family_embedding is not None else 0),
         "size_dim": enc.size_embedding.embedding_dim,
-        "family_dim": enc.family_embedding.embedding_dim,
+        "family_dim": (enc.family_embedding.embedding_dim
+                       if enc.family_embedding is not None else 16),
+        # D1 §5.3 feature-variant record (defaults = legacy on old checkpoints)
+        "name_dim": enc.name_dim,
+        "use_desc": enc.use_desc,
+        "use_family": enc.use_family,
+        "name_proj_dim": enc.name_proj_dim,
+        "name_proj_seed": enc.name_proj_seed,
+        "num_model_tasks": enc.num_model_tasks,
+        "model_task_dim": (enc.task_embedding.embedding_dim
+                           if enc.task_embedding is not None else 16),
         "hidden_channels": model.model_proj.out_features,
         "out_dim": (model.model_head.out_features
                     if getattr(model, "separate_heads", False) else model.head.out_features),
@@ -147,14 +159,27 @@ def _arch_of(model: HeteroGraphSAGE) -> dict:
             "task_dim": de.task_type_embedding.embedding_dim,
             "nclass_dim": de.n_class_embedding.embedding_dim,
             "arity_dim": de.arity_embedding.embedding_dim,
+            # v3 Z1 (None on pre-Z checkpoints -> legacy passthrough)
+            "dataset_frozen_proj_dim": getattr(de, "frozen_proj_dim", None),
         })
     else:
         arch["dataset_in_dim"] = model.dataset_proj.in_features
     return arch
 
 
+def _validate_task_vocab(vocab: dict, num_rows: int, *, label: str) -> None:
+    """Same bijection discipline as family: contiguous ids, Other pinned to 0."""
+    if len(vocab) != num_rows or set(vocab.values()) != set(range(num_rows)):
+        raise ValueError(
+            f"{label} ({len(vocab)} entries) is not a contiguous bijection onto "
+            f"{{0..{num_rows - 1}}} — embedding rows would be misnamed.")
+    if vocab.get("Other") != 0:
+        raise ValueError(f"{label} must map 'Other' -> 0 (zero-shot fallback row).")
+
+
 def save_checkpoint(model, family_vocab: dict, out_path: str, *, extra_repro=None,
-                    task_type_vocab: dict | None = None):
+                    task_type_vocab: dict | None = None,
+                    model_task_vocab: dict | None = None):
     """
     Save weights + family_vocab + repro metadata as ONE bound artifact, and also
     drop a sidecar family_vocab.csv next to it (the vocab is the only credential
@@ -166,9 +191,20 @@ def save_checkpoint(model, family_vocab: dict, out_path: str, *, extra_repro=Non
     task_type_vocab : OPTIONAL — the xd0 dataset task_type vocab. When the model
                    has a DatasetNodeEncoder it is the credential for the
                    task_type embedding rows; bound and validated like family_vocab.
+    model_task_vocab : OPTIONAL — the D1 MODEL-side task vocab (e_task rows,
+                   from d1_model_task_vocab.py). REQUIRED when the encoder has a
+                   task table; bound and validated like family_vocab.
     """
     enc = model.model_encoder
-    _validate_vocab_binding(family_vocab, enc.family_embedding.num_embeddings)
+    if enc.family_embedding is not None:
+        _validate_vocab_binding(family_vocab, enc.family_embedding.num_embeddings)
+    if enc.task_embedding is not None:
+        if model_task_vocab is None:
+            raise ValueError(
+                "encoder has a model-task table but no model_task_vocab was given "
+                "— the e_task rows would be orphaned (same rule as family_vocab)")
+        _validate_task_vocab(model_task_vocab, enc.task_embedding.num_embeddings,
+                             label="model_task_vocab")
 
     payload = {
         "state_dict": model.state_dict(),
@@ -176,6 +212,8 @@ def save_checkpoint(model, family_vocab: dict, out_path: str, *, extra_repro=Non
         "arch": _arch_of(model),
         "repro": _repro_metadata(extra_repro),
     }
+    if model_task_vocab is not None and enc.task_embedding is not None:
+        payload["model_task_vocab"] = model_task_vocab
     if getattr(model, "use_dataset_encoder", False):
         rows = model.dataset_encoder.task_type_embedding.num_embeddings
         if task_type_vocab is not None:
@@ -208,6 +246,15 @@ def save_checkpoint(model, family_vocab: dict, out_path: str, *, extra_repro=Non
             w.writerow(["task_type", "task_type_id"])
             for tt, tid in sorted(task_type_vocab.items(), key=lambda kv: kv[1]):
                 w.writerow([tt, tid])
+
+    # sidecar for the D1 model-side task vocab (e_task row credential)
+    if model_task_vocab is not None and enc.task_embedding is not None:
+        mt_path = os.path.join(os.path.dirname(abs_out), f"{stem}.model_task_vocab.csv")
+        with open(mt_path, "w", newline="", encoding="utf-8") as f:
+            w = csv.writer(f)
+            w.writerow(["task", "task_id"])
+            for tt, tid in sorted(model_task_vocab.items(), key=lambda kv: kv[1]):
+                w.writerow([tt, tid])
     return out_path
 
 
@@ -222,7 +269,9 @@ def load_checkpoint(path: str, *, map_location="cpu"):
         metadata=arch["metadata"],
         frozen_dim=arch["frozen_dim"],
         num_size_buckets=arch["num_size_buckets"],
-        num_families=arch["num_families"],
+        # 0 marks "no family table" (use_family=False); nn.Embedding still needs
+        # a positive row count at build time — the table is skipped anyway.
+        num_families=arch["num_families"] or 1,
         dataset_in_dim=arch["dataset_in_dim"],
         hidden_channels=arch["hidden_channels"],
         out_dim=arch["out_dim"],
@@ -232,6 +281,14 @@ def load_checkpoint(path: str, *, map_location="cpu"):
         edge_aware=arch.get("edge_aware", False),
         weighted_relations=arch.get("weighted_relations", None),
         separate_heads=arch.get("separate_heads", False),
+        # D1 §5.3 feature variants: defaults keep every pre-D1 checkpoint valid
+        name_dim=arch.get("name_dim"),
+        use_desc=arch.get("use_desc", True),
+        use_family=arch.get("use_family", True),
+        name_proj_dim=arch.get("name_proj_dim"),
+        name_proj_seed=arch.get("name_proj_seed", 42),
+        num_model_tasks=arch.get("num_model_tasks"),
+        model_task_dim=arch.get("model_task_dim", 16),
         # dataset side (xd0): None for old checkpoints -> plain dataset_proj
         num_task_types=arch.get("num_task_types"),
         n_class_buckets=arch.get("n_class_buckets"),
@@ -239,18 +296,25 @@ def load_checkpoint(path: str, *, map_location="cpu"):
         task_dim=arch.get("task_dim", 16),
         nclass_dim=arch.get("nclass_dim", 8),
         arity_dim=arch.get("arity_dim", 4),
+        dataset_frozen_proj_dim=arch.get("dataset_frozen_proj_dim"),
     )
     model.load_state_dict(ckpt["state_dict"])
     model.eval()
 
     vocab = ckpt["family_vocab"]
-    rows = model.model_encoder.family_embedding.num_embeddings
-    _validate_vocab_binding(vocab, rows)
-    # surface the dataset task_type vocab (if bound) via repro, keeping the
-    # 3-tuple return signature every caller already unpacks.
+    if model.model_encoder.family_embedding is not None:
+        _validate_vocab_binding(vocab, model.model_encoder.family_embedding.num_embeddings)
+    if model.model_encoder.task_embedding is not None:
+        _validate_task_vocab(ckpt["model_task_vocab"],
+                             model.model_encoder.task_embedding.num_embeddings,
+                             label="model_task_vocab")
+    # surface the dataset task_type / model task vocabs (if bound) via repro,
+    # keeping the 3-tuple return signature every caller already unpacks.
     repro = dict(ckpt["repro"])
     if "task_type_vocab" in ckpt:
         repro["task_type_vocab"] = ckpt["task_type_vocab"]
+    if "model_task_vocab" in ckpt:
+        repro["model_task_vocab"] = ckpt["model_task_vocab"]
     return model, vocab, repro
 
 
@@ -274,31 +338,57 @@ def new_model_input(frozen_vec, param_count, family, family_vocab, *, device=Non
     return fv, size_id, fam_id
 
 
-@torch.no_grad()
-def encode_new_model(model, frozen_vec, param_count, family, family_vocab):
+def new_model_task_id(task, model_task_vocab, *, device=None):
     """
-    Run a new model through the TRAINED ModelNodeEncoder (frozen || size || fam).
-    This is the x_m^(0) of a cold-start model; the full z_m additionally needs the
-    GNN with the node joined into the graph (serving-time, Step 6). Returned here
-    at encoder level so the zero-shot routing (unseen family -> Other) is testable
-    without faking graph structure.
+    D1 e_task zero-shot rule, isomorphic to size/family degradation:
+    task missing or absent from the vocab -> id 0 (Other). `task` should be the
+    CANONICAL task (d1_model_task_vocab.canon_task of the HF pipeline_tag).
+    """
+    tid = torch.tensor([model_task_vocab.get(task, 0)], dtype=torch.long)
+    return tid.to(device) if device is not None else tid
+
+
+@torch.no_grad()
+def encode_new_model(model, frozen_vec, param_count, family, family_vocab,
+                     task=None, model_task_vocab=None):
+    """
+    Run a new model through the TRAINED ModelNodeEncoder (frozen || size || fam
+    [|| task]). This is the x_m^(0) of a cold-start model; the full z_m
+    additionally needs the GNN with the node joined into the graph (serving-time,
+    Step 6). Returned here at encoder level so the zero-shot routing (unseen
+    family/task -> Other) is testable without faking graph structure.
     """
     # follow the model's device so this works after model.to("cuda")
     device = model.model_encoder.size_embedding.weight.device
     fv, size_id, fam_id = new_model_input(
         frozen_vec, param_count, family, family_vocab, device=device
     )
-    return model.model_encoder(fv, size_id, fam_id)
+    task_id = None
+    if model.model_encoder.task_embedding is not None:
+        assert model_task_vocab is not None, (
+            "encoder has an e_task table: pass model_task_vocab (from the "
+            "checkpoint's repro['model_task_vocab']) so the Other fallback applies")
+        task_id = new_model_task_id(task, model_task_vocab, device=device)
+    return model.model_encoder(fv, size_id, fam_id, task_id)
 
 
 # ── C. — sparse-gradient health of the two tables ──────────────────────────
 
+def _encoder_tables(encoder) -> dict:
+    """The encoder's LEARNABLE tables that actually exist (D1 variants may drop
+    family and add task)."""
+    tables = {"size": encoder.size_embedding}
+    if getattr(encoder, "family_embedding", None) is not None:
+        tables["family"] = encoder.family_embedding
+    if getattr(encoder, "task_embedding", None) is not None:
+        tables["task"] = encoder.task_embedding
+    return tables
+
+
 def snapshot_weights(encoder) -> dict:
-    """Clone both tables' weights — call BEFORE training to compare against later."""
-    return {
-        "size": encoder.size_embedding.weight.detach().clone(),
-        "family": encoder.family_embedding.weight.detach().clone(),
-    }
+    """Clone every table's weights — call BEFORE training to compare against later."""
+    return {name: emb.weight.detach().clone()
+            for name, emb in _encoder_tables(encoder).items()}
 
 
 def embedding_health(encoder, init_weights: dict | None = None, *, move_atol: float = 1e-6) -> dict:
@@ -316,7 +406,7 @@ def embedding_health(encoder, init_weights: dict | None = None, *, move_atol: fl
                       updated ("the prior of missingness", a feature not a bug).
     """
     report = {}
-    tables = {"size": encoder.size_embedding, "family": encoder.family_embedding}
+    tables = _encoder_tables(encoder)
     for name, emb in tables.items():
         w = emb.weight.detach()
         norms = w.norm(dim=1)

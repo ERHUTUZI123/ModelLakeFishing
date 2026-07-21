@@ -89,11 +89,33 @@ def train_eval_one(data, xm0, xd0, cfg, split, *, init_seed, epochs, device="cpu
     ti = torch.cat([train_data[TRAINED_ON].edge_index, eli], dim=1)
     ta = torch.cat([train_data[TRAINED_ON].edge_attr.float(), target], dim=0)
     M = topk_membership(data, top_frac=cfg["top_frac"], trained_on_index=ti, trained_on_attr=ta)
+    if cfg.get("root_pool_positives") and cfg.get("root_ids") is not None:
+        # v6 S1: pool the global-term positive sets within each root (train-visible
+        # only; test roots stay all-zero). z_d learns root-invariant preference.
+        from ModelLakeFishing.stage2TrainGraphSAGE.losses import pool_membership_by_root
+        root_ids = torch.as_tensor(cfg["root_ids"], dtype=torch.long)
+        M = pool_membership_by_root(M, root_ids)
     comp = lineage_components(data, data["model"].num_nodes)
 
     # init_seed is separate from the split: only the model/scorer init + training
     # RNG depend on it; the test edges are already fixed by split_seed.
     torch.manual_seed(init_seed); np.random.seed(init_seed)
+    # D1 §5.3 feature-variant kwargs (one change per row; absent keys = legacy)
+    fkw = {}
+    if cfg.get("drop_desc"):
+        fkw.update(use_desc=False, name_dim=xm0["name_dim"])
+    if cfg.get("drop_family"):
+        fkw["use_family"] = False
+    if cfg.get("name_proj_dim"):
+        fkw.update(name_proj_dim=cfg["name_proj_dim"], name_dim=xm0["name_dim"])
+    if cfg.get("use_model_task"):
+        assert "num_model_tasks" in xm0 and getattr(data["model"], "task_id", None) is not None, (
+            "use_model_task needs attach_model_task_ids() run on this graph "
+            "(see d1_features.py) and xm0['num_model_tasks'] set")
+        fkw["num_model_tasks"] = xm0["num_model_tasks"]
+    if cfg.get("dataset_frozen_proj_dim"):
+        # v3 Z1: learnable projection of the frozen xd0 views inside the encoder
+        fkw["dataset_frozen_proj_dim"] = cfg["dataset_frozen_proj_dim"]
     model = HeteroGraphSAGE(
         metadata=data.metadata(), frozen_dim=data["model"].x.shape[1],
         num_size_buckets=xm0["num_size_buckets"], num_families=xm0["num_families"],
@@ -101,11 +123,12 @@ def train_eval_one(data, xm0, xd0, cfg, split, *, init_seed, epochs, device="cpu
         edge_aware=cfg.get("edge_aware", False),
         weighted_relations=cfg.get("weighted_relations", None),
         separate_heads=cfg.get("separate_heads", False),
-        **_ds_kwargs(xd0)).to(device)
+        **fkw, **_ds_kwargs(xd0)).to(device)
     scorer = PerfScorer(dim=128, mode=cfg["scorer"]).to(device)
 
     grouped = cfg.get("grouped", False)
     common = dict(epochs=epochs, lr=cfg.get("lr", 1e-2),
+                  batch_size=cfg.get("batch_size", 128),
                   lambda_mse=cfg["lambda_mse"], lambda_rank=cfg["lambda_rank"],
                   lambda_contrast=cfg["lambda_contrast"], lambda_uniform=cfg["lambda_uniform"],
                   rank_loss=cfg.get("rank_loss", "hinge"),
@@ -129,19 +152,60 @@ def train_eval_one(data, xm0, xd0, cfg, split, *, init_seed, epochs, device="cpu
                           dm_temperature=cfg.get("dm_temperature", 0.1),
                           dm_top_frac=cfg.get("top_frac", 0.10))
         if cfg.get("lambda_global", 0.0) > 0:
-            # Top-1 guide Phase 1: reliable global negatives (train-visible only)
-            from ModelLakeFishing.stage2TrainGraphSAGE.losses import build_global_negative_pools
-            pools, pool_stats = build_global_negative_pools(
-                data["dataset"].task_type_id, ti, ta, M,
-                include_known_low=cfg.get("global_known_low", False),
-                low_frac=cfg.get("global_low_frac", 0.3))
-            print(f"    [global negs] {pool_stats}")
-            common.update(global_ctx=dict(
-                pools=pools, M=M, lambda_g=cfg["lambda_global"],
-                temperature=cfg.get("global_temperature", 0.1),
-                n_neg=cfg.get("global_n_neg", 64),
-                n_datasets=cfg.get("global_n_datasets", 16),
-                hard_frac=cfg.get("global_hard_frac", 0.0)))
+            gctx = dict(M=M, lambda_g=cfg["lambda_global"],
+                        temperature=cfg.get("global_temperature", 0.1),
+                        n_neg=cfg.get("global_n_neg", 64),
+                        n_datasets=cfg.get("global_n_datasets", 16))
+            if cfg.get("global_mode", "pools") == "lake":
+                # v3 L1: whole-lake logQ-corrected sampled softmax (+L2 mining)
+                from ModelLakeFishing.stage2TrainGraphSAGE.losses import build_lake_logq
+                q, logq = build_lake_logq(
+                    ti, data["model"].num_nodes,
+                    alpha=cfg.get("lake_alpha", 0.75), n0=cfg.get("lake_n0", 1.0))
+                deg = torch.bincount(ti[0], minlength=data["model"].num_nodes)
+                print(f"    [lake logQ] models={q.numel()} labeled={(deg > 0).sum().item()} "
+                      f"max_deg={int(deg.max())} q_head={q.max():.4f} "
+                      f"alpha={cfg.get('lake_alpha', 0.75)}")
+                gctx.update(lake=(q, logq),
+                            hard_mine_epoch=cfg.get("hard_mine_epoch", 0),
+                            hard_k=cfg.get("hard_k", 20),
+                            n_hard=cfg.get("n_hard", 16))
+                if cfg.get("pos_ipw_beta", 0.0) > 0:
+                    # v4 L4: inverse-propensity positive weights (logQ's dual)
+                    w = (deg.float() + 1.0) ** (-cfg["pos_ipw_beta"])
+                    gctx["pos_ipw"] = w
+                    print(f"    [pos IPW] beta={cfg['pos_ipw_beta']} "
+                          f"w_range=[{w.min():.3f},{w.max():.3f}]")
+                if cfg.get("hard_alibi"):
+                    # v4 L2b: alibi context for the one-shot miner
+                    from ModelLakeFishing.stage2TrainGraphSAGE.losses import build_model_task_profiles
+                    gctx["alibi"] = dict(
+                        deg=deg,
+                        dataset_task_id=data["dataset"].task_type_id,
+                        model_tasks=build_model_task_profiles(
+                            ti, data["dataset"].task_type_id),
+                        deg_quantile=cfg.get("alibi_deg_quantile", 0.9))
+            else:
+                # Top-1 guide Phase 1: reliable global negatives (train-visible only)
+                from ModelLakeFishing.stage2TrainGraphSAGE.losses import build_global_negative_pools
+                pools, pool_stats = build_global_negative_pools(
+                    data["dataset"].task_type_id, ti, ta, M,
+                    include_known_low=cfg.get("global_known_low", False),
+                    low_frac=cfg.get("global_low_frac", 0.3))
+                print(f"    [global negs] {pool_stats}")
+                gctx.update(pools=pools, hard_frac=cfg.get("global_hard_frac", 0.0))
+            common.update(global_ctx=gctx)
+        if cfg.get("lambda_zpush", 0.0) > 0:
+            # v3 Z2: dataset-dataset push-apart (uses train_data task_type_id,
+            # repaired upstream when cfg['repair_dataset_task'] is set)
+            known = int((data["dataset"].task_type_id > 0).sum())
+            print(f"    [zpush] known-task datasets={known} "
+                  f"margin={cfg.get('zpush_margin', 0.2)}")
+            common.update(zpush_ctx=dict(
+                lambda_zp=cfg["lambda_zpush"],
+                margin=cfg.get("zpush_margin", 0.2),
+                n_anchor=cfg.get("zpush_n_anchor", 32),
+                n_neg=cfg.get("zpush_n_neg", 16)))
         hist, _ = train(model, scorer, train_data, eli, target, M.to(device), comp.to(device),
                         **common)
 

@@ -145,3 +145,35 @@ def apply_similar_to_mode(data, mode, *, k=10):
     if mode == "topk_unweighted":
         return topk_similar_to(data, k, weighted=False)
     raise ValueError(f"unknown similar_to mode: {mode}")
+
+
+def degree_cap_trained_on(data, *, quantile=0.95):
+    """v4 W3 / D2-P2 (mild degree cap): message-graph hygiene on trained_on.
+
+    tau = the `quantile` of the model out-degree distribution (labeled models
+    only). Models with deg > tau keep their tau HIGHEST-attr edges; every other
+    model is untouched. Supervision (edge_label_*) and lineage edges are never
+    touched -- this caps the MESSAGE graph only. REV mirrors the result.
+
+    Returns (data, stats). Deterministic (ties broken by edge order).
+    """
+    out = data.clone()
+    ei = out[TRAINED_ON].edge_index
+    ea = out[TRAINED_ON].edge_attr.float().flatten()
+    deg = torch.bincount(ei[0], minlength=int(ei[0].max()) + 1 if ei.numel() else 1)
+    lab = deg[deg > 0].float()
+    tau = int(torch.quantile(lab, quantile).ceil()) if lab.numel() else 0
+    keep = torch.ones(ei.shape[1], dtype=torch.bool)
+    n_capped_models = 0
+    for m in (deg > tau).nonzero().flatten().tolist():
+        idx = (ei[0] == m).nonzero().flatten()
+        order = idx[torch.argsort(-ea[idx], stable=True)]
+        keep[order[tau:]] = False
+        n_capped_models += 1
+    out[TRAINED_ON].edge_index = ei[:, keep]
+    out[TRAINED_ON].edge_attr = data[TRAINED_ON].edge_attr[keep]
+    out[REV_TRAINED_ON].edge_index = out[TRAINED_ON].edge_index.flip(0)
+    out[REV_TRAINED_ON].edge_attr = out[TRAINED_ON].edge_attr.clone()
+    stats = {"tau": tau, "n_capped_models": n_capped_models,
+             "edges_before": int(ei.shape[1]), "edges_after": int(keep.sum())}
+    return out, stats

@@ -46,7 +46,8 @@ from ModelLakeFishing.stage2TrainGraphSAGE.losses import (  # noqa: E402
     lineage_components, per_dataset_density, global_positive_density,
     contrastive_loss, dataset_to_model_contrastive,
     dataset_to_model_contrastive_from_edges, uniformity_loss,
-    global_retrieval_loss,
+    global_retrieval_loss, global_lake_loss, mine_hard_negative_sets,
+    mine_alibi_hard_negative_sets, dataset_push_apart_loss,
 )
 from ModelLakeFishing.stage2TrainGraphSAGE.sampling import (  # noqa: E402
     make_link_loader, apply_edge_dropout, batch_contrastive_masks,
@@ -78,7 +79,7 @@ def train(model, scorer, train_data, eli, target, M, comp, *,
           rank_gap_weighted=False,
           val_data=None, val_lookup=None, patience=0, eval_every=1,
           lambda_dm_contrast=0.0, dm_temperature=0.1, dm_top_frac=0.10,
-          global_ctx=None):
+          global_ctx=None, zpush_ctx=None):
     """
     Per batch: lambda_rank * ranking + lambda_contrast * contrast (+ optional
     lambda_mse * MSE, + optional lambda_uniform * uniformity). Ranking (not MSE)
@@ -100,14 +101,47 @@ def train(model, scorer, train_data, eli, target, M, comp, *,
     # forward per step (the batch subgraph lacks the global negatives). The full
     # train message graph gets its own edge dropout each step.
     use_global = global_ctx is not None and global_ctx.get("lambda_g", 0.0) > 0
-    if use_global:
+    # v3 Z2: dataset-dataset push-apart also needs a full-graph z per step
+    use_zpush = zpush_ctx is not None and zpush_ctx.get("lambda_zp", 0.0) > 0
+    if use_global or use_zpush:
         g_base = train_data.clone().to(device)
+    if use_global:
         g_M = global_ctx["M"].to(device)
+        # v3 L1: "lake" mode replaces the reliable pools with whole-lake logQ
+        # sampling; L2 adds hard sets mined ONCE at hard_mine_epoch (>=1).
+        use_lake = "lake" in global_ctx
+        hard_sets = None
+        hard_mine_epoch = int(global_ctx.get("hard_mine_epoch", 0) or 0)
     use_val = val_data is not None and val_lookup is not None
     best_val, best_state, bad_epochs = -2.0, None, 0
     import copy
     for epoch in range(epochs):
         model.train()
+        # v3 L2: mine 'currently-beats-the-labeled-best' negatives EXACTLY once,
+        # from a clean (no-dropout) train-graph forward -- never re-mined, so no
+        # self-reinforcing feedback loop (plan v3 §0.3, P3-style discipline).
+        if (use_global and use_lake and hard_mine_epoch > 0
+                and epoch == hard_mine_epoch and hard_sets is None):
+            model.eval()
+            with torch.no_grad():
+                z_mine = model(g_base.clone())
+            alibi = global_ctx.get("alibi")
+            if alibi is not None:
+                # v4 L2b: only mined models with a popularity/task-mismatch
+                # alibi survive -- hidden gold (low-degree, task-compatible)
+                # is never pushed down (the L2 self-sabotage fix)
+                hard_sets = mine_alibi_hard_negative_sets(
+                    z_mine, g_M, alibi["deg"], alibi["dataset_task_id"],
+                    alibi["model_tasks"], hard_k=global_ctx.get("hard_k", 20),
+                    deg_quantile=alibi.get("deg_quantile", 0.9))
+                tag = "alibi hard-mine"
+            else:
+                hard_sets = mine_hard_negative_sets(
+                    z_mine, g_M, hard_k=global_ctx.get("hard_k", 20))
+                tag = "lake hard-mine"
+            model.train()
+            print(f"    [{tag} @ep{epoch}] datasets={len(hard_sets)} "
+                  f"k={global_ctx.get('hard_k', 20)}")
         ep = []
         for batch in loader:
             batch = batch.to(device)                    # GPU: sample on CPU, train on device
@@ -139,16 +173,36 @@ def train(model, scorer, train_data, eli, target, M, comp, *,
                     z, eli_b, el_b, top_frac=dm_top_frac, temperature=dm_temperature)
                 total = total + lambda_dm_contrast * ldm
                 parts["dm_contrast"] = float(ldm.detach())
-            if use_global:
+            if use_global or use_zpush:
                 g_graph = g_base.clone()
                 apply_edge_dropout(g_graph, p=p, p_lineage=p_lineage)
                 z_full = model(g_graph)
-                lg = global_retrieval_loss(
-                    z_full, g_M, global_ctx["pools"],
-                    temperature=global_ctx.get("temperature", 0.1),
-                    n_neg=global_ctx.get("n_neg", 64),
-                    n_datasets=global_ctx.get("n_datasets", 16),
-                    hard_frac=global_ctx.get("hard_frac", 0.0))
+            if use_zpush:
+                lzp = dataset_push_apart_loss(
+                    z_full["dataset"], g_base["dataset"].task_type_id,
+                    margin=zpush_ctx.get("margin", 0.2),
+                    n_anchor=zpush_ctx.get("n_anchor", 32),
+                    n_neg=zpush_ctx.get("n_neg", 16))
+                total = total + zpush_ctx["lambda_zp"] * lzp
+                parts["zpush"] = float(lzp.detach())
+            if use_global:
+                if use_lake:
+                    q, logq = global_ctx["lake"]
+                    lg = global_lake_loss(
+                        z_full, g_M, q, logq,
+                        temperature=global_ctx.get("temperature", 0.1),
+                        n_neg=global_ctx.get("n_neg", 64),
+                        n_datasets=global_ctx.get("n_datasets", 16),
+                        hard_sets=hard_sets,
+                        n_hard=global_ctx.get("n_hard", 16),
+                        pos_ipw=global_ctx.get("pos_ipw"))
+                else:
+                    lg = global_retrieval_loss(
+                        z_full, g_M, global_ctx["pools"],
+                        temperature=global_ctx.get("temperature", 0.1),
+                        n_neg=global_ctx.get("n_neg", 64),
+                        n_datasets=global_ctx.get("n_datasets", 16),
+                        hard_frac=global_ctx.get("hard_frac", 0.0))
                 total = total + global_ctx["lambda_g"] * lg
                 parts["global"] = float(lg.detach())
             if lambda_uniform > 0:

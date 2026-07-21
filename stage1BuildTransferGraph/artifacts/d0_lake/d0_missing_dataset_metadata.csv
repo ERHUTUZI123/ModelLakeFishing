@@ -1,0 +1,13 @@
+dataset_node,n_models,chosen_metric,dominant_task
+nanobeir_r100_mean,39,map,cross-encoder-nano-beir
+nanomsmarco_r100,39,map,cross-encoder-reranking
+nanonfcorpus_r100,39,map,cross-encoder-reranking
+nanonq_r100,39,map,cross-encoder-reranking
+custom,25,f1,token-classification
+none/default,10,map,reranking
+none/en,8,accuracy,classification
+multilabel_classification/simplified,6,f1,text-classification
+quora-duplicates-dev,5,f1,paraphrase-mining
+magento-synthetic-eval,4,accuracy,text-generation
+mixed,3,f1,text-classification
+shadertoys-fine/return_completion,3,exact_match,text-generation

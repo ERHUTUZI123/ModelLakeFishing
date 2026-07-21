@@ -1,0 +1,71 @@
+{
+  "export_code_version": "1.0",
+  "created_utc": "2026-07-08T23:10:54.110895+00:00",
+  "graph": {
+    "path": "ModelLakeFishing\\stage1BuildTransferGraph\\hgraph_hf1000d_2000m_xm0_xd0.pt",
+    "sha256": "25ae333bca0c00b6ae2fe4047115a02a198744284bdcd632419d02b2b16e05c0",
+    "num_models": 2000,
+    "num_datasets": 362
+  },
+  "checkpoint": {
+    "path": "ModelLakeFishing\\stage2TrainGraphSAGE\\artifacts\\ablation\\top1\\ckpt\\G2_s0_i0.pt",
+    "sha256": "3eade9611c3241f8bc46311f7341f4da7b69e59b5c69ff7bf4add3addf810c5f",
+    "config_name": "G2",
+    "split_seed": 0,
+    "init_seed": 0
+  },
+  "vocab": {
+    "family_csv": {
+      "path": "ModelLakeFishing\\stage2TrainGraphSAGE\\artifacts\\ablation\\top1\\ckpt\\G2_s0_i0.family_vocab.csv",
+      "sha256": "4b76d3c82c763c4d847143db757b273aa68135735b55d9efbf8df0f6a61a3b0f",
+      "rows": 185
+    },
+    "task_type_csv": {
+      "path": "ModelLakeFishing\\stage2TrainGraphSAGE\\artifacts\\ablation\\top1\\ckpt\\G2_s0_i0.task_type_vocab.csv",
+      "sha256": "9012cb89440a5ff57562de7ddf18c97863a02a9f8e55c76ba4d3ce271d817e84",
+      "rows": 10
+    }
+  },
+  "surgery": {
+    "dedup_trained_on": true,
+    "similar_to_mode": "topk_unweighted",
+    "similar_to_k": 10
+  },
+  "embedding": {
+    "dim": 128,
+    "dtype": "float32",
+    "normalized": true,
+    "score": "cosine == inner product of the stored unit vectors"
+  },
+  "encoders": {
+    "e_name_seed": 42,
+    "e_name_token_dim": 64,
+    "e_name_hash_buckets": 10000,
+    "e_desc_encoder": "all-MiniLM-L6-v2",
+    "size_bucket_constants": {
+      "NUM_SIZE_BUCKETS": 15,
+      "SIZE_LOG10_MIN": 5.0,
+      "SIZE_LOG10_MAX": 12.0,
+      "SIZE_BUCKET_WIDTH": 0.5
+    }
+  },
+  "versions": {
+    "python": "3.13.1",
+    "torch": "2.12.0+cu126",
+    "numpy": "2.4.6",
+    "pandas": "3.0.3"
+  },
+  "verification": {
+    "forward_determinism_bitwise": true,
+    "ids_row_order_ok": true,
+    "spotcheck_rows": 20,
+    "spotcheck_ok": true
+  },
+  "files": {
+    "z_m.npy": "e688c5ef70eecb9ec7b63791038276eafc95bd6cfc8d2a0be7c8bbce43e16578",
+    "z_d.npy": "5879aa3f01cf5d387e7d7b3e23e033a672bd05cae3a02ac9204fbb3c0b48db09",
+    "model_ids.csv": "cd06281332260537b8517070c8ee89c4c363271a3750af01e397b78eb7c8a5a6",
+    "dataset_ids.csv": "dd4d8322b4701c27f4711be8b3465abf535756dd68057963ace4c46d87dfd456",
+    "model_meta.parquet": "2a604b2f47e2cd12a98671a1331cc9883c835c97a7087fd3c4cf72f201389281"
+  }
+}

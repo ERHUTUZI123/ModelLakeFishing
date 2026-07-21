@@ -1,0 +1,8 @@
+{
+  "n_edges": 54795,
+  "n_models": 9491,
+  "n_datasets": 1463,
+  "n_roots": 421,
+  "n_tasks": 17,
+  "graph": "hgraph_d0_v1.pt"
+}

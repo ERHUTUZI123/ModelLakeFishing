@@ -2,7 +2,16 @@
 
 **Date:** 2026-07-07
 **Target folder:** `stage3HNSW/`
-**Status:** plan only — no code written yet.
+**Status:** Phases 0–3 complete (2026-07-10, gates G-A/G-B/G-C/G-D PASS — see `stage3HNSW/README.md`); next Phases 4/5.
+
+> **Amendment 2026-07-08 (user decision): Stage 3 uses G2 ONLY.**
+> Every Stage-3 deliverable (export, index, query, benchmarks, service) targets
+> the single **G2** checkpoint. G1 and P6_dm10 are **no longer built as
+> comparison indexes** and drop out of all Stage-3 reporting; their frozen
+> checkpoints (`top1/ckpt/G1_s0_i0.pt`, `P6_dm10_s0_i0.pt`) stay on disk from
+> Phase 0 for future audits only. Passages below that mention indexing or
+> reporting G1/P6_dm10 alongside G2 are superseded by this amendment; the
+> 306-model diverse candidate remains the mechanism-smoke checkpoint.
 
 ---
 
@@ -98,9 +107,10 @@ independent fidelity cross-check in benchmarks. Both consume the same exported
   2026-07-07**. Note the provenance honestly: under the Stage-2 promotion rule
   G2 was *rejected* (one zero split at gold@10 granularity 1/35; gate detail in
   `TOP1_PHASE_REPORT.md`), while G1 was the promoted config. Serving G2 is a
-  deliberate override; Phase 4/8 must therefore report G2's fidelity and
-  hub-stratified numbers side by side with G1 so the choice stays auditable.
-  **G1 and P6_dm10 are indexed alongside for comparison.**
+  deliberate override, recorded here and in the checkpoint's repro metadata.
+  ~~G1 and P6_dm10 are indexed alongside for comparison.~~ **[2026-07-08]
+  Superseded: Stage 3 uses G2 only (see Amendment at top); G1/P6_dm10 exist
+  solely as frozen Phase-0 checkpoints for future audits.**
 - **Mechanism smoke / small tests:** production `stage2_diverse_xd0_candidate.pt`
   (306 models) — fast, contract-verified.
 - Stage 3 code must be **checkpoint-agnostic**: everything flows from an exported
@@ -164,6 +174,15 @@ stage3HNSW/
    budget for this). Same check for G1 and P6_dm10 (comparison indexes).
 
 **Gate:** both backends import; input hashes recorded; G2 weights on disk.
+
+> **[2026-07-08] DONE.** hnswlib 0.8.0 (compiled with VS Build Tools 2022 —
+> no cp313 wheel exists) + faiss-cpu 1.14.3, both pinned in `requirements.txt`.
+> Weights were indeed not persisted; G2/G1/P6_dm10 retrained via
+> `stage3HNSW/phase0_freeze.py` (deduped protocol, split_seed=0, init_seed=0,
+> 25 epochs). Five-metric replay matches the recorded split-0 aggregates
+> exactly (G2: only median_gold_rank 142 vs 141); state_dict sha256 does not
+> bit-match (CUDA nondeterminism) — recorded honestly in ckpt repro metadata.
+> Hashes in `stage3HNSW/README.md`. Per the Amendment, only G2 goes forward.
 
 ### Phase 1 — Embedding export with contract verification (1 day)
 
@@ -342,7 +361,8 @@ query.py results.
 2. **Synthetic 1M ≠ real 1M.** State the caveat everywhere the plot appears;
    the real-scale run is future work gated on harvesting a larger lake.
 3. **G2 weights may not be on disk** (Phase 0 item 3) — one bounded re-train if so.
-   Same applies to the G1/P6_dm10 comparison checkpoints.
+   ~~Same applies to the G1/P6_dm10 comparison checkpoints.~~ **[2026-07-08]
+   Resolved: all three retrained and frozen in Phase 0; only G2 is served.**
 4. **hnswlib tombstones don't reclaim memory** — covered by the rebuild policy.
 5. **Two backends drifting** — faiss is check-only; production answers always
    come from hnswlib; benchmarks assert agreement.

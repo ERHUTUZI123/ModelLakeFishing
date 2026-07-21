@@ -1,0 +1,42 @@
+{
+  "build_code_version": "1.0",
+  "created_utc": "2026-07-09T22:24:56.259347+00:00",
+  "backend": {
+    "library": "hnswlib",
+    "version": "0.8.0",
+    "space": "cosine"
+  },
+  "params": {
+    "M": 16,
+    "ef_construction": 200,
+    "random_seed": 100,
+    "build_threads": 1
+  },
+  "export": {
+    "path": "ModelLakeFishing\\stage3HNSW\\artifacts\\exports\\hf1000d_G2",
+    "manifest_sha256": "ca4c5ec93e2575972e54f290695fc1fa445c21e31df503ffd7bac0e3e92f89ed",
+    "z_m_sha256": "e688c5ef70eecb9ec7b63791038276eafc95bd6cfc8d2a0be7c8bbce43e16578",
+    "graph_sha256": "25ae333bca0c00b6ae2fe4047115a02a198744284bdcd632419d02b2b16e05c0",
+    "checkpoint_sha256": "3eade9611c3241f8bc46311f7341f4da7b69e59b5c69ff7bf4add3addf810c5f",
+    "checkpoint_config": "G2",
+    "num_models": 2000,
+    "dim": 128
+  },
+  "index": {
+    "file": "index.bin",
+    "sha256": "e658e05c2edd4b8cdd62df8be46b365be2fe925b91facfbc417e26d2dfffbfb3",
+    "element_count": 2000,
+    "bytes": 1322364,
+    "build_seconds": 0.0778
+  },
+  "gates": {
+    "fidelity_ef_search": 200,
+    "recall@1": 1.0,
+    "recall@10": 1.0,
+    "recall@50": 1.0,
+    "recall@100": 1.0,
+    "fidelity_queries": "all z_d (362)",
+    "roundtrip_identical": true,
+    "roundtrip_k": 50
+  }
+}

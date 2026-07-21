@@ -1,0 +1,20 @@
+{
+  "graph": "hgraph_d0_v1_content.pt",
+  "sha256": "dea91542bd0cf6d900220819dcb978cf61a1d0bbde7c9bcbb513a4b98b78c1f3",
+  "content_view": true,
+  "content_coverage": 0.20607661822985468,
+  "content_gold_coverage": 0.26580226904376014,
+  "dataset_frozen_dim": 842,
+  "models": 10234,
+  "dataset_nodes": 1514,
+  "roots": 461,
+  "trained_on_edges": 55140,
+  "lineage_edges": 1033,
+  "similar_to_edges": 30280,
+  "gold_nodes_in_graph": 617,
+  "task_vocab": 19,
+  "task_other_share": 0.031704094260931015,
+  "size_unknown_share": 0.5189564228057861,
+  "num_families": 382,
+  "feature_scope_note": "xd0 probe views deferred; metadata + content views"
+}
