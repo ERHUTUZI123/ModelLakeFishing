@@ -1,0 +1,67 @@
+{
+  "universe": 12000,
+  "n_queries": 517,
+  "DISCLOSURE": "ModelLens run is the reproducible-from-release version: its dataset_desc_matrix AND dataset2id are unpublished, so it is dataset-blind (task+metric+model only). This UNDER-represents the paper's full system; the gap is from unreleased artifacts, NOT a level-field method comparison.",
+  "A_axis": {
+    "ours_L1L3b": {
+      "n_queries": 517,
+      "gold@1": 0.09477756286266925,
+      "gold-gap@1": 0.22823984526112184,
+      "gold@10": 0.4158607350096712,
+      "gold-gap@10": 0.5087040618955513,
+      "top3@10": 0.5319148936170213,
+      "median_gold_rank": 21.0,
+      "n_roots": 412,
+      "root_gold@1": 0.08783639925055356,
+      "root_gold@10": 0.3919924203713166,
+      "root_top3@10": 0.5065331715210356,
+      "root_gold-gap@10": 0.49583439788792366,
+      "_wall_sec": 0.19
+    },
+    "modellens_blind": {
+      "n_queries": 517,
+      "gold@1": 0.0,
+      "gold-gap@1": 0.03481624758220503,
+      "gold@10": 0.01160541586073501,
+      "gold-gap@10": 0.058027079303675046,
+      "top3@10": 0.058027079303675046,
+      "median_gold_rank": 2418.0,
+      "n_roots": 412,
+      "root_gold@1": 0.0,
+      "root_gold@10": 0.014563106796116505,
+      "root_top3@10": 0.07281553398058252,
+      "root_gold-gap@10": 0.07281553398058252,
+      "_missing_keys": 4
+    }
+  },
+  "B_axis_latency_vs_N": {
+    "1000": {
+      "modellens_scan_ms_p50": 1.9588,
+      "modellens_scan_ms_p99": 2.754417000000004,
+      "ours_hnsw_ms_p50": 0.0298,
+      "ours_hnsw_ms_p99": 0.047809000000000004,
+      "speedup_p50": 65.73154362416108
+    },
+    "2000": {
+      "modellens_scan_ms_p50": 3.48475,
+      "modellens_scan_ms_p99": 4.241535000000001,
+      "ours_hnsw_ms_p50": 0.0238,
+      "ours_hnsw_ms_p99": 0.035403000000000004,
+      "speedup_p50": 146.41806722689074
+    },
+    "5000": {
+      "modellens_scan_ms_p50": 7.94705,
+      "modellens_scan_ms_p99": 11.250728000000013,
+      "ours_hnsw_ms_p50": 0.02475,
+      "ours_hnsw_ms_p99": 0.03682400000000001,
+      "speedup_p50": 321.0929292929293
+    },
+    "12000": {
+      "modellens_scan_ms_p50": 16.6103,
+      "modellens_scan_ms_p99": 17.890369,
+      "ours_hnsw_ms_p50": 0.037500000000000006,
+      "ours_hnsw_ms_p99": 0.05452200000000001,
+      "speedup_p50": 442.94133333333326
+    }
+  }
+}

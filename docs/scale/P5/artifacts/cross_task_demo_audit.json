@@ -1,0 +1,1638 @@
+{
+  "protocol": {
+    "selection_frozen_before_public_demo_collection": true,
+    "selection_kind": "cross-task qualitative capability battery",
+    "prevalence_source": "deployment_quality_metrics.json over all 517 held-out queries",
+    "model_lake_path": "z_m_eval @ z_d_eval, leakage-free held-out MIPS",
+    "description_source": "ModelLens corpus-v2 via ml_dataset_pool.csv desc field",
+    "missing_observed_value": "unknown, displayed as em dash",
+    "excluded_missing_description": [
+      {
+        "dataset_id": 976,
+        "dataset": "MMLU-Pro(acc)",
+        "reason": "official description is missing/NaN"
+      },
+      {
+        "dataset_id": 191,
+        "dataset": "CrossNER_AI",
+        "reason": "official description is missing/NaN"
+      }
+    ],
+    "public_demo_capture_policy": "The contiguous primary rank table is authoritative. Isolated, inconsistent DOM cards outside that table are excluded and disclosed in the case notes.",
+    "manual_compatibility_policy": "Strict-compatible requires direct support for the requested task, modality, and language. Known off-task is used only for an explicit role, modality, or language mismatch. Remaining candidates are marked ambiguous rather than failed."
+  },
+  "aggregate": {
+    "included_cases": 9,
+    "excluded_missing_description_cases": 2,
+    "model_lake_rows": 90,
+    "model_lake_exact_verified": 72,
+    "model_lake_exact_near_optimal": 33,
+    "public_demo_collected_cases": 9,
+    "public_demo_captured_rows": 88,
+    "public_demo_exact_verified": 5,
+    "public_demo_exact_near_optimal": 5,
+    "public_demo_strict_compatible": 26,
+    "public_demo_known_off_task": 49,
+    "public_demo_unclassified_or_ambiguous": 13,
+    "public_demo_zero_exact_coverage_cases": 8
+  },
+  "excluded_cases": [
+    {
+      "dataset_id": 976,
+      "dataset": "MMLU-Pro(acc)",
+      "reason": "official description is missing/NaN"
+    },
+    {
+      "dataset_id": 191,
+      "dataset": "CrossNER_AI",
+      "reason": "official description is missing/NaN"
+    }
+  ],
+  "cases": [
+    {
+      "task_family": "Text classification",
+      "dataset_id": 1659,
+      "dataset": "MTEB MTOPDomainClassification (en)",
+      "dataset_node": "MTEB MTOPDomainClassification (en)␟Classification",
+      "task_type": "Classification",
+      "metric": "accuracy",
+      "description": "MTEB MTOPDomainClassification (en) is an English domain-classification subset derived from the MTOP task-oriented parsing corpus and included in the Massive Text Embedding Benchmark (MTEB). It contains user utterances labeled with their high-level task domains (e.g., music, weather, navigation, alarms), enabling evaluation of embedding and classification models on domain identification in task-oriented dialogue. The dataset is suitable for benchmarking semantic representations in supervised, few-shot, and retrieval-style settings where accurate domain-level intent detection is required.",
+      "labeled_candidates": 744,
+      "observed_optimum": 0.9924988746643066,
+      "model_lake_verified@10": 10,
+      "model_lake_near_optimal@10": 8,
+      "model_lake_top10": [
+        {
+          "rank": 1,
+          "model": "barnowak/gte-qwen2-7b-instruct-q4-k-m-gguf",
+          "observed_value": 0.9903784990310669,
+          "mips": 0.9382942741189819
+        },
+        {
+          "rank": 2,
+          "model": "gme-qwen2-vl-7b-instruct",
+          "observed_value": 0.9755129814147949,
+          "mips": 0.9202401172156963
+        },
+        {
+          "rank": 3,
+          "model": "bnightning/gte-qwen2-7b-instruct-q4-k-m-gguf",
+          "observed_value": 0.9903784990310669,
+          "mips": 0.9163091200447495
+        },
+        {
+          "rank": 4,
+          "model": "gte-qwen1-5-7b-instruct",
+          "observed_value": 0.9575239419937134,
+          "mips": 0.912347842904723
+        },
+        {
+          "rank": 5,
+          "model": "nizzouuu/gte-qwen2-7b-instruct-q6-k-gguf",
+          "observed_value": 0.9903784990310669,
+          "mips": 0.9119301916491841
+        },
+        {
+          "rank": 6,
+          "model": "datouge/gte-qwen2-7b-instruct-q4-0-gguf",
+          "observed_value": 0.9903784990310669,
+          "mips": 0.9087280555513291
+        },
+        {
+          "rank": 7,
+          "model": "bn7002/gte-qwen2-7b-instruct-q4-k-m-gguf",
+          "observed_value": 0.9903784990310669,
+          "mips": 0.9061179325647198
+        },
+        {
+          "rank": 8,
+          "model": "niancheng/gte-qwen2-7b-instruct-q4-k-m-gguf",
+          "observed_value": 0.9903784990310669,
+          "mips": 0.903309165421657
+        },
+        {
+          "rank": 9,
+          "model": "lxc1999/gte-qwen2-7b-instruct-q4-k-m-gguf",
+          "observed_value": 0.9903784990310669,
+          "mips": 0.9008909058541905
+        },
+        {
+          "rank": 10,
+          "model": "brtaydin/gte-qwen2-7b-instruct-q5-k-m-gguf",
+          "observed_value": 0.9903784990310669,
+          "mips": 0.8978877510978566
+        }
+      ],
+      "modellens_public_demo": {
+        "run_timestamp": "2026-07-28, user-supplied public-demo run",
+        "rows": [
+          [
+            1,
+            "dqubit/frida-f16",
+            "unknown",
+            23.8737,
+            "—",
+            8
+          ],
+          [
+            2,
+            "sncffcns/llm-jp-3-13b-it-20241127-lora",
+            "llm",
+            22.648,
+            "—",
+            0
+          ],
+          [
+            3,
+            "zomba/fsg-net",
+            "unknown",
+            19.2341,
+            "—",
+            0
+          ],
+          [
+            4,
+            "samerzaher80/aethermind-srl",
+            "unknown",
+            18.6596,
+            "—",
+            0
+          ],
+          [
+            5,
+            "lonestriker/skywork-13b-spicyboros-3-1-5-0bpw-h6-exl2",
+            "unknown",
+            18.5158,
+            "—",
+            0
+          ],
+          [
+            6,
+            "169pi/alpie-core",
+            "unknown",
+            17.9667,
+            "—",
+            76
+          ],
+          [
+            7,
+            "botbotrobotics/cabrallama3-70b",
+            "llama",
+            17.7916,
+            "70.0B",
+            13
+          ],
+          [
+            8,
+            "viktorzver/frida",
+            "unknown",
+            17.5736,
+            "—",
+            18
+          ],
+          [
+            9,
+            "leocristt/hackathon-embedding-model",
+            "unknown",
+            16.614,
+            "—",
+            4
+          ],
+          [
+            10,
+            "maziyarpanahi/calme-3-2-instruct-78b",
+            "calme",
+            16.2538,
+            "—",
+            0
+          ]
+        ],
+        "exact_dataset_verified": 0,
+        "exact_dataset_near_optimal": 0,
+        "strict_compatible": 3,
+        "known_off_task": 6,
+        "strict_compatible_ranks": [
+          1,
+          8,
+          9
+        ],
+        "known_off_task_ranks": [
+          2,
+          3,
+          4,
+          5,
+          7,
+          10
+        ],
+        "notes": "Three candidates are recognisable embedding models; no returned model has an exact MTOP result."
+      }
+    },
+    {
+      "task_family": "Text retrieval",
+      "dataset_id": 1055,
+      "dataset": "MTEB ArguAna",
+      "dataset_node": "MTEB ArguAna␟Retrieval",
+      "task_type": "Retrieval",
+      "metric": "ndcg@10",
+      "description": "ArguAna is a dataset of short arguments and claims extracted from online debate forums, annotated with topic and stance information and linked to semantically similar or paraphrased claims. Included in MTEB to evaluate embeddings on argument retrieval, semantic similarity, and clustering, it tests a model’s ability to group semantically equivalent claims and discriminate opposing stances in opinionated text. ArguAna is useful for benchmarking embedding quality in argumentative and opinion mining applications such as semantic search and claim clustering.",
+      "labeled_candidates": 696,
+      "observed_optimum": 0.8307967782020569,
+      "model_lake_verified@10": 10,
+      "model_lake_near_optimal@10": 0,
+      "model_lake_top10": [
+        {
+          "rank": 1,
+          "model": "barnowak/gte-qwen2-7b-instruct-q4-k-m-gguf",
+          "observed_value": 0.6427299976348877,
+          "mips": 0.7527791997450684
+        },
+        {
+          "rank": 2,
+          "model": "sparkhonyuk/gte-qwen2-7b-instruct-gguf",
+          "observed_value": 0.6427299976348877,
+          "mips": 0.7421920044055668
+        },
+        {
+          "rank": 3,
+          "model": "michieleeckhout/gte-qwen2-7b-instruct-q4-k-m-gguf",
+          "observed_value": 0.6427299976348877,
+          "mips": 0.7393824694450808
+        },
+        {
+          "rank": 4,
+          "model": "cleatherbury/gte-qwen2-7b-instruct-q5-k-m-gguf",
+          "observed_value": 0.6427299976348877,
+          "mips": 0.7356994669995678
+        },
+        {
+          "rank": 5,
+          "model": "bnightning/gte-qwen2-7b-instruct-q4-k-m-gguf",
+          "observed_value": 0.6427299976348877,
+          "mips": 0.7353959465300028
+        },
+        {
+          "rank": 6,
+          "model": "niancheng/gte-qwen2-7b-instruct-q4-k-m-gguf",
+          "observed_value": 0.6427299976348877,
+          "mips": 0.7316013166283012
+        },
+        {
+          "rank": 7,
+          "model": "gme-qwen2-vl-7b-instruct",
+          "observed_value": 0.6459599733352661,
+          "mips": 0.7311899210522483
+        },
+        {
+          "rank": 8,
+          "model": "lxc1999/gte-qwen2-7b-instruct-q4-k-m-gguf",
+          "observed_value": 0.6427299976348877,
+          "mips": 0.727930890930351
+        },
+        {
+          "rank": 9,
+          "model": "datouge/gte-qwen2-7b-instruct-q4-0-gguf",
+          "observed_value": 0.6427299976348877,
+          "mips": 0.727182015456588
+        },
+        {
+          "rank": 10,
+          "model": "sunzx0810/gte-qwen2-7b-instruct-q5-k-m-gguf",
+          "observed_value": 0.6427299976348877,
+          "mips": 0.7236435602396258
+        }
+      ],
+      "modellens_public_demo": {
+        "run_timestamp": "2026-07-28, user-supplied public-demo run",
+        "rows": [
+          [
+            1,
+            "sncffcns/llm-jp-3-13b-it-20241127-lora",
+            "llm",
+            17.74,
+            "—",
+            0
+          ],
+          [
+            2,
+            "lonestriker/skywork-13b-spicyboros-3-1-5-0bpw-h6-exl2",
+            "unknown",
+            17.0858,
+            "—",
+            0
+          ],
+          [
+            3,
+            "luminainc/jina-embeddings-v3",
+            "unknown",
+            15.4773,
+            "—",
+            26
+          ],
+          [
+            4,
+            "bullerwins/mistral-large-instruct-2407-exl2-5-5bpw",
+            "mistral",
+            14.9178,
+            "—",
+            0
+          ],
+          [
+            5,
+            "shindc/marian-finetuned-kde4-en-to-fr",
+            "marian",
+            12.77,
+            "—",
+            6
+          ],
+          [
+            6,
+            "prashrex/santacoder-gguf",
+            "code",
+            12.7561,
+            "—",
+            7
+          ],
+          [
+            7,
+            "dqubit/frida-f16",
+            "unknown",
+            12.6357,
+            "—",
+            8
+          ],
+          [
+            8,
+            "jiiyy/funnel",
+            "unknown",
+            12.5007,
+            "—",
+            2
+          ],
+          [
+            9,
+            "devcamilosepulveda/333-qwen3sp-clover-usergrid",
+            "qwen",
+            12.4882,
+            "—",
+            1
+          ],
+          [
+            10,
+            "ilhamdprastyo/jina-embeddings-v3-tei",
+            "unknown",
+            12.4583,
+            "—",
+            0
+          ]
+        ],
+        "exact_dataset_verified": 0,
+        "exact_dataset_near_optimal": 0,
+        "strict_compatible": 2,
+        "known_off_task": 6,
+        "strict_compatible_ranks": [
+          3,
+          10
+        ],
+        "known_off_task_ranks": [
+          1,
+          2,
+          4,
+          5,
+          6,
+          9
+        ],
+        "notes": "Two Jina embedding variants are strict retrieval matches; neither has an exact ArguAna record in the corpus."
+      }
+    },
+    {
+      "task_family": "Reranking",
+      "dataset_id": 1062,
+      "dataset": "MTEB AskUbuntuDupQuestions",
+      "dataset_node": "MTEB AskUbuntuDupQuestions␟Reranking",
+      "task_type": "Reranking",
+      "metric": "map",
+      "description": "MTEB AskUbuntuDupQuestions is a duplicate-question detection dataset drawn from the Ask Ubuntu Stack Exchange, containing pairs of user questions labeled as duplicates or non-duplicates. It targets semantic similarity and near-duplicate retrieval tasks in a technical Q&A domain, enabling evaluation of sentence and passage embeddings for duplicate detection, clustering, and semantic search. The dataset is useful for benchmarking embedding models on domain-specific paraphrase/duplication detection and improving retrieval or reranking systems for technical help forums.",
+      "labeled_candidates": 693,
+      "observed_optimum": 0.6758376359939575,
+      "model_lake_verified@10": 9,
+      "model_lake_near_optimal@10": 8,
+      "model_lake_top10": [
+        {
+          "rank": 1,
+          "model": "sunzx0810/gte-qwen2-7b-instruct-q5-k-m-gguf",
+          "observed_value": 0.6757826805114746,
+          "mips": 0.8722639110164102
+        },
+        {
+          "rank": 2,
+          "model": "hoshino-yumetsuki/gte-qwen2-7b-instruct-q8-0-gguf",
+          "observed_value": 0.6757826805114746,
+          "mips": 0.8691963389046682
+        },
+        {
+          "rank": 3,
+          "model": "redshiva/gte-qwen2-7b-instruct-q8-0-gguf",
+          "observed_value": 0.6757826805114746,
+          "mips": 0.8634016194022164
+        },
+        {
+          "rank": 4,
+          "model": "fishbone64/gte-qwen2-7b-instruct-q8-0-gguf",
+          "observed_value": 0.6757826805114746,
+          "mips": 0.8582279200462373
+        },
+        {
+          "rank": 5,
+          "model": "agier9/gte-qwen1-5-7b-instruct-q5-k-m-gguf",
+          "observed_value": 0.6600208878517151,
+          "mips": 0.8575705258684146
+        },
+        {
+          "rank": 6,
+          "model": "sensenova/piccolo-large-zh",
+          "observed_value": null,
+          "mips": 0.8573324107435016
+        },
+        {
+          "rank": 7,
+          "model": "niancheng/gte-qwen2-7b-instruct-q4-k-m-gguf",
+          "observed_value": 0.6757826805114746,
+          "mips": 0.8569366749701292
+        },
+        {
+          "rank": 8,
+          "model": "sparkhonyuk/gte-qwen2-7b-instruct-gguf",
+          "observed_value": 0.6757826805114746,
+          "mips": 0.8541809703570241
+        },
+        {
+          "rank": 9,
+          "model": "sthuck/gte-qwen2-7b-instruct-bfloat16",
+          "observed_value": 0.6757826805114746,
+          "mips": 0.851418800251976
+        },
+        {
+          "rank": 10,
+          "model": "barnowak/gte-qwen2-7b-instruct-q4-k-m-gguf",
+          "observed_value": 0.6757826805114746,
+          "mips": 0.8502109152962766
+        }
+      ],
+      "modellens_public_demo": {
+        "run_timestamp": "2026-07-28, user-supplied public-demo run",
+        "rows": [
+          [
+            1,
+            "hatemestinbejaia/mminilml-bi-encoder-kd-v1-student-tripletloss-teacher-marginloss-adptativemargin007",
+            "code",
+            29.2712,
+            "—",
+            0
+          ],
+          [
+            2,
+            "dqubit/frida-f16",
+            "unknown",
+            24.6899,
+            "—",
+            8
+          ],
+          [
+            3,
+            "zomba/fsg-net",
+            "unknown",
+            20.6885,
+            "—",
+            0
+          ],
+          [
+            4,
+            "leocristt/hackathon-embedding-model",
+            "unknown",
+            19.4686,
+            "—",
+            4
+          ],
+          [
+            5,
+            "hatemestinbejaia/mminilml-bi-encoder-kd-v1-0student-tripletlossadptativemargin-1teacher-marginloss-m15",
+            "code",
+            19.0427,
+            "—",
+            0
+          ],
+          [
+            6,
+            "devcamilosepulveda/333-qwen3sp-clover-usergrid",
+            "qwen",
+            17.9345,
+            "—",
+            1
+          ],
+          [
+            7,
+            "devcamilosepulveda/6-llama3sp-bamboo",
+            "llama",
+            17.6915,
+            "6.0B",
+            0
+          ],
+          [
+            8,
+            "hkurita/sup-simcse-bert-base-uncased-mean",
+            "bert",
+            17.5283,
+            "110M",
+            4
+          ],
+          [
+            9,
+            "bartowski/calmerys-78b-orpo-v0-1-gguf",
+            "unknown",
+            17.3766,
+            "—",
+            0
+          ]
+        ],
+        "exact_dataset_verified": 0,
+        "exact_dataset_near_optimal": 0,
+        "strict_compatible": 5,
+        "known_off_task": 4,
+        "strict_compatible_ranks": [
+          1,
+          2,
+          4,
+          5,
+          8
+        ],
+        "known_off_task_ranks": [
+          3,
+          6,
+          7,
+          9
+        ],
+        "notes": "The pasted primary table contains nine rows. An inconsistent isolated DOM card labelled rank 10 was excluded."
+      }
+    },
+    {
+      "task_family": "Cross-lingual STS",
+      "dataset_id": 1984,
+      "dataset": "MTEB STS17 (fr-en)",
+      "dataset_node": "MTEB STS17 (fr-en)␟STS",
+      "task_type": "STS",
+      "metric": "cosine_pearson",
+      "description": "MTEB STS17 (fr-en) is a cross-lingual semantic textual similarity dataset comprising French–English sentence pairs annotated with human similarity scores. Included in the MTEB benchmark, it evaluates multilingual and cross-lingual sentence embeddings and retrieval systems by measuring how well embedding-based similarity correlates with human judgments, making it suitable for benchmarking semantic matching, retrieval, and embedding quality across languages.",
+      "labeled_candidates": 41,
+      "observed_optimum": 0.8730688691139221,
+      "model_lake_verified@10": 2,
+      "model_lake_near_optimal@10": 0,
+      "model_lake_top10": [
+        {
+          "rank": 1,
+          "model": "baai/bge-multilingual-gemma2",
+          "observed_value": null,
+          "mips": 0.9924147888438869
+        },
+        {
+          "rank": 2,
+          "model": "mestruck/kalm-embedding-multilingual-mini-instruct-v1-gguf",
+          "observed_value": 0.7630743980407715,
+          "mips": 0.9619046307572358
+        },
+        {
+          "rank": 3,
+          "model": "fashion-italia/gte-qwen2-7b-instruct-q4-k-m-gguf",
+          "observed_value": null,
+          "mips": 0.9471597711665589
+        },
+        {
+          "rank": 4,
+          "model": "gandolfi/bge-m3-custom-fr-q4-k-m-gguf",
+          "observed_value": null,
+          "mips": 0.9294559755868743
+        },
+        {
+          "rank": 5,
+          "model": "zeta-alpha-ai/zeta-alpha-e5-mistral",
+          "observed_value": null,
+          "mips": 0.9288939529858733
+        },
+        {
+          "rank": 6,
+          "model": "tensorblock/gte-qwen2-7b-instruct-gguf",
+          "observed_value": null,
+          "mips": 0.9279502777016647
+        },
+        {
+          "rank": 7,
+          "model": "michieleeckhout/gte-qwen2-7b-instruct-q4-k-m-gguf",
+          "observed_value": null,
+          "mips": 0.925732245252507
+        },
+        {
+          "rank": 8,
+          "model": "mlx-community/gte-qwen2-7b-instruct-4bit-dwq",
+          "observed_value": null,
+          "mips": 0.9244089735136312
+        },
+        {
+          "rank": 9,
+          "model": "rcins/gte-qwen2-7b-instruct-q6-k-gguf",
+          "observed_value": null,
+          "mips": 0.9232813986349624
+        },
+        {
+          "rank": 10,
+          "model": "hit-tmg/kalm-embedding-multilingual-mini-instruct-v1",
+          "observed_value": 0.7630743980407715,
+          "mips": 0.9222855875785967
+        }
+      ],
+      "modellens_public_demo": {
+        "run_timestamp": "2026-07-28, user-supplied public-demo run",
+        "rows": [
+          [
+            1,
+            "lonestriker/skywork-13b-spicyboros-3-1-5-0bpw-h6-exl2",
+            "unknown",
+            20.2133,
+            "—",
+            0
+          ],
+          [
+            2,
+            "sncffcns/llm-jp-3-13b-it-20241127-lora",
+            "llm",
+            18.6517,
+            "—",
+            0
+          ],
+          [
+            3,
+            "bullerwins/mistral-large-instruct-2407-exl2-5-5bpw",
+            "mistral",
+            17.4262,
+            "—",
+            0
+          ],
+          [
+            4,
+            "gladiator/microsoft-deberta-v3-large-ner-wnut-17",
+            "microsoft",
+            14.4577,
+            "—",
+            0
+          ],
+          [
+            5,
+            "lonestriker/skywork-13b-airo-claude-pippa-puffin-6-0bpw-h6-exl2",
+            "claude",
+            14.3063,
+            "—",
+            0
+          ],
+          [
+            6,
+            "prashrex/santacoder-gguf",
+            "code",
+            14.1499,
+            "—",
+            7
+          ],
+          [
+            7,
+            "hkurita/sup-simcse-bert-base-uncased-mean",
+            "bert",
+            14.1405,
+            "110M",
+            4
+          ],
+          [
+            8,
+            "bighuggyd/mistralai-mistral-large-instruct-2407-exl2-4-0bpw-h8",
+            "mistral",
+            13.8881,
+            "—",
+            0
+          ],
+          [
+            9,
+            "zomba/fsg-net",
+            "unknown",
+            13.8122,
+            "—",
+            0
+          ],
+          [
+            10,
+            "shubhamrathore081/bge-base-en-1-5-ft",
+            "unknown",
+            13.5839,
+            "—",
+            0
+          ]
+        ],
+        "exact_dataset_verified": 0,
+        "exact_dataset_near_optimal": 0,
+        "strict_compatible": 0,
+        "known_off_task": 8,
+        "strict_compatible_ranks": [],
+        "known_off_task_ranks": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          8,
+          9
+        ],
+        "notes": "Two sentence-embedding models are English-only and fail the fr-en language requirement; the other eight cross task or modality boundaries."
+      }
+    },
+    {
+      "task_family": "Clustering",
+      "dataset_id": 1085,
+      "dataset": "MTEB BiorxivClusteringS2S",
+      "dataset_node": "MTEB BiorxivClusteringS2S␟Clustering",
+      "task_type": "Clustering",
+      "metric": "v_measure",
+      "description": "MTEB BiorxivClusteringS2S is a benchmark of bioRxiv preprints organized into topical clusters for evaluating representation and clustering quality in a sequence-to-sequence (S2S) context. Items consist of document-level texts (title and/or abstract) with cluster labels, enabling assessment of embedding methods, S2S encoders, and generative models on scientific-language grouping tasks. It targets evaluation of semantic clustering, topic coherence, and downstream retrieval or classification in the biomedical preprint domain.",
+      "labeled_candidates": 688,
+      "observed_optimum": 0.49603521823883057,
+      "model_lake_verified@10": 10,
+      "model_lake_near_optimal@10": 0,
+      "model_lake_top10": [
+        {
+          "rank": 1,
+          "model": "jspringer/echo-mistral-7b-instruct-lasttoken",
+          "observed_value": 0.35342368483543396,
+          "mips": 0.9038087286536353
+        },
+        {
+          "rank": 2,
+          "model": "recipe/embeddings",
+          "observed_value": 0.38349831104278564,
+          "mips": 0.8790001060579549
+        },
+        {
+          "rank": 3,
+          "model": "novasearch/stella-en-1-5b-v5",
+          "observed_value": 0.46866291761398315,
+          "mips": 0.8772803791238304
+        },
+        {
+          "rank": 4,
+          "model": "barnowak/gte-qwen2-7b-instruct-q4-k-m-gguf",
+          "observed_value": 0.4664733111858368,
+          "mips": 0.874741563610089
+        },
+        {
+          "rank": 5,
+          "model": "gte-qwen1-5-7b-instruct",
+          "observed_value": 0.4505901038646698,
+          "mips": 0.8651217808679919
+        },
+        {
+          "rank": 6,
+          "model": "zeta-alpha-ai/zeta-alpha-e5-mistral",
+          "observed_value": 0.4073737859725952,
+          "mips": 0.8642834549029079
+        },
+        {
+          "rank": 7,
+          "model": "gme-qwen2-vl-7b-instruct",
+          "observed_value": 0.43860435485839844,
+          "mips": 0.8555275535791291
+        },
+        {
+          "rank": 8,
+          "model": "billsyzhang/gte-qwen2-7b-instruct-q4-mlx",
+          "observed_value": 0.4664733111858368,
+          "mips": 0.8544993669286185
+        },
+        {
+          "rank": 9,
+          "model": "cherrydavid/gme-qwen2-vl-7b-instruct-q4-k-m-gguf",
+          "observed_value": 0.43860435485839844,
+          "mips": 0.8534528481803417
+        },
+        {
+          "rank": 10,
+          "model": "mav23/gte-qwen2-7b-instruct-gguf",
+          "observed_value": 0.4664733111858368,
+          "mips": 0.8509721180362664
+        }
+      ],
+      "modellens_public_demo": {
+        "run_timestamp": "2026-07-28, user-supplied public-demo run",
+        "rows": [
+          [
+            1,
+            "sncffcns/llm-jp-3-13b-it-20241127-lora",
+            "llm",
+            33.0409,
+            "—",
+            0
+          ],
+          [
+            2,
+            "lonestriker/skywork-13b-spicyboros-3-1-5-0bpw-h6-exl2",
+            "unknown",
+            18.9201,
+            "—",
+            0
+          ],
+          [
+            3,
+            "shubhamrathore081/bge-base-en-1-5-ft",
+            "unknown",
+            18.0196,
+            "—",
+            0
+          ],
+          [
+            4,
+            "devcamilosepulveda/333-qwen3sp-clover-usergrid",
+            "qwen",
+            17.4674,
+            "—",
+            1
+          ],
+          [
+            5,
+            "hkurita/sup-simcse-bert-base-uncased-mean",
+            "bert",
+            16.6287,
+            "110M",
+            4
+          ],
+          [
+            6,
+            "zomba/fsg-net",
+            "unknown",
+            16.4704,
+            "—",
+            0
+          ],
+          [
+            7,
+            "samerzaher80/aethermind-srl",
+            "unknown",
+            16.2671,
+            "—",
+            0
+          ],
+          [
+            8,
+            "dqubit/frida-f16",
+            "unknown",
+            16.2071,
+            "—",
+            8
+          ],
+          [
+            9,
+            "bullerwins/mistral-large-instruct-2407-exl2-5-5bpw",
+            "mistral",
+            15.6878,
+            "—",
+            0
+          ],
+          [
+            10,
+            "gladiator/microsoft-deberta-v3-large-ner-wnut-17",
+            "microsoft",
+            15.626,
+            "—",
+            0
+          ]
+        ],
+        "exact_dataset_verified": 0,
+        "exact_dataset_near_optimal": 0,
+        "strict_compatible": 3,
+        "known_off_task": 7,
+        "strict_compatible_ranks": [
+          3,
+          5,
+          8
+        ],
+        "known_off_task_ranks": [
+          1,
+          2,
+          4,
+          6,
+          7,
+          9,
+          10
+        ],
+        "notes": "Three sentence-embedding models are strict clustering matches; the remaining seven cross task or modality boundaries."
+      }
+    },
+    {
+      "task_family": "Bitext mining",
+      "dataset_id": 2060,
+      "dataset": "MTEB Tatoeba (ast-eng)",
+      "dataset_node": "MTEB Tatoeba (ast-eng)␟BitextMining",
+      "task_type": "BitextMining",
+      "metric": "f1",
+      "description": "MTEB Tatoeba (ast-eng) is a bilingual subset of the Massive Text Embedding Benchmark consisting of short parallel sentences in Asturian and English from the Tatoeba corpus. It is used to evaluate multilingual and cross-lingual sentence embeddings on retrieval and similarity tasks, assessing models’ ability to match semantically equivalent sentences across Asturian and English. The dataset’s varied, casual-language sentences provide a lightweight, real-world benchmark for zero-shot transfer and cross-lingual retrieval performance.",
+      "labeled_candidates": 103,
+      "observed_optimum": 0.8976377844810486,
+      "model_lake_verified@10": 10,
+      "model_lake_near_optimal@10": 10,
+      "model_lake_top10": [
+        {
+          "rank": 1,
+          "model": "jyje/multilingual-e5-large-instruct-q4-k-m-gguf",
+          "observed_value": 0.8976377844810486,
+          "mips": 0.9016455242895932
+        },
+        {
+          "rank": 2,
+          "model": "mestruck/multilingual-e5-large-instruct-gguf",
+          "observed_value": 0.8976377844810486,
+          "mips": 0.8923177392471054
+        },
+        {
+          "rank": 3,
+          "model": "jhjhjhjhj/multilingual-e5-large-instruct-q5-k-m-gguf",
+          "observed_value": 0.8976377844810486,
+          "mips": 0.8915499547388614
+        },
+        {
+          "rank": 4,
+          "model": "intfloat/multilingual-e5-large-instruct",
+          "observed_value": 0.8976377844810486,
+          "mips": 0.8849145703884065
+        },
+        {
+          "rank": 5,
+          "model": "yixuan-chia/multilingual-e5-large-instruct-gguf",
+          "observed_value": 0.8976377844810486,
+          "mips": 0.8845756177669756
+        },
+        {
+          "rank": 6,
+          "model": "coolsoon/multilingual-e5-large-instruct-q4-k-m-gguf",
+          "observed_value": 0.8976377844810486,
+          "mips": 0.8825811153925218
+        },
+        {
+          "rank": 7,
+          "model": "nextcloud-ai/multilingual-e5-large-instruct",
+          "observed_value": 0.8976377844810486,
+          "mips": 0.8767634766382705
+        },
+        {
+          "rank": 8,
+          "model": "impulse2000/multilingual-e5-large-instruct-gguf",
+          "observed_value": 0.8976377844810486,
+          "mips": 0.876759802053052
+        },
+        {
+          "rank": 9,
+          "model": "sangyup/multilingual-e5-local-copy",
+          "observed_value": 0.8976377844810486,
+          "mips": 0.8708801376106283
+        },
+        {
+          "rank": 10,
+          "model": "paramedik/multilingual-e5-large-instruct-q8-0-gguf",
+          "observed_value": 0.8976377844810486,
+          "mips": 0.8616310764410727
+        }
+      ],
+      "modellens_public_demo": {
+        "run_timestamp": "2026-07-28, user-supplied public-demo run",
+        "rows": [
+          [
+            1,
+            "prashrex/santacoder-gguf",
+            "code",
+            26.5994,
+            "—",
+            7
+          ],
+          [
+            2,
+            "bullerwins/mistral-large-instruct-2407-exl2-5-5bpw",
+            "mistral",
+            24.7908,
+            "—",
+            0
+          ],
+          [
+            3,
+            "sangyup/multilingual-e5-local-copy",
+            "e5",
+            24.0183,
+            "—",
+            32
+          ],
+          [
+            4,
+            "lonestriker/skywork-13b-spicyboros-3-1-5-0bpw-h6-exl2",
+            "unknown",
+            23.7332,
+            "—",
+            0
+          ],
+          [
+            5,
+            "yixuan-chia/multilingual-e5-large-instruct-gguf",
+            "e5",
+            23.0811,
+            "—",
+            6
+          ],
+          [
+            6,
+            "yoeven/multilingual-e5-large-instruct-q3-k-s-gguf",
+            "e5",
+            22.771,
+            "—",
+            0
+          ],
+          [
+            7,
+            "yoeven/multilingual-e5-large-instruct-q5-k-m-gguf",
+            "e5",
+            22.5407,
+            "—",
+            0
+          ],
+          [
+            8,
+            "bighuggyd/mistralai-mistral-large-instruct-2407-exl2-4-0bpw-h8",
+            "mistral",
+            22.2402,
+            "—",
+            0
+          ],
+          [
+            9,
+            "onelevelstudio/ml-e5-0-6b-instruct",
+            "e5",
+            22.1457,
+            "—",
+            0
+          ]
+        ],
+        "exact_dataset_verified": 5,
+        "exact_dataset_near_optimal": 5,
+        "verified_values": {
+          "sangyup/multilingual-e5-local-copy": 0.897638,
+          "yixuan-chia/multilingual-e5-large-instruct-gguf": 0.897638,
+          "yoeven/multilingual-e5-large-instruct-q3-k-s-gguf": 0.897638,
+          "yoeven/multilingual-e5-large-instruct-q5-k-m-gguf": 0.897638,
+          "onelevelstudio/ml-e5-0-6b-instruct": 0.897638
+        },
+        "strict_compatible": 5,
+        "known_off_task": 4,
+        "strict_compatible_ranks": [
+          3,
+          5,
+          6,
+          7,
+          9
+        ],
+        "known_off_task_ranks": [
+          1,
+          2,
+          4,
+          8
+        ],
+        "notes": "This is the genuine ModelLens success case: five multilingual E5 variants have exact, observed-optimal Tatoeba results. The pasted primary table contains nine rows."
+      }
+    },
+    {
+      "task_family": "Question answering / reasoning",
+      "dataset_id": 2615,
+      "dataset": "bbh_reasoning_about_colored_objects",
+      "dataset_node": "bbh_reasoning_about_colored_objects␟Question Answering",
+      "task_type": "Question Answering",
+      "metric": "accuracy_norm",
+      "description": "Big Bench Hard (BBH) is a collection of challenging reasoning tasks for large language models across domains such as language understanding, mathematical reasoning, and commonsense/world knowledge.\n\nThis is a subset on Multi-attribute reasoning involving colors and shapes.",
+      "labeled_candidates": 3491,
+      "observed_optimum": 0.9079999923706055,
+      "model_lake_verified@10": 10,
+      "model_lake_near_optimal@10": 0,
+      "model_lake_top10": [
+        {
+          "rank": 1,
+          "model": "hermes-3-llama-3-1-70b-lorablated",
+          "observed_value": 0.7459999918937683,
+          "mips": 0.9336202364851789
+        },
+        {
+          "rank": 2,
+          "model": "euphrates-14b",
+          "observed_value": 0.7239999771118164,
+          "mips": 0.9275461659132886
+        },
+        {
+          "rank": 3,
+          "model": "llama-3-1-nemotron-lorablated-70b",
+          "observed_value": 0.8080000281333923,
+          "mips": 0.9257427328457142
+        },
+        {
+          "rank": 4,
+          "model": "meta-llama-3-70b",
+          "observed_value": 0.6600000262260437,
+          "mips": 0.9255022430713388
+        },
+        {
+          "rank": 5,
+          "model": "llama-3-70b-orpo-v0-1",
+          "observed_value": 0.527999997138977,
+          "mips": 0.9251371842595502
+        },
+        {
+          "rank": 6,
+          "model": "thebeagle-v2beta-32b-mgs",
+          "observed_value": 0.8834285736083984,
+          "mips": 0.9234004883824403
+        },
+        {
+          "rank": 7,
+          "model": "higgs-llama-3-70b",
+          "observed_value": 0.8159999847412109,
+          "mips": 0.9230539683788084
+        },
+        {
+          "rank": 8,
+          "model": "brinebreath-llama-3-1-70b",
+          "observed_value": 0.843999981880188,
+          "mips": 0.9211346513097285
+        },
+        {
+          "rank": 9,
+          "model": "progenitor-v1-1-llama-70b",
+          "observed_value": 0.7639999985694885,
+          "mips": 0.920573439108585
+        },
+        {
+          "rank": 10,
+          "model": "internlm2-5-20b-llamafied",
+          "observed_value": 0.8159999847412109,
+          "mips": 0.9199115661499395
+        }
+      ],
+      "modellens_public_demo": {
+        "run_timestamp": "2026-07-28, user-supplied public-demo run",
+        "rows": [
+          [
+            1,
+            "sncffcns/llm-jp-3-13b-it-20241127-lora",
+            "llm",
+            20.4711,
+            "—",
+            0
+          ],
+          [
+            2,
+            "dqubit/frida-f16",
+            "unknown",
+            20.4181,
+            "—",
+            8
+          ],
+          [
+            3,
+            "zai-org/glm-4-7",
+            "glm",
+            20.3069,
+            "—",
+            0
+          ],
+          [
+            4,
+            "lonestriker/skywork-13b-spicyboros-3-1-5-0bpw-h6-exl2",
+            "unknown",
+            19.7895,
+            "—",
+            0
+          ],
+          [
+            5,
+            "samerzaher80/aethermind-srl",
+            "unknown",
+            16.9927,
+            "—",
+            0
+          ],
+          [
+            6,
+            "zomba/fsg-net",
+            "unknown",
+            16.9235,
+            "—",
+            0
+          ],
+          [
+            7,
+            "devcamilosepulveda/333-qwen3sp-clover-usergrid",
+            "qwen",
+            16.6432,
+            "—",
+            1
+          ],
+          [
+            8,
+            "bullerwins/mistral-large-instruct-2407-exl2-5-5bpw",
+            "mistral",
+            16.3332,
+            "—",
+            0
+          ],
+          [
+            9,
+            "deepset/flan-t5-xl-squad2",
+            "flan",
+            16.1514,
+            "3.0B",
+            11
+          ],
+          [
+            10,
+            "devcamilosepulveda/3-qwen3sp-datamanagement",
+            "qwen",
+            16.1196,
+            "—",
+            0
+          ]
+        ],
+        "exact_dataset_verified": 0,
+        "exact_dataset_near_optimal": 0,
+        "strict_compatible": 5,
+        "known_off_task": 4,
+        "strict_compatible_ranks": [
+          1,
+          3,
+          4,
+          8,
+          9
+        ],
+        "known_off_task_ranks": [
+          5,
+          6,
+          7,
+          10
+        ],
+        "notes": "Several generative models are task-capable, but none has an exact result for this BBH query; four candidates are clearly task or language mismatches."
+      }
+    },
+    {
+      "task_family": "Multimodal VQA",
+      "dataset_id": 2460,
+      "dataset": "TextVQA",
+      "dataset_node": "TextVQA␟multimodal",
+      "task_type": "multimodal",
+      "metric": "accuracy",
+      "description": "TextVQA is a dataset to benchmark visual reasoning based on text in images. TextVQA requires models to read and reason about text in images to answer questions about them. Specifically, models need to incorporate a new modality of text present in the images and reason over it to answer TextVQA questions. Statistics * 28,408 images from OpenImages * 45,336 questions * 453,360 ground truth answers",
+      "labeled_candidates": 36,
+      "observed_optimum": 0.8140000104904175,
+      "model_lake_verified@10": 4,
+      "model_lake_near_optimal@10": 3,
+      "model_lake_top10": [
+        {
+          "rank": 1,
+          "model": "gemini-1-5-pro",
+          "observed_value": null,
+          "mips": 0.9682229056765073
+        },
+        {
+          "rank": 2,
+          "model": "emova-ollm/emova-qwen-2-5-72b",
+          "observed_value": 0.8140000104904175,
+          "mips": 0.9594084445089057
+        },
+        {
+          "rank": 3,
+          "model": "emova-72b",
+          "observed_value": 0.8140000104904175,
+          "mips": 0.9580777910350395
+        },
+        {
+          "rank": 4,
+          "model": "emova-ollm/emova-qwen-2-5-72b-hf",
+          "observed_value": 0.8140000104904175,
+          "mips": 0.9516255584476674
+        },
+        {
+          "rank": 5,
+          "model": "lmms-lab/llava-onevision-qwen2-72b-si",
+          "observed_value": null,
+          "mips": 0.9349924733459534
+        },
+        {
+          "rank": 6,
+          "model": "baichuan-omni",
+          "observed_value": 0.7429999709129333,
+          "mips": 0.9262695208405918
+        },
+        {
+          "rank": 7,
+          "model": "gemini-2-5-pro",
+          "observed_value": null,
+          "mips": 0.9230877953569465
+        },
+        {
+          "rank": 8,
+          "model": "claude3-5-sonnet",
+          "observed_value": null,
+          "mips": 0.907313416704662
+        },
+        {
+          "rank": 9,
+          "model": "lmms-lab/llava-video-72b-qwen2",
+          "observed_value": null,
+          "mips": 0.9014107359467588
+        },
+        {
+          "rank": 10,
+          "model": "wangkanai/qwen2-5-vl-32b-instruct",
+          "observed_value": null,
+          "mips": 0.8996651199869689
+        }
+      ],
+      "modellens_public_demo": {
+        "run_timestamp": "2026-07-28, user-supplied public-demo run",
+        "rows": [
+          [
+            1,
+            "pcuenq/mobileclip-b-lt",
+            "clip",
+            7.8389,
+            "—",
+            33
+          ],
+          [
+            2,
+            "pali-3-w/-ocr",
+            "pali",
+            7.2695,
+            "—",
+            0
+          ],
+          [
+            3,
+            "sophosympatheia/aurora-nights-70b-v1-0",
+            "aurora",
+            7.0491,
+            "—",
+            0
+          ],
+          [
+            4,
+            "line-corporation/clip-japanese-base",
+            "clip",
+            6.9944,
+            "—",
+            21092
+          ],
+          [
+            5,
+            "umg-clip-l/14",
+            "clip",
+            6.9933,
+            "300M",
+            0
+          ],
+          [
+            6,
+            "suko/janus",
+            "janus",
+            6.9701,
+            "—",
+            0
+          ],
+          [
+            7,
+            "bbbbchan/llava-scissor-baseline-7b",
+            "llava",
+            6.9667,
+            "7.0B",
+            11
+          ],
+          [
+            8,
+            "line-corporation/clip-japanese-base-v2",
+            "clip",
+            6.8335,
+            "200M",
+            13741
+          ],
+          [
+            9,
+            "blip-vit/l-129m",
+            "blip",
+            6.7959,
+            "—",
+            0
+          ],
+          [
+            10,
+            "rutenl/mobileclip2-s4-openclip-onnx",
+            "clip",
+            6.7695,
+            "—",
+            0
+          ]
+        ],
+        "exact_dataset_verified": 0,
+        "exact_dataset_near_optimal": 0,
+        "strict_compatible": 3,
+        "known_off_task": 6,
+        "strict_compatible_ranks": [
+          2,
+          6,
+          7
+        ],
+        "known_off_task_ranks": [
+          1,
+          3,
+          4,
+          5,
+          8,
+          10
+        ],
+        "notes": "Pali, Janus, and LLaVA are strict VQA-capable matches. Retrieval-only CLIP encoders cannot directly answer TextVQA questions."
+      }
+    },
+    {
+      "task_family": "Machine translation",
+      "dataset_id": 2778,
+      "dataset": "news-test2008",
+      "dataset_node": "news-test2008␟Translation deu-eng",
+      "task_type": "Translation deu-eng",
+      "metric": "bleu",
+      "description": "news-test2008 is a standard WMT evaluation set consisting of newswire sentences from 2008 paired with human reference translations for common MT language pairs (e.g., English↔German, English↔French). It serves as a held-out test set for benchmarking machine translation systems, enabling standardized evaluation with metrics like BLEU and chrF. The dataset reflects the formal news domain and is used to assess model generalization and translation quality on contemporary news-style text rather than for model training.",
+      "labeled_candidates": 8,
+      "observed_optimum": 0.2720000147819519,
+      "model_lake_verified@10": 7,
+      "model_lake_near_optimal@10": 4,
+      "model_lake_top10": [
+        {
+          "rank": 1,
+          "model": "helsinki-nlp/opus-mt-tc-big-en-fr",
+          "observed_value": null,
+          "mips": 0.9228708670407187
+        },
+        {
+          "rank": 2,
+          "model": "helsinki-nlp/opus-mt-tc-big-fr-en",
+          "observed_value": null,
+          "mips": 0.9164809258742695
+        },
+        {
+          "rank": 3,
+          "model": "helsinki-nlp/opus-mt-tc-bible-big-deu-eng-fra-por-spa-gmw",
+          "observed_value": 0.26899999380111694,
+          "mips": 0.912017469745549
+        },
+        {
+          "rank": 4,
+          "model": "helsinki-nlp/opus-mt-tc-big-de-es",
+          "observed_value": null,
+          "mips": 0.8898465407090328
+        },
+        {
+          "rank": 5,
+          "model": "helsinki-nlp/opus-mt-tc-bible-big-gmw-deu-eng-fra-por-spa",
+          "observed_value": 0.27000001072883606,
+          "mips": 0.8692023427714424
+        },
+        {
+          "rank": 6,
+          "model": "helsinki-nlp/opus-mt-tc-big-gmw-gmw",
+          "observed_value": 0.2720000147819519,
+          "mips": 0.8577924372585858
+        },
+        {
+          "rank": 7,
+          "model": "helsinki-nlp/opus-mt-tc-bible-big-deu-eng-fra-por-spa-ine",
+          "observed_value": 0.25600001215934753,
+          "mips": 0.8349104505817508
+        },
+        {
+          "rank": 8,
+          "model": "helsinki-nlp/opus-mt-tc-base-gmw-gmw",
+          "observed_value": 0.23800000548362732,
+          "mips": 0.8277930382491976
+        },
+        {
+          "rank": 9,
+          "model": "helsinki-nlp/opus-mt-tc-bible-big-gem-deu-eng-fra-por-spa",
+          "observed_value": 0.26899999380111694,
+          "mips": 0.8230661826674968
+        },
+        {
+          "rank": 10,
+          "model": "helsinki-nlp/opus-mt-tc-bible-big-ine-deu-eng-fra-por-spa",
+          "observed_value": 0.2619999945163727,
+          "mips": 0.8110328355862628
+        }
+      ],
+      "modellens_public_demo": {
+        "run_timestamp": "2026-07-28, user-supplied public-demo run",
+        "rows": [
+          [
+            1,
+            "sncffcns/llm-jp-3-13b-it-20241127-lora",
+            "llm",
+            29.2083,
+            "—",
+            0
+          ],
+          [
+            2,
+            "lonestriker/skywork-13b-spicyboros-3-1-5-0bpw-h6-exl2",
+            "unknown",
+            25.8197,
+            "—",
+            0
+          ],
+          [
+            3,
+            "bullerwins/mistral-large-instruct-2407-exl2-5-5bpw",
+            "mistral",
+            22.3544,
+            "—",
+            0
+          ],
+          [
+            4,
+            "prashrex/santacoder-gguf",
+            "code",
+            21.3889,
+            "—",
+            7
+          ],
+          [
+            5,
+            "lonestriker/skywork-13b-airo-claude-pippa-puffin-6-0bpw-h6-exl2",
+            "claude",
+            19.2768,
+            "—",
+            0
+          ],
+          [
+            6,
+            "blemond/0910a",
+            "unknown",
+            19.2444,
+            "—",
+            0
+          ],
+          [
+            7,
+            "bighuggyd/mistralai-mistral-large-instruct-2407-exl2-4-0bpw-h8",
+            "mistral",
+            19.1247,
+            "—",
+            0
+          ],
+          [
+            8,
+            "wilfredomartel/bge-m3-es-legal-155k",
+            "unknown",
+            18.7388,
+            "—",
+            163
+          ],
+          [
+            9,
+            "luminainc/jina-embeddings-v3",
+            "unknown",
+            18.6452,
+            "—",
+            26
+          ],
+          [
+            10,
+            "169pi/alpie-core",
+            "unknown",
+            18.5958,
+            "—",
+            76
+          ]
+        ],
+        "exact_dataset_verified": 0,
+        "exact_dataset_near_optimal": 0,
+        "strict_compatible": 0,
+        "known_off_task": 4,
+        "strict_compatible_ranks": [],
+        "known_off_task_ranks": [
+          1,
+          4,
+          8,
+          9
+        ],
+        "notes": "No returned candidate is a confirmed German-to-English translation model; none has an exact news-test2008 result."
+      }
+    }
+  ]
+}

@@ -1,0 +1,54 @@
+{
+  "universe": 12000,
+  "n_queries": 517,
+  "overall": {
+    "ours_gold@10": 0.4158607350096712,
+    "modellens_retrained_gold@10": 0.437137330754352
+  },
+  "C1_new_model_proxy_gold_model_train_degree": {
+    "dimension": "gold model # train datasets (cold->warm)",
+    "strata": [
+      {
+        "stratum": "cold (<=2)",
+        "n": 49,
+        "ours_gold@10": 0.04081632653061224,
+        "modellens_gold@10": 0.02040816326530612
+      },
+      {
+        "stratum": "mid (3-10)",
+        "n": 72,
+        "ours_gold@10": 0.25,
+        "modellens_gold@10": 0.4583333333333333
+      },
+      {
+        "stratum": "warm (>=11)",
+        "n": 396,
+        "ours_gold@10": 0.49242424242424243,
+        "modellens_gold@10": 0.48484848484848486
+      }
+    ]
+  },
+  "C2_new_dataset_same_task_peers": {
+    "dimension": "query # same-task train datasets (root-siblings excluded by split)",
+    "strata": [
+      {
+        "stratum": "rare task (<=5)",
+        "n": 44,
+        "ours_gold@10": 0.38636363636363635,
+        "modellens_gold@10": 0.36363636363636365
+      },
+      {
+        "stratum": "mid (6-50)",
+        "n": 147,
+        "ours_gold@10": 0.564625850340136,
+        "modellens_gold@10": 0.5918367346938775
+      },
+      {
+        "stratum": "common task (>=51)",
+        "n": 326,
+        "ours_gold@10": 0.35276073619631904,
+        "modellens_gold@10": 0.3773006134969325
+      }
+    ]
+  }
+}

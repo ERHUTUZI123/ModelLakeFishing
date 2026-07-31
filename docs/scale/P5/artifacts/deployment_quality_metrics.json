@@ -1,0 +1,88 @@
+{
+  "protocol": {
+    "candidate_universe": 12000,
+    "held_out_queries": 517,
+    "k": 10,
+    "near_optimal_delta": 0.01,
+    "evaluation_target": "actual global top-10 from Model Lake and the scorer reproducible from the published ModelLens checkpoint",
+    "missing_result_policy": "unknown for semantic claims; zero only inside the explicitly named certified_utility_lower_bound@10",
+    "excluded_as_primary_metrics": [
+      "labeled-only NDCG",
+      "labeled-only Spearman/Kendall",
+      "conditional regret",
+      "retrained-surrogate pointwise calibration"
+    ]
+  },
+  "modellens_release_contract": {
+    "missing_checkpoint_keys": [
+      "dataset_desc_matrix",
+      "model_embedding.weight",
+      "model_info_encoder.tok_emb.weight",
+      "model_info_encoder.id_emb.weight"
+    ],
+    "unexpected_checkpoint_keys": [],
+    "dataset_description_available": false,
+    "dataset_id_mapping_available": false,
+    "inference_signature": "task + metric + model features; dataset description/id blind"
+  },
+  "systems": {
+    "model_lake": {
+      "top10_deployment_quality": {
+        "n_queries": 517,
+        "verified_precision@10": 0.37620889748549324,
+        "all_unverified_query_rate@10": 0.30947775628626695,
+        "certified_near_optimal_precision@10": 0.15203094777562862,
+        "no_certified_near_optimal_query_rate@10": 0.4912959381044487,
+        "certified_utility_lower_bound@10": 0.33250991358365567,
+        "exact_task_evidence@10": 0.6663442940038685,
+        "known_off_task@10": 0.332495164410058,
+        "no_exact_task_evidence@10": 0.33365570599613154,
+        "task_pure_query_rate@10": 0.4564796905222437,
+        "majority_known_off_task_query_rate@10": 0.32495164410058025,
+        "gold_miss_rate@10": 0.5841392649903288,
+        "top3_miss_rate@10": 0.46808510638297873,
+        "median_gold_rank": 21.0
+      },
+      "query_responsiveness": {
+        "unique_recommended_models@10": 766,
+        "catalog_coverage@10": 0.06383333333333334,
+        "unique_models_per_1000_slots": 148.16247582205028,
+        "unique_top10_list_fraction": 0.9245647969052224,
+        "top1_max_query_share": 0.12379110251450677,
+        "same_task_metric_query_pairs": 3014,
+        "same_task_metric_mean_jaccard@10": 0.4471597956711801,
+        "same_task_metric_identical_list_pair_rate@10": 0.0325149303251493,
+        "dataset_specificity@10": 0.5528402043288199
+      }
+    },
+    "modellens_released": {
+      "top10_deployment_quality": {
+        "n_queries": 517,
+        "verified_precision@10": 0.031721470019342356,
+        "all_unverified_query_rate@10": 0.9032882011605415,
+        "certified_near_optimal_precision@10": 0.027466150870406186,
+        "no_certified_near_optimal_query_rate@10": 0.941972920696325,
+        "certified_utility_lower_bound@10": 0.030896233248908393,
+        "exact_task_evidence@10": 0.11992263056092843,
+        "known_off_task@10": 0.7294003868471954,
+        "no_exact_task_evidence@10": 0.8800773694390716,
+        "task_pure_query_rate@10": 0.0,
+        "majority_known_off_task_query_rate@10": 0.8916827852998066,
+        "gold_miss_rate@10": 0.988394584139265,
+        "top3_miss_rate@10": 0.941972920696325,
+        "median_gold_rank": 2418.0
+      },
+      "query_responsiveness": {
+        "unique_recommended_models@10": 78,
+        "catalog_coverage@10": 0.0065,
+        "unique_models_per_1000_slots": 15.087040618955513,
+        "unique_top10_list_fraction": 0.2205029013539652,
+        "top1_max_query_share": 0.390715667311412,
+        "same_task_metric_query_pairs": 3014,
+        "same_task_metric_mean_jaccard@10": 1.0,
+        "same_task_metric_identical_list_pair_rate@10": 1.0,
+        "dataset_specificity@10": 0.0
+      }
+    }
+  }
+}
