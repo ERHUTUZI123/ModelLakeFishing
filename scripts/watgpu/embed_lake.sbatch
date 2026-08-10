@@ -34,8 +34,24 @@ RUN_DIR="${OUTPUT_ROOT}/runs/${RUN_ID}"
 mkdir -p "${RUN_DIR}/metadata" "${RUN_DIR}/stdout"
 
 cd "${PROJECT_ROOT}"
-# shellcheck disable=SC1090
-source "${ENV_ACTIVATE:?set ENV_ACTIVATE to your venv/conda activate line}"
+
+: "${ENV_SOURCE:?set ENV_SOURCE to the stored Python environment}"
+
+# $HOME is mounted noexec on WATGPU. Stage compiled Python packages onto the
+# compute node's executable local filesystem for this job.
+MLF_JOB_TMP=$(mktemp -d "/tmp/mlf-${USER}-${SLURM_JOB_ID}.XXXXXX")
+trap 'rm -rf -- "${MLF_JOB_TMP}"' EXIT
+
+echo "[env] staging ${ENV_SOURCE} -> ${MLF_JOB_TMP}/mlf"
+time cp -a "${ENV_SOURCE}" "${MLF_JOB_TMP}/mlf"
+
+export VIRTUAL_ENV="${MLF_JOB_TMP}/mlf"
+export PATH="${VIRTUAL_ENV}/bin:${PATH}"
+unset PYTHONHOME
+hash -r
+
+echo "[env] python=$(which python)"
+python --version
 
 {
   echo "UTC_TIME=$(date -u --iso-8601=seconds)"
