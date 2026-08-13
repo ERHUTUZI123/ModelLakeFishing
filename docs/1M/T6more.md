@@ -4,9 +4,10 @@
 
 **一句话：训练本身合格，六个 run 的机制门都是真的过了；卡住 T7 的不是训练，是三条证据链。**
 
-> **执行状态（2026-08-13）**：本地能做的 **9 项全部完成并已验证**（§2）；
-> 需要 watGPU 的 **3 项仍然阻塞**（§3）——本机 SSH 走不通（`x98liu@watgpu.cs.uwaterloo.ca: Permission denied (publickey)`，
-> 私钥按 `100kplan.md` §4.2 设了 passphrase，非交互会话无法解锁）。§3 是一段可直接粘贴的命令。
+> **执行状态（2026-08-13，远端已执行）**：`§3.1` 与 `§3.2` **两条阻塞已全部闭合**，
+> 本地 9 项早先已完成（§2）。`§3.3` 的 vocab 已在远端产出并逐位对上，
+> **12K 的两个 seed 已提交、在排队**（`Reason=Priority`，watgpu808 两张 GPU 满，预约起跑 `19:28:55`）。
+> 唯一新增的红旗是 **§1.8：远端正式图的血缘 `relation_id` 全是 `unknown`**——需要你定一次。
 > 所有已确定的数字与指纹在 **§1 指纹台账**，那一节是本篇给后续阶段的主要交付。
 
 ---
@@ -15,18 +16,19 @@
 
 | # | 项 | 状态 | 在哪看 |
 |---|---|---|---|
-| P1-1 | 100K 图的 T5 门禁留痕 | 🔴 **阻塞（需 watGPU）** | §3.1 |
-| P1-2 ① | 远端 as-run 代码与本地对账 | 🔴 **阻塞（需 watGPU）** | §3.2 |
+| P1-1 | 100K 图的 T5 门禁留痕 | ✅ **已闭合**：sha 对上，33/33 门全过 | §3.1 |
+| P1-2 ① | 远端 as-run 代码与本地对账 | ✅ **已闭合**：3 处异常全部归因，均无害 | §3.2 |
 | P1-2 ② | 提交 T6 源码树 | ✅ 完成 `3992d67` | §2.1 |
 | P1-2 ③ | 修 `_git()` 的 cwd + 回归测试 | ✅ 完成，7 个新测试 | §2.2 |
 | P1-3a | seed 语义定案 | ✅ **已查清并登记 D-43** | §2.3 |
-| P1-3b | 12K 补 seed 1/2 | 🔴 **阻塞（需 watGPU）** | §3.3 |
-| P2-1 | 12k/30k 的 `family_vocab.csv` | ✅ 完成，已生成并验证 | §2.4 |
+| P1-3b | 12K 补 seed 1/2 | 🟡 **已提交，排队中**（1510204 / 1510205） | §3.3 |
+| P2-1 | 12k/30k 的 `family_vocab.csv` | ✅ 完成，**远端产物与本地逐位相同** | §2.4 / §3.3 |
 | P2-2 | override 写进 gate report / SUMMARY | ✅ 完成，端到端验过 | §2.5 |
 | P2-3 | run 目录复用登记 | ✅ 完成 | §2.6 |
 | P2-4 | `checkpoints` 字段语义 | ✅ 完成 | §2.6 |
 | P2-5 | `--amp` 决策登记 | ✅ 完成 **D-42** | §2.7 |
-| ＋ | **新发现**：CRLF 污染 vocab 指纹 | ✅ 已修 + 已加 `.gitattributes` | §2.4 |
+| ＋ | **新发现 1**：CRLF 污染 vocab 指纹 | ✅ 已修 + 已加 `.gitattributes` | §2.4 |
+| ＋ | 🔴 **新发现 2**：远端图的血缘 `relation_id` 全 `unknown` | ⏸ **待你裁定** | §1.8 |
 
 全套测试：**206 passed**（`scale1m/tests` 140 + `stage2TrainGraphSAGE/tests` 66），改动后重跑通过。
 
@@ -43,24 +45,61 @@
 |---|---|---|---|
 | 12k | `00ac2434cd8ecaa2f633bc377b25d1d5ae0a7d50cbcab88774355efc47a11d34` | `stage1BuildTransferGraph/hgraph_ml_v2_sub.pt` | ✅ **逐字节相同** |
 | 30k | `e6ae2dfeb59779f4cb0242a08bf90d6628699e90a9a648048b799d9cc7d71cda` | `stage1BuildTransferGraph/hgraph_ml_v2.pt` | ✅ **逐字节相同** |
-| 100k | `7fbc3c47ca66227c408a78e03197602f0e405bd15a2d7da77fdd10a2f8a651a0` | **只在远端** | 🔴 **未核验（P1-1）** |
+| 100k | `7fbc3c47ca66227c408a78e03197602f0e405bd15a2d7da77fdd10a2f8a651a0` | 远端 `data1m/graphs/hgraph_100k.pt` | ✅ **远端 `sha256sum` 实测相同**（2026-08-13） |
 
 > 12k/30k 这两行是**铁律 1 在这两档上的直接证据**：训练用的图与本地冻结的 CORE 图逐字节相同。
-> 100k 那一行是本篇的头号阻塞——本地那份 `hgraph_100k.pt` 是**排练件**，不是它。
+> 100k 这一行现在也闭合了：远端实测 `7fbc3c47ca66227c408a78e03197602f0e405bd15a2d7da77fdd10a2f8a651a0`，
+> 与六个 MANIFEST 绑定的值逐位一致，且这张图的 T5 门禁 33 条全过（§3.1）。
+> 远端 12k/30k 是指向 CORE 图的**软链**（`ls -la` 已确认），所以三档的图身份全部可追。
 
-### 1.2 100K 图：本地排练件 vs 远端正式件
+### 1.2 100K 图：本地排练件 vs 远端正式件（**已实测对账**）
 
-| 量 | 本地排练件（`GRAPH_REPORT_100k.json`，2026-08-10T17:51:36Z） | 远端正式件（T6 实际训练用） |
+| 量 | 本地排练件（2026-08-10T17:51:36Z） | 远端正式件（T6 实际训练用，2026-08-10T21:44:40Z） | 判定 |
+|---|---|---|---|
+| `graph_sha256` | `334153aac46d705ccab79012bdbd30402b863ac9aedee2752ca69f67d32ea004` | `7fbc3c47ca66227c408a78e03197602f0e405bd15a2d7da77fdd10a2f8a651a0` | 预期不同 ✅ |
+| `x_m_sha256` | `6e8b69245a462cd5299a10c49565784c749ab5d23d6314934557948901ba7fd3`（对照） | `d7573a020779e69c082cf686933204d5fe3261960fe4e1525f5a264596721da5`（正式） | 预期不同 ✅ |
+| `family_vocab_sha256` | `0fbf5c11d3cae2ea8254ee8ac218babe158c0c932a43c4ce002d7a64dc4aa157` 🔴 CRLF | `f40af358d64d96a2a7f7f3e2ff4e323abf1b28c8372f09ddc2e257cf36d9f31d` LF | 预期不同（换行符）✅ |
+| `core_graph_sha256` | `e6ae2dfeb59779f4cb0242a08bf90d6628699e90a9a648048b799d9cc7d71cda` | **相同** | ✅ |
+| `ladder_sha256` | `ccf288aee2a3caee10b60ab8a7ee3031f44d5766e33074e4090eb35cb128b0ab` | **相同** | ✅ |
+| 边数 / 血缘拓扑 | 见 §3.1 | **逐项相同** | ✅ |
+| `lineage.relation_counts` | `finetune 10226 / quantized 4360 / adapter 1608 / unknown 115 / merge 76` | 🔴 **`unknown 16385`（全部）** | **第四处不同 → §1.8** |
+
+> ✅ **本篇写在执行之前的那条预判被实测证实了**：T5.md §8 说「**只有** `graph_sha256` 和 `x_m_sha256` 会不同」，
+> 而 `family_vocab_sha256` 也不同，原因与科学无关——纯粹是换行符（§2.4）。**这一条已从"预测"升为"实测"。**
+>
+> 🔴 **但实测同时抓出了第四处不同，而本篇定的规矩正是「第四处不同才是问题」。** 见 §1.8。
+
+### 1.8 🔴 待裁定：远端正式图的血缘 `relation_id` 全部是 `unknown`
+
+**事实。** 两份 100K 图的血缘**拓扑完全一致**——`total 16427 = core_core 42 + core_halo 606 + halo_core 0 + halo_halo 15779`，
+`n_models_with_lineage 20135`、`n_components 3709`、`largest_component 159`、
+`halo_declared_base 27672`、`halo_base_unresolved 10887`、`halo_self_loop_dropped 400`，**逐项相同**。
+唯一的差别是每条边的 `relation_id`：
+
+| | 本地排练件 | 远端正式件（T6 训练用） |
 |---|---|---|
-| `graph_sha256` | `334153aac46d705ccab79012bdbd30402b863ac9aedee2752ca69f67d32ea004` | `7fbc3c47ca66227c…` |
-| `x_m_sha256` | `6e8b69245a462cd5299a10c49565784c749ab5d23d6314934557948901ba7fd3`（对照特征） | `d7573a02…`（T5.md §8 记的正式特征） |
-| `family_vocab_sha256` | `0fbf5c11d3cae2ea8254ee8ac218babe158c0c932a43c4ce002d7a64dc4aa157` 🔴 **CRLF 污染** | `f40af358d64d96a2…`（T6 六个 run 绑定的 LF 形式） |
-| `core_graph_sha256` | `e6ae2dfeb59779f4cb0242a08bf90d6628699e90a9a648048b799d9cc7d71cda` | 应相同 |
-| `ladder_sha256` | `ccf288aee2a3caee10b60ab8a7ee3031f44d5766e33074e4090eb35cb128b0ab` | 应相同 |
+| `relation_counts` | finetune 10226 / quantized 4360 / adapter 1608 / unknown 115 / merge 76 | **unknown 16385**（+ CORE 的 42） |
 
-> 🔴 **T5.md §8 的对账清单要改一个字。** 那里写「**只有** `graph_sha256` 和 `provenance.x_m_sha256` 会不同」。
-> 实际上 **`family_vocab_sha256` 也会不同**，而且原因与科学无关——纯粹是换行符（§2.4）。
-> 不先说清楚，P1-1 回收报告时会看到第三个不一致，然后花时间查一个不存在的问题。
+**成因已查实**：远端根本没有 `hf_canon.parquet`——`$DATA_ROOT/data1m/candidates_v2/canon/` **目录不存在**。
+[`T5.md`](T5.md) §8 明确预告过这件事（「不传也能跑，代价是所有血缘边的 `relation_id` 落到 `unknown`，以后要用只能重建图」）
+并给了 `scp` 命令，那条命令没有被执行。
+
+**对已有结果的影响：无。** `relation_weights_applied` 在**两份图上都是 `false``（D-41：加权是显式开关，默认关），
+`edge_attr` 两边都是 CORE 的 1.0，边的**存在与拓扑**完全相同 ⇒ **T6 六个 run 的数字不受影响，不需要重跑**。
+
+**丢的是什么**：`r_mm'` 的离散有序权重（quantized > adapter > finetune > merge）在这张图上**没有输入**。
+那是 CLAUDE.md 点名的 novel contribution，也是 D-37 花力气从 `baseModels` 抢回 94.9% 血缘声明的目的。
+
+**两条路，请你选一条**：
+
+| | 做法 | 代价 | 后果 |
+|---|---|---|---|
+| **A（保守）** | 现在把 `hf_canon.parquet` 传上去，但**不重建 R2 的图**；R2 全程按「血缘无关系类型」如实披露，R3/R4 起用带 relation 的图 | 0 | T6/T7/T8 全部沿用现有 checkpoint；R2 报告里 `r_mm'` 只能报「边存在」不能报「按类型加权」 |
+| **B（彻底）** | 传 parquet → 重建 100K 图 → 重跑 T6 六个 run | 图 sha 变、**六个 checkpoint 作废**；但重跑很便宜（12K 93 s、100K 108 s，整条工作流 21 分钟） | R2 起就有完整的 `r_mm'` 输入；**必须在 T7 之前决定**，T7/T8 跑完再改代价成倍 |
+
+**我的建议是 B，但这取决于一件我不知道的事**：R2 的报告要不要把「血缘边按关系类型加权」作为卖点之一。
+要，就现在做——重跑成本是分钟级，而 T7/T8 之后再返工要连带重做导出、索引和三轴评测。
+不要，就选 A，并且**在 R2_EXECUTION.md 里明写这一档的血缘边没有关系类型**，别让读者以为 D-37 的成果进了这一档。
 
 ### 1.3 family_vocab（checkpoint 的身份凭据）
 
@@ -261,102 +300,112 @@ HEAD 还停在 T4 的 `b512213`。**产出那六个数字的代码一行都没�
 
 ---
 
-## 3. 仍然阻塞的（需要 watGPU）
+## 3. 远端执行记录（2026-08-13）
 
-本机 SSH 不通：`ssh x98liu@watgpu.cs.uwaterloo.ca` → `Permission denied (publickey)`。
-`~/.ssh/id_ed25519` 在，但按 `100kplan.md` §4.2 设了 passphrase，非交互会话解不开。
-下面三段按顺序粘贴即可，**中间不需要我参与**。
+SSH 经 Windows ssh-agent 打通（Git Bash 的 ssh 走不到 Windows 的 agent，必须用
+`C:\Windows\System32\OpenSSH\ssh.exe`；这一条留给下次）。执行顺序严格按 §3.1 → §3.2 → §3.3，
+**`/tmp/remote_code.sha256` 在任何 `git pull` 之前生成**。
 
-### 3.1 P1-1　100K 图的 T5 门禁留痕　🔴 头号阻塞
+### 3.1 P1-1　100K 图的 T5 门禁留痕　✅ **已闭合**
 
-```bash
-source ~/.mlf_env
-cd "$PROJECT_ROOT"
+三份 T5 报告**本来就在远端** `$DATA_ROOT/data1m/graphs/`（`GRAPH_REPORT_100k.json` /
+`T5_GATES_100k.json` / `lineage_stats.json`，均为 2026-08-10 21:44 建图时产出），
+所以**没有重跑 `verify_rung_graph`，更没有碰 `build_graph_rung`**——直接回收比对即可。
 
-# ① 图本体的指纹必须是这个值
-sha256sum "$DATA_ROOT/data1m/graphs/hgraph_100k.pt"
-#   期望 7fbc3c47ca66227c408a78e03197602f0e405bd15a2d7da77fdd10a2f8a651a0
+| 检查 | 结果 |
+|---|---|
+| `sha256sum hgraph_100k.pt` | ✅ `7fbc3c47ca66227c408a78e03197602f0e405bd15a2d7da77fdd10a2f8a651a0`（223,352,080 字节） |
+| `T5_GATES_100k.json` | ✅ `passed: true`，**33 条 checks 逐条 `ok: true`** |
+| G-B1 铁律 1 | ✅ `model.x[:30183] byte-identical to CORE`、`size_bucket_id/family_id/unique_model_id prefix identical`、`dataset.x untouched`、`trained_on edge_index+attr identical to CORE` |
+| G-B2 契约 | ✅ `check_stage2_contract passed` |
+| G-B3 划分 | ✅ `test-edge set identical to CORE's`，**65,968 边**，sha `66c81823cb731063614529c73ab142471989858d2a20fadbd537087b8177dcd3`（`rung_sha256 == core_sha256`） |
+| 边数 | ✅ `trained_on 312986 / rev 312986 / similar_to 192060 / is_base_of 16427 / rev 16427` |
+| 家族表 | ✅ `family_vocab only grew (341 -> 1896)`、`no CORE family row moved`、`ids contiguous 0..1895` |
+| 血缘拓扑 | ✅ `16427 = 42 + 606 + 0 + 15779`，与本地排练件逐项相同 |
 
-# ② 三份 T5 报告在不在
-ls -la "$DATA_ROOT/data1m/graphs/"
+**三处预期不同全部对上**（§1.2），**但抓到了第四处**——血缘 `relation_id` 全 `unknown`，
+这正是本篇立的规矩要拦的东西，已单列为 **§1.8 待裁定**。
 
-# ③ 不在就地重验（不重建！）
-srun --cpus-per-task=4 --mem=32G --time=00:30:00 \
-  python -m scale1m.verify_rung_graph \
-    --rung 100k \
-    --graph "$DATA_ROOT/data1m/graphs/hgraph_100k.pt" \
-    --core  "$PROJECT_ROOT/stage1BuildTransferGraph/hgraph_ml_v2.pt" \
-    --out   "$DATA_ROOT/data1m/graphs/T5_GATES_100k_verify.json"
+远端回收到本地：`D:\research\model_lake\data\runs\T6more_20260813\t5_remote\`
+
+```text
+1450a4d5cc40c258a120ff5bbd704af43c268b7ddfd1bd51c077135fe15ea591  GRAPH_REPORT_100k.json
+b3bc1a42f680aeca5f8a1e27480b0018c1b65c7d424683d71e625d7014ab8b86  T5_GATES_100k.json
+74730705f960f0917e9b7e51368f4f191cafac56d48a03c16b774c6ce75cdfc7  lineage_stats.json
 ```
 
-> 🔴 **绝对不许跑 `build_graph_rung`。** 重建会产生一张新的 `hgraph_100k.pt`，
-> 六个 checkpoint 的 `binding.graph_sha256` 当场全部作废，T6 要重跑。
-> [`verify_rung_graph.py`](../../scale1m/verify_rung_graph.py) 吃 `--graph`、**只验不建**，
-> 覆盖的正是 G-B1（铁律 1 的字节断言）、G-B2（`check_stage2_contract`）、G-B3（`test_edge_sha` 与 CORE 对拍）。
+### 3.2 P1-2 ①　远端 as-run 代码对账　✅ **已闭合**
 
-**对账清单**（`T5.md` §8 的那份，加上本篇查出来的一条修正）：
+`/tmp/remote_code.sha256`：**111 个文件**，自身 sha `e241998d8f9aa8e638205483d6c0452e34bb29900a0656e8355b1b6531850ec5`。
+远端 `HEAD = b512213`（与 T6 当时一致），工作树 8 个 modified + 一堆 untracked，与预期相符。
 
-- [ ] `graph_sha256` == `7fbc3c47ca66227c…`
-- [ ] 33 条门逐条 true，`passed == true`
-- [ ] test 边 sha == `66c81823cb731063…`
-- [ ] `trained_on 312986 / similar_to 192060 / is_base_of 16427`
-- [ ] `lineage 16427 = core_core 42 + core_halo 606 + halo_halo 15779`
-- [ ] `family_vocab 1896`（与六份 MANIFEST 的 `binding.num_families` 一致）
-- [ ] 🔴 **预期会有三处不同，不是两处**：`graph_sha256`（`334153aa` vs `7fbc3c47`）、
-      `x_m_sha256`（`6e8b6924` vs `d7573a02`）、**`family_vocab_sha256`（`0fbf5c11` vs `f40af358`，纯 CRLF/LF 之差，见 §2.4）**。
-      **第四处不同才是问题。**
+对账结果：**105 个文件逐字节相同**，差异分三类，**全部归因、全部无害**：
 
-### 3.2 P1-2 ①　远端 as-run 代码对账
+| 类 | 文件 | 判定 |
+|---|---|---|
+| **预期**（本篇改的 5 个） | `train_rung.py`、`validate_t6_run.py`、`train_rung.sbatch`、`t6_gate_and_advance.sbatch`、`t6_summary.sbatch` | ✅ 与 `3992d67` 提交信息一致 |
+| **预期**（本篇新增 2 个） | `dump_family_vocab.py`、`tests/test_run_metadata.py` | ✅ 仅本地有 |
+| ⚠️ **意外 1** | `scale1m/tests/test_validate_t6_run.py`、`stage2TrainGraphSAGE/tests/test_t0_scale.py` 仅本地有 | 远端从来没同步过这两个**测试**文件；作业不跑 pytest ⇒ **不在运行路径** |
+| ⚠️ **意外 2** | `stage2TrainGraphSAGE/w1_dzero.py` 字节不同 | **纯换行符**：本地去掉 `\r` 后 sha = `d75e5c58d01167379c4d9339c628e3969b0385b7a05c9f455b859e4246fad9d4` = 远端原值。且 AST 可达性分析确认：从 `train_rung.py` 出发可达 24 个模块，**`w1_dzero` 不在其中**（`s2_sibling`/`p0_oracles`/`p2b_task` 也都不可达） |
+| ⚠️ **意外 3** | 远端 `git status` 说 `scale1m/hf_crawl.py` 被改过，本地没有 | `git diff` 是 **751 增 / 751 删**（全文件 751 行）= 纯换行符churn；两边**工作副本字节完全相同**（都在那 105 个里） |
 
-```bash
-cd "$PROJECT_ROOT"
-find scale1m scripts/watgpu stage2TrainGraphSAGE scale -type f \
-  \( -name '*.py' -o -name '*.sbatch' -o -name '*.sh' \) \
-  -not -path '*/__pycache__/*' | sort | xargs sha256sum > /tmp/remote_code.sha256
-wc -l /tmp/remote_code.sha256      # 应为 115 行（本地清单是 115 行 + 3 行注释头）
+**⇒ 结论：T6 训练路径上的每一个文件，要么与本地逐字节相同，要么是本篇跑完之后才改的。as-run 对账通过。**
+两条意外都是同一个 CRLF/LF 病灶（§2.4）的新病例，坐实了 `.gitattributes` 那个修复的必要性。
+
+> 副产品：远端 `origin` 其实是一个**本地 bundle 文件**（`codes/./r2-100k.bundle`），不是网络仓库。
+> 所以「同步代码」= 生成 bundle → `scp` → 从 bundle `fetch`，全程在自己账号内，不涉及任何对外推送。
+
+**同步过程（全部可逆）**：
+1. 先把远端整棵源码树打包备份：`~/t6_asrun_source_20260813T164558Z.tgz`（21,468,142 字节，
+   sha `719e1e802957ecf9e3cc4aa905c55d113fed60e88bd01473a0b31e5a0a6d5b9c`）
+2. 本地增量 bundle `b512213..r2-100k` → `t6more.bundle`（331,389 字节，
+   sha `1e1db4ed77044b2fed3b35b8a675fe3c1243f4320f03e12ca7063149b6faea14`，传输后远端复算一致）
+3. 删除会被合并覆盖的 untracked 副本（备份已在第 1 步），`git checkout -- .` 清掉换行符改动
+4. `git merge --ff-only` ⇒ **`b512213` → `304e11b`**，71 files changed，工作树干净（只剩 `logs/` 等生成物）
+
+### 3.3 P1-3b　vocab 已产出 ✅ ／ 12K 两个 seed 已提交 🟡 排队中
+
+**vocab（作业 `1510203`，`COMPLETED`）**——因为 `$HOME` 是 noexec，dump 必须在计算节点跑，
+所以走了一个 4 CPU / 32 G 的小作业，env 从 `/dev/shm` 暂存：
+
+```text
+12k  graph 00ac2434…  rows 341  sha256 d4e6b6823edcc5b76f797479ceaf27aec0ead552cac18bcc5f60012b0935ec54
+30k  graph e6ae2dfe…  rows 341  sha256 d4e6b6823edcc5b76f797479ceaf27aec0ead552cac18bcc5f60012b0935ec54
 ```
 
-拿回本地后与 [`T6more_runs/local_code.sha256`](T6more_runs/local_code.sha256) 比对
-（本地清单自身 sha `c482bdaa1908fcbd…`，对应提交 `3992d67`）：
+🔑 **远端（Linux）产出的两份文件与本地（Windows）产出的 sha 逐位相同**，均为 3,686 字节。
+这验证了 [`dump_family_vocab.py`](../../scale1m/dump_family_vocab.py) 里显式写 LF 的那行——
+跨平台产出同一个指纹，正是 checkpoint 绑定需要的性质。
 
-```powershell
-scp x98liu@watgpu.cs.uwaterloo.ca:/tmp/remote_code.sha256 $env:TEMP\remote_code.sha256
-```
+**两个训练作业**：
 
-**判读规则（重要）**：差异**应当恰好**是这 9 个文件——它们是 T6 跑完之后本篇改的：
+| run | JobID | 状态 |
+|---|---|---|
+| `R2_12k_s1_e25` | **1510204** | PENDING（`Reason=Priority`） |
+| `R2_12k_s2_e25` | **1510205** | PENDING（`Reason=Priority`） |
 
-```
-scale1m/train_rung.py                       scripts/watgpu/train_rung.sbatch
-scale1m/validate_t6_run.py                  scripts/watgpu/t6_gate_and_advance.sbatch
-scale1m/dump_family_vocab.py      (新)      scripts/watgpu/t6_summary.sbatch
-scale1m/tests/test_run_metadata.py (新)     (docs 不在这个清单里)
-```
+提交时带了 `--dependency=afterok:1510203` 和
+`T6_RUNTIME_ENV=/u801/x98liu/model_lake/t6_workflows/T6_20260811T174245Z/runtime.env`。
 
-**多出任何一个差异 = 远端跑的不是本地这份代码，必须查清再进 T7。**
+> 🔴 **为什么必须带 `T6_RUNTIME_ENV`**：那份持久环境里有 `pyg_lib 0.8.0+pt212cu130`，
+> 而 `~/.mlf_env` 默认的 `ENV_SOURCE` 里**没有**。少了它，`make_link_loader` 会退回纯 Python 的
+> `LightLinkLoader` ⇒ **换了采样器**，seed 1/2 与 seed 0 就不是同一个系统，噪声带白测。
 
-### 3.3 P1-3b　12K 补两个 split seed
+**为什么在排队**：`train_rung.sbatch` 钉了 `--nodelist=watgpu808`，而该节点两张 GPU 当前满载
+（`AllocTRES=gres/gpu=2` / `CfgTRES=gres/gpu=2`），Slurm 给的预约起跑时间是 **`2026-08-13T19:28:55`**。
 
-```bash
-cd "$PROJECT_ROOT"
-git pull --ff-only            # 拿到 3992d67 / f013027
+**我没有解开这个 pin，这是有意的**：seed 0 的 12K 跑在 watgpu808（H200 NVL）。
+换一张卡去跑 seed 1/2，浮点结果会带上硬件差异，而这三个 run 的**全部意义**就是隔离出划分噪声——
+把硬件噪声混进去，测出来的带宽就不是我们要的那个。作业只有 93 秒，排队 2.5 小时不浪费任何算力。
 
-# 先把 CORE 的 vocab 落到 sbatch 会找的位置（否则新版脚本会按 §2.4 直接失败）
-for r in 12k 30k; do
-  case $r in 12k) g=hgraph_ml_v2_sub.pt;; 30k) g=hgraph_ml_v2.pt;; esac
-  python -m scale1m.dump_family_vocab \
-    --graph "$PROJECT_ROOT/stage1BuildTransferGraph/$g" \
-    --out   "$DATA_ROOT/data1m/feats/$r/family_vocab.csv"
-done
-#   两次都应打印 rows 341 / sha256 d4e6b6823edcc5b7…
+**跑完要检查**（收集命令见 §6）：
 
-for s in 1 2; do
-  RUNG=12k SEED=$s EPOCHS=25 sbatch --export=ALL,RUNG,SEED,EPOCHS \
-    scripts/watgpu/train_rung.sbatch
-done
-```
-
-单次 93 秒。跑完检查两件事：
-`mechanism_gate.passed == true`，以及 **`metadata.git_head` 非空**——后者就是 §2.2 那个修复的验收。
+- [ ] `mechanism_gate.passed == true`（两个 run）
+- [ ] 🔑 `metadata.git_head == 304e11b85d7cfff69cfdbf9de3a852b32ea4c780` **非空** —— §2.2 那个修复的运行时验收
+- [ ] `metadata.git_status` 为空（树干净）⇒ 不应生成 `uncommitted.patch`
+- [ ] 🔑 `binding.family_vocab_sha256 == d4e6b682…` —— P2-1 的运行时验收
+- [ ] 新字段 `checkpoints_written` / `checkpoints_retained` / `run_dir_reused: false` 都在
+- [ ] 记下两个 run 的 `train_row.head.n_datasets`（seed 0 是 517）—— 12K 档划分噪声的第一组实测
 
 ---
 
@@ -386,29 +435,59 @@ T8 的 **G-D1（候选池真的是 100000）** 要当第一嫌疑查，铁律 3 
 
 T7 开工前逐条勾。前四条不过就别开 T7。
 
-- [ ] **G-T6b-1** 🔴 `hgraph_100k.pt` 的 sha == `7fbc3c47…`，且 T5 门禁 33 条全过、报告已回收、已回填 T5.md　→ §3.1
-- [ ] **G-T6b-2** 🔴 远端 as-run 代码对账完成，差异恰好是那 9 个文件　→ §3.2
-- [ ] **G-T6b-3** 🔴 12K 三个 split seed 的 checkpoint 齐备，机制门全过　→ §3.3
-- [ ] **G-T6b-4** 🔴 G-C2 的判据句改写为含 seed 语义的版本（**噪声带须先补测**，§1.7）
+- [x] **G-T6b-1** ✅ `hgraph_100k.pt` sha == `7fbc3c47…` 远端实测；T5 门禁 **33/33 全过**；三份报告已回收　→ §3.1
+      　　（剩一件文书工作：把 `7fbc3c47…` / `d7573a02…` 回填进 [`T5.md`](T5.md) §2/§8，并改掉「只有两处不同」那句）
+- [x] **G-T6b-2** ✅ as-run 对账完成：105 文件逐字节相同，差异全部归因且无一落在训练路径上　→ §3.2
+- [ ] **G-T6b-3** 🟡 12K 三个 split seed —— seed 1/2 已提交，预约 `19:28:55` 起跑　→ §3.3
+- [ ] **G-T6b-4** 🔴 G-C2 的判据句改写为含 seed 语义的版本（**噪声带随 G-T6b-3 first 次测出**，§1.7）
 - [x] **G-T6b-5** `_GIT_ROOT` 修复已完成并有回归测试；**运行时验证**随 §3.3 的新 run 一起完成
 - [x] **G-T6b-6** P2-1..P2-5 五条全部完成（§2.4–§2.7），另修一条 CRLF 指纹污染
 - [x] **G-T6b-7** P3 的四条观察项已写入 §4，待抄进 T7/T8 开工清单
+- [ ] **G-T6b-8** 🔴 **新增**：§1.8 的血缘 `relation_id` 走 A 还是 B，**必须在 T7 之前定**
 
 > **G-C2 本身不在这张表里。** 它要等 T7 导出 + T8 评测，`gold10_validated=false` 现在保持正确。
 > 本篇做的是**把 G-C2 判得动的前提条件补齐**——图可验、代码可追、seed 口径可比、噪声带有得测。
 
 ---
 
-## 6. 跑完发我什么
+## 6. 产物回收
 
-| # | 内容 | 对应 |
+### 6.1 已回收（`D:\research\model_lake\data\runs\T6more_20260813\`）
+
+| 文件 | sha256 | 来源 |
 |---|---|---|
-| 1 | `T5_GATES_100k*.json`（+ 若在，`GRAPH_REPORT_100k.json` / `lineage_stats.json`） | §3.1 |
-| 2 | `sha256sum $DATA_ROOT/data1m/graphs/hgraph_100k.pt` 的输出 | §3.1 |
-| 3 | `/tmp/remote_code.sha256` | §3.2 |
-| 4 | `R2_12k_s{1,2}_e25` 的 `MANIFEST.json` + `metrics/train_history.json` | §3.3 |
-| 5 | 这两个新 run 的 `metadata.git_head`（非空即是修复生效） | §3.3 |
-| 6 | 两次 `dump_family_vocab` 的输出（应为 `rows 341 / d4e6b682…`） | §3.3 |
+| `t5_remote/GRAPH_REPORT_100k.json` | `1450a4d5cc40c258a120ff5bbd704af43c268b7ddfd1bd51c077135fe15ea591` | §3.1 |
+| `t5_remote/T5_GATES_100k.json` | `b3bc1a42f680aeca5f8a1e27480b0018c1b65c7d424683d71e625d7014ab8b86` | §3.1 |
+| `t5_remote/lineage_stats.json` | `74730705f960f0917e9b7e51368f4f191cafac56d48a03c16b774c6ce75cdfc7` | §3.1 |
+| `remote_code_asrun.sha256` | `e241998d8f9aa8e638205483d6c0452e34bb29900a0656e8355b1b6531850ec5` | §3.2（111 文件） |
+| `family_vocab_core_341.csv` | `d4e6b6823edcc5b76f797479ceaf27aec0ead552cac18bcc5f60012b0935ec54` | §3.3（远端产物） |
+
+### 6.2 待作业跑完后回收（`19:28:55` 之后）
+
+```bash
+# 远端：两个 run 的小证据包
+source ~/.mlf_env
+for r in R2_12k_s1_e25 R2_12k_s2_e25; do
+  cd "$OUTPUT_ROOT/runs/$r" && tar czf ~/t6more_$r.tgz \
+    MANIFEST.json metrics metadata stdout/train.log
+done
+sacct -j 1510203,1510204,1510205 \
+  --format=JobID,JobName%22,Submit,Start,End,Elapsed,MaxRSS,AllocTRES,ExitCode
+```
+
+```powershell
+# 本地：拉回来
+scp x98liu@watgpu.cs.uwaterloo.ca:~/t6more_R2_12k_s*.tgz `
+    D:\research\model_lake\data\runs\T6more_20260813\
+```
+
+然后跑一遍门禁复验（会顺带把 override 字段写进报告）：
+
+```powershell
+.\.venv\Scripts\python.exe scale1m\validate_t6_run.py `
+  --run-dir <解包后的 run 目录> --stage 12k --expect-n 12000 --expect-epochs 25 `
+  --train-job-id 1510204 --gold-gate-override 0 --report <report.json>
+```
 
 checkpoint 照旧不下载。
 
@@ -416,7 +495,8 @@ checkpoint 照旧不下载。
 
 ## 7. 明确不做的
 
-- **不重建任何图。** §3.1 只验不建。
+- **不重建任何图。** §3.1 果然只验不建（三份报告本来就在远端，连 `verify_rung_graph` 都不必重跑）。
+  ⚠️ 这一条现在有一个**待裁定的例外**：§1.8 的 B 方案就是重建。若选 B，本条作废并另行登记。
 - **不改任何超参。** T6 的价值一半来自「配置一个字没改」，不开这个口子。
 - **不实现 `--amp`。** D-42，推到 R3/R4。
 - **不补 30K 的 seed 1/2。** G-D5 的跨档比较用 seed 0 就够。
