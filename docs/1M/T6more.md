@@ -542,24 +542,24 @@ T7 开工前逐条勾。前四条不过就别开 T7。
 | 1510213 | `R2rel_100k_s1_e25` | 新图 seed 1 |
 | 1510214 | `R2rel_100k_s2_e25` | 新图 seed 2 |
 
-```bash
-# 远端：打小证据包（checkpoint 不下载）
-source ~/.mlf_env
-for r in R2_12k_s1_e25 R2_12k_s2_e25 \
-         R2rel_100k_s0_e2 R2rel_100k_s0_e25 R2rel_100k_s1_e25 R2rel_100k_s2_e25; do
-  [ -f "$OUTPUT_ROOT/runs/$r/MANIFEST.json" ] || { echo "MISSING $r"; continue; }
-  ( cd "$OUTPUT_ROOT/runs/$r" && tar czf ~/t6more_$r.tgz \
-      MANIFEST.json metrics metadata stdout/train.log )
-done
-sacct -j 1510203,1510204,1510205,1510210,1510211,1510212,1510213,1510214 \
-  --format=JobID,JobName%22,Submit,Start,End,Elapsed,MaxRSS,AllocTRES,ExitCode
-```
+**打包这一步已经自动化了**：作业 **`1510223`**（`--dependency=afterany:` 上面全部六个）
+会在最后一个 run 落地后自动把证据收好——六个 run 的 `MANIFEST` / `metrics` / `metadata` /
+`train.log` / ckpt 清单、新旧两份 T5 报告、图与三份 vocab 的 sha、全作业 `sacct`，
+外加一份 **`DIGEST.txt`**（每个 run 一行：N / epochs / 墙钟 / 显存 / loss / 机制门 /
+graph sha / vocab sha / **git_head** / 树是否脏 / `run_dir_reused` / held-out 数据集数）。
+用 `afterany` 而不是 `afterok`，是为了让**失败也能被收走**——失败的证据比成功的更需要看。
+
+产物：`~/t6more_delivery.tgz`（+ `.sha256`）。回来之后：
 
 ```powershell
-# 本地：拉回来
-scp x98liu@watgpu.cs.uwaterloo.ca:~/t6more_*.tgz `
+# 先看一眼摘要，再决定要不要细看
+ssh x98liu@watgpu.cs.uwaterloo.ca "cat ~/t6more_delivery/DIGEST.txt"
+
+scp x98liu@watgpu.cs.uwaterloo.ca:~/t6more_delivery.tgz* `
     D:\research\model_lake\data\runs\T6more_20260813\
 ```
+
+（若要手工重跑打包：脚本在远端 `/tmp/mlf_t6more_collect.sbatch`，直接 `sbatch` 即可。）
 
 **回收后逐项核对**（前两条是本篇两个修复的运行时验收，第三条是 §3.4 的对拍）：
 
