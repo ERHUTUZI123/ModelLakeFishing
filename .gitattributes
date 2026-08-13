@@ -11,6 +11,10 @@
 #
 # *.sh / *.sbatch -- these run on Linux. A CRLF shebang line is a
 #   "bad interpreter: ^M" failure at job start, after the queue wait.
+#
+# *.sha256 -- fingerprint manifests. Their own sha256 is quoted in the docs, and
+#   the whole point of the file is that its bytes are stable.
 *.csv text eol=lf
 *.sh text eol=lf
 *.sbatch text eol=lf
+*.sha256 text eol=lf
