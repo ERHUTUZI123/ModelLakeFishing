@@ -23,7 +23,17 @@
 #SBATCH --gres=gpu:1
 #SBATCH --cpus-per-task=8
 #SBATCH --mem=96G
-#SBATCH --time=04:00:00
+# 100kplan.md 4.5 set 04:00:00 as the pre-measurement placeholder and said to
+# correct it once a real epoch had been timed. It has been: the slowest T6 run
+# was 2m44s wall including env staging (100k, 25 epochs, 3 seeds all under 3m).
+#
+# Oversizing this is not free. Slurm reserves the *requested* wall time, so at
+# 4h each, six 2-minute jobs behind one busy GPU get scheduled 4h apart -- a
+# 20-hour queue. At 00:30:00 the same six fit in a single evening.
+#
+# R3/R4 must raise this: pass --time on the sbatch command line, which
+# overrides the directive below.
+#SBATCH --time=00:30:00
 
 set -euo pipefail
 
