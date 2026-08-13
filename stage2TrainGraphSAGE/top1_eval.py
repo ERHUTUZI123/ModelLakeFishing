@@ -41,38 +41,61 @@ GOLD_KS = (1, 10, 50, 100)
 # of 0.0017, so strict gold under-counts real serving utility ~3x. This adds a
 # metric; it never moves gold@K (the goalpost stays).
 GOLD_GAP_DELTA = 0.01
+# T0 item 5: rank counting streams the score vector in blocks so the transient
+# [pool, n_probes] comparison stays bounded at 1M models too.
+_RANK_CHUNK = 1 << 20
 
 
-def five_metric_eval(z_dict, cands, *, names=None):
+def five_metric_eval(z_dict, cands, *, names=None, device=None, expect_n=None):
     """Observed + full-pool metrics from ONE z_dict.
 
     z_dict : {"model": [N,dim], "dataset": [D,dim]} embeddings (from test_data)
     cands  : {dataset_idx: (candidate_model_idx array, normalized_acc array)}
              — materialized once and shared by every configuration.
+    device : T0 item 5. None keeps the historical CPU path bit-for-bit; "cuda"
+             keeps z_m resident on the GPU and scores there. The per-query score
+             vector is reduced to ranks in place and never accumulated across
+             queries (517 x 1M x 4B = 2 GB if it were).
+    expect_n : IRON RULE 3 (100kplan §1). Assert the candidate pool really is
+             the whole lake. The classic silent bug at 100K is evaluating only
+             the 30K CORE models and reporting an unchanged gold@10.
 
     Returns per_dataset dict with the five primary metrics + audit fields
     (selected/gold ids & accuracies, global gold rank, reciprocal rank).
     """
     z_m = F.normalize(z_dict["model"], dim=-1)
     z_d = F.normalize(z_dict["dataset"], dim=-1)
+    if expect_n is not None:
+        assert z_m.shape[0] == expect_n, (
+            f"candidate pool is {z_m.shape[0]}, expected {expect_n}")
+    if device is not None:
+        z_m, z_d = z_m.to(device), z_d.to(device)
     per = {}
     for d, (cand, a) in cands.items():
-        ct = torch.as_tensor(cand, dtype=torch.long)
+        ct = torch.as_tensor(cand, dtype=torch.long, device=z_m.device)
         # observed selection: rank ONLY the held-out observed candidates
-        s_obs = (z_m[ct] @ z_d[int(d)]).numpy()
+        s_obs = (z_m[ct] @ z_d[int(d)]).cpu().numpy()
         sel = int(np.argmax(s_obs))
         max_acc = float(a.max())
         top3 = set(np.argsort(-a)[: min(3, len(a))].tolist())
         gold = int(cand[int(np.argmax(a))])
         # global survival: score EVERY indexed model with the same z_dict
-        s_all = (z_m @ z_d[int(d)]).numpy()
-        gold_rank = int((s_all > s_all[gold]).sum()) + 1     # 1-indexed, tie-safe
+        s_all_t = z_m @ z_d[int(d)]
         # v5 P4: gold-gap rank = best (lowest) global rank achieved by ANY
         # candidate whose acc is within GOLD_GAP_DELTA of the best. gold itself
         # (gap 0) is always in this set, so gap_rank <= gold_rank -> gold-gap@K
         # is a strict relaxation of gold@K. "good-enough model in top-K".
         near = cand[a >= (max_acc - GOLD_GAP_DELTA)]
-        gap_rank = int(min((s_all > s_all[int(m)]).sum() + 1 for m in near))
+        probe = torch.as_tensor(np.concatenate([[gold], np.asarray(near, dtype=np.int64)]),
+                                dtype=torch.long, device=z_m.device)
+        s_probe = s_all_t[probe]
+        counts = torch.zeros(probe.numel(), dtype=torch.long, device=z_m.device)
+        for s in range(0, s_all_t.numel(), _RANK_CHUNK):     # bounded [chunk, P]
+            counts += (s_all_t[s:s + _RANK_CHUNK].unsqueeze(1) > s_probe.unsqueeze(0)).sum(0)
+        ranks = counts.cpu().numpy() + 1
+        del s_all_t
+        gold_rank = int(ranks[0])                            # 1-indexed, tie-safe
+        gap_rank = int(ranks.min())
         rec = {
             "n_candidates": int(cand.size),
             "observed_hit1": float(a[sel] == max_acc),

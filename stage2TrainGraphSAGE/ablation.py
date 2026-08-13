@@ -88,7 +88,8 @@ def train_eval_one(data, xm0, xd0, cfg, split, *, init_seed, epochs, device="cpu
     eli, target = perf_supervision(train_data[TRAINED_ON], lookup)
     ti = torch.cat([train_data[TRAINED_ON].edge_index, eli], dim=1)
     ta = torch.cat([train_data[TRAINED_ON].edge_attr.float(), target], dim=0)
-    M = topk_membership(data, top_frac=cfg["top_frac"], trained_on_index=ti, trained_on_attr=ta)
+    M = topk_membership(data, top_frac=cfg["top_frac"], trained_on_index=ti,
+                        trained_on_attr=ta, sparse=cfg.get("sparse_M", False))
     if cfg.get("root_pool_positives") and cfg.get("root_ids") is not None:
         # v6 S1: pool the global-term positive sets within each root (train-visible
         # only; test roots stay all-zero). z_d learns root-invariant preference.
@@ -135,6 +136,11 @@ def train_eval_one(data, xm0, xd0, cfg, split, *, init_seed, epochs, device="cpu
                   rank_temperature=cfg.get("rank_temperature", 0.1),
                   rank_min_gap=cfg.get("rank_min_gap", 0.0),
                   rank_gap_weighted=cfg.get("rank_gap_weighted", False), device=device)
+    # T0 items 1 + 3: bounded subgraphs and a bounded contrastive denominator.
+    # Both default OFF so every historical config still reproduces bit-for-bit.
+    scale_kw = dict(fanout=cfg.get("fanout", False),
+                    contrast_n_neg=cfg.get("contrast_n_neg"),
+                    contrast_max_pos_per_dataset=cfg.get("contrast_max_pos_per_dataset"))
     if grouped:
         # the dataset->model contrastive (Phase 6) needs the train-visible ti + full M
         common.update(ti=ti, lambda_dm_contrast=cfg.get("lambda_dm_contrast", 0.0),
@@ -144,6 +150,12 @@ def train_eval_one(data, xm0, xd0, cfg, split, *, init_seed, epochs, device="cpu
         hist, _ = train_grouped(model, scorer, train_data, eli, target, M.to(device),
                                 comp.to(device), **common)
     else:
+        # T6 (100kplan §9.3): checkpoint/resume hooks ride in on cfg so the
+        # champion config stays a plain dict and every historical caller, which
+        # sets none of these, gets the identical code path.
+        common.update(resume_state=cfg.get("resume_state"),
+                      history0=cfg.get("history0"),
+                      on_epoch_end=cfg.get("on_epoch_end"))
         if cfg.get("early_stop", False):
             common.update(val_data=_val, val_lookup=lookup,
                           patience=cfg.get("patience", 0), eval_every=cfg.get("eval_every", 1))
@@ -207,27 +219,38 @@ def train_eval_one(data, xm0, xd0, cfg, split, *, init_seed, epochs, device="cpu
                 n_anchor=cfg.get("zpush_n_anchor", 32),
                 n_neg=cfg.get("zpush_n_neg", 16)))
         hist, _ = train(model, scorer, train_data, eli, target, M.to(device), comp.to(device),
-                        **common)
+                        **common, **scale_kw)
 
     # ── evaluate on the FIXED test split (z computed on the test message graph) ──
     model.eval()
+    chunk = cfg.get("infer_chunk")
     with torch.no_grad():
-        z_test = {k: v.cpu() for k, v in model(test_data.clone().to(device)).items()}
-        z_full = model(data.clone().to(device))["model"].cpu()
+        if chunk:
+            # T0 item 4: bounded-memory inference (exact; see inference.py)
+            from ModelLakeFishing.stage2TrainGraphSAGE.inference import chunked_forward
+            z_test = chunked_forward(model, test_data, chunk_size=chunk, device=device)
+            z_full = chunked_forward(model, data, chunk_size=chunk,
+                                     device=device)["model"]
+        else:
+            z_test = {k: v.cpu() for k, v in model(test_data.clone().to(device)).items()}
+            z_full = model(data.clone().to(device))["model"].cpu()
     scorer_cpu = scorer.cpu()
 
+    # T0 item 6: the diagnostics block is the expensive half of the row at scale
+    # (a density estimate over 200K sampled pairs + an HNSW build per run).
+    skip_diag = cfg.get("skip_diagnostics", False)
     macro_tau, per_tau = per_dataset_tau(scorer_cpu, z_test, test_data, lookup)
     head_macro, per_head = head_retrieval(z_test, test_data, lookup)
-    dm_recall = dataset_to_model_hnsw_recall(z_test, k=50)
+    dm_recall = float("nan") if skip_diag else dataset_to_model_hnsw_recall(z_test, k=50)
 
     row = {
         "tau_macro": macro_tau,
         "n_datasets_scored": len(per_tau),
-        "mean_cos": collapse_report(z_full),
-        "z_m_pr": participation_ratio(z_full.numpy()),
-        "z_d_pr": participation_ratio(z_test["dataset"].numpy()),
-        "density": global_positive_density(M),
-        "pd_density": per_dataset_density(ti, M),
+        "mean_cos": float("nan") if skip_diag else collapse_report(z_full),
+        "z_m_pr": float("nan") if skip_diag else participation_ratio(z_full.numpy()),
+        "z_d_pr": float("nan") if skip_diag else participation_ratio(z_test["dataset"].numpy()),
+        "density": float("nan") if skip_diag else global_positive_density(M),
+        "pd_density": float("nan") if skip_diag else per_dataset_density(ti, M),
         "rank_drop": hist[0].get("rank", 0.0) - hist[-1].get("rank", 0.0),
         "contrast_drop": hist[0].get("contrast", 0.0) - hist[-1].get("contrast", 0.0),
         "head": head_macro,

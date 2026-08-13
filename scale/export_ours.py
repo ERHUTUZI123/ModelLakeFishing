@@ -55,35 +55,120 @@ def l1l3b_config(batch=1024):
     return cfg
 
 
-def build_hnsw(z_m, z_d, cands, ef=200, M=32):
-    """HNSW over normalized z_m; fidelity recall@50 vs brute MIPS; latency."""
+def _recall_at(idx, zm, zd, qd, K, ef, brute_cache):
+    """Mean recall@K of the index at a given ef_search, vs brute-force MIPS."""
+    idx.set_ef(int(ef))
+    recalls = []
+    for d in qd:
+        q = zd[int(d)].astype(np.float32)
+        lab, _ = idx.knn_query(q, k=K)
+        recalls.append(len(set(lab[0].tolist()) & brute_cache[d]) / K)
+    return float(np.mean(recalls))
+
+
+def tune_ef_for_recall(idx, zm, zd, qd, *, target=0.99, K=50, ef_max=2048,
+                       brute_cache=None):
+    """T0 item 7: smallest ef_search reaching `target` recall@K -- B-axis protocol.
+
+    Latency measured at an unstated ef is not a claim about anything: any ANN
+    index is arbitrarily fast if allowed to be arbitrarily wrong. The B-axis
+    (100kplan §11.2) therefore fixes recall FIRST and reports latency at the
+    minimum ef that holds it, so the head-to-head compares iso-recall points.
+
+    Doubling search (K -> 2K -> ...) then a binary search on the bracket;
+    returns (ef, recall, trace) with the whole probe sequence for the report.
+    """
+    if brute_cache is None:
+        brute_cache = {d: set(np.argsort(-(zm @ zd[int(d)].astype(np.float32)))[:K].tolist())
+                       for d in qd}
+    trace = []
+    lo, hi, hi_rec = None, None, None
+    ef = K
+    while ef <= ef_max:
+        rec = _recall_at(idx, zm, zd, qd, K, ef, brute_cache)
+        trace.append({"ef": int(ef), "recall": rec})
+        if rec >= target:
+            hi, hi_rec = ef, rec
+            break
+        lo, ef = ef, ef * 2
+    if hi is None:                       # target unreachable within ef_max
+        return int(ef_max), trace[-1]["recall"] if trace else 0.0, trace
+    while lo is not None and hi - lo > 1:
+        mid = (lo + hi) // 2
+        rec = _recall_at(idx, zm, zd, qd, K, mid, brute_cache)
+        trace.append({"ef": int(mid), "recall": rec})
+        if rec >= target:
+            hi, hi_rec = mid, rec
+        else:
+            lo = mid
+    return int(hi), float(hi_rec), trace
+
+
+def build_hnsw(z_m, z_d, cands, ef=200, M=32, *, threads=None, iso_recall=None,
+               n_query=300, K=50, latency_reps=1000, warmup=100):
+    """HNSW over normalized z_m; fidelity recall@50 vs brute MIPS; latency.
+
+    threads    : hnswlib build threads (None = library default = all cores).
+    iso_recall : when set (e.g. 0.99), binary-search ef_search to that recall
+                 and measure latency THERE, single-threaded, warmup discarded --
+                 the B-axis protocol. When None, the historical behaviour
+                 (ef fixed at max(ef, 64), latency from the fidelity loop).
+    """
     import hnswlib
     zm = z_m / (np.linalg.norm(z_m, axis=1, keepdims=True) + 1e-12)
     zd = z_d / (np.linalg.norm(z_d, axis=1, keepdims=True) + 1e-12)
     N, dim = zm.shape
     idx = hnswlib.Index(space="ip", dim=dim)
     idx.init_index(max_elements=N, ef_construction=ef, M=M)
+    if threads:
+        idx.set_num_threads(int(threads))
     t0 = time.perf_counter_ns()
     idx.add_items(zm.astype(np.float32), np.arange(N))
     build_ms = (time.perf_counter_ns() - t0) / 1e6
     idx.set_ef(max(ef, 64))
 
-    # fidelity: recall@50 vs brute-force MIPS, on the gold query datasets
-    qd = list(cands)[: min(300, len(cands))]
-    recalls, lat = [], []
-    K = 50
-    for d in qd:
-        q = zd[int(d)].astype(np.float32)
-        brute = np.argsort(-(zm @ q))[:K]
+    qd = list(cands)[: min(n_query, len(cands))]
+    brute_cache = {d: set(np.argsort(-(zm @ zd[int(d)].astype(np.float32)))[:K].tolist())
+                   for d in qd}
+    report = dict(build_ms=round(build_ms, 1), n_query=len(qd), M=int(M),
+                  ef_construction=int(ef), build_threads=int(threads or 0),
+                  index_mb=round(N * (dim * 4 + M * 2 * 4) / 2 ** 20, 1))
+
+    if iso_recall is None:
+        ef_used = max(ef, 64)
+        recalls, lat = [], []
+        for d in qd:
+            q = zd[int(d)].astype(np.float32)
+            t = time.perf_counter_ns()
+            lab, _ = idx.knn_query(q, k=K)
+            lat.append((time.perf_counter_ns() - t) / 1e6)
+            recalls.append(len(set(lab[0].tolist()) & brute_cache[d]) / K)
+        report.update(recall_at_50=float(np.mean(recalls)),
+                      hnsw_query_ms_p50=float(np.percentile(lat, 50)),
+                      hnsw_query_ms_p99=float(np.percentile(lat, 99)),
+                      ef_search=int(ef_used), iso_recall=None)
+        return idx, report
+
+    ef_used, rec, trace = tune_ef_for_recall(idx, zm, zd, qd, target=iso_recall,
+                                             K=K, brute_cache=brute_cache)
+    idx.set_ef(ef_used)
+    idx.set_num_threads(1)                       # single-threaded, per-query
+    qvecs = [zd[int(d)].astype(np.float32) for d in qd]
+    for i in range(warmup):                      # warmup discarded
+        idx.knn_query(qvecs[i % len(qvecs)], k=K)
+    lat = []
+    for i in range(latency_reps):
+        q = qvecs[i % len(qvecs)]
         t = time.perf_counter_ns()
-        lab, _ = idx.knn_query(q, k=K)
+        idx.knn_query(q, k=K)
         lat.append((time.perf_counter_ns() - t) / 1e6)
-        recalls.append(len(set(lab[0].tolist()) & set(brute.tolist())) / K)
-    return idx, dict(build_ms=round(build_ms, 1),
-                     recall_at_50=float(np.mean(recalls)),
-                     hnsw_query_ms_p50=float(np.percentile(lat, 50)),
-                     hnsw_query_ms_p99=float(np.percentile(lat, 99)),
-                     n_query=len(qd))
+    report.update(recall_at_50=float(rec), ef_search=int(ef_used),
+                  iso_recall=float(iso_recall), ef_trace=trace,
+                  hnsw_query_ms_p50=float(np.percentile(lat, 50)),
+                  hnsw_query_ms_p95=float(np.percentile(lat, 95)),
+                  hnsw_query_ms_p99=float(np.percentile(lat, 99)),
+                  latency_reps=int(latency_reps), latency_threads=1)
+    return idx, report
 
 
 def main():
@@ -92,6 +177,26 @@ def main():
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--epochs", type=int, default=25)
     ap.add_argument("--tag", default="ml_sub_L1L3b")
+    # ── T0 scale switches (all default OFF = historical behaviour) ──────────
+    ap.add_argument("--fanout", action="store_true",
+                    help="T0-1 cap the fallback loader's neighbourhood expansion")
+    ap.add_argument("--sparse-M", action="store_true",
+                    help="T0-2 CSC/CSR membership instead of the dense [N_m,N_d]")
+    ap.add_argument("--contrast-n-neg", type=int, default=None,
+                    help="T0-3 sampled contrastive negatives (D-14; None = full N^2)")
+    ap.add_argument("--contrast-max-pos-per-dataset", type=int, default=None)
+    ap.add_argument("--chunked-infer", type=int, default=None, metavar="CHUNK",
+                    help="T0-4 chunked exact inference, CHUNK seed nodes at a time")
+    ap.add_argument("--stream-scores", action="store_true",
+                    help="T0-5 stream the global-metric scoring (no {q: [N]} dict)")
+    ap.add_argument("--skip-diagnostics", action="store_true", help="T0-6")
+    ap.add_argument("--hnsw-threads", type=int, default=None, help="T0-7")
+    ap.add_argument("--ef-construction", type=int, default=200, help="T0-7")
+    ap.add_argument("--hnsw-M", type=int, default=32, help="T0-7")
+    ap.add_argument("--iso-recall", type=float, default=None,
+                    help="T0-7 tune ef_search to this recall@50 before timing")
+    ap.add_argument("--expect-n", type=int, default=None,
+                    help="IRON RULE 3: assert the candidate pool size")
     args = ap.parse_args()
     device = "cuda" if torch.cuda.is_available() else "cpu"
     out = os.path.join(OUT_ROOT, args.tag)
@@ -103,6 +208,11 @@ def main():
     xm0, xd0 = payload["xm0_meta"], payload["xd0_meta"]
     names = model_names(payload["unique_model_id"])
     cfg = l1l3b_config()
+    cfg.update(fanout=args.fanout, sparse_M=args.sparse_M,
+               contrast_n_neg=args.contrast_n_neg,
+               contrast_max_pos_per_dataset=args.contrast_max_pos_per_dataset,
+               infer_chunk=args.chunked_infer,
+               skip_diagnostics=args.skip_diagnostics)
 
     data = torch.load(args.graph, map_location="cpu", weights_only=False)["data"]
     data = apply_similar_to_mode(data, cfg["similar_to_mode"], k=cfg["similar_to_k"])
@@ -120,22 +230,39 @@ def main():
 
     # gold@K on held-out test (OUR A-axis; same five_metric_eval == global_metrics)
     with torch.no_grad():
-        z_test = {k: v.cpu() for k, v in model(test_data.clone().to(device)).items()}
+        if args.chunked_infer:
+            from ModelLakeFishing.stage2TrainGraphSAGE.inference import chunked_forward
+            z_test = chunked_forward(model, test_data, chunk_size=args.chunked_infer,
+                                     device=device)
+        else:
+            z_test = {k: v.cpu() for k, v in model(test_data.clone().to(device)).items()}
     cands = candidates(test_data, lookup)
-    per = five_metric_eval(z_test, cands, names=names)
+    per = five_metric_eval(z_test, cands, names=names, expect_n=args.expect_n)
     agg = aggregate(per)
-    # cross-run our own harness for parity confidence
-    scores_by_q = {int(d): (F_norm(z_test["model"]) @ F_norm(z_test["dataset"])[int(d)]).numpy()
-                   for d in cands}
+    # cross-run our own harness for parity confidence (G-A3)
     gm_cands = {int(d): (np.asarray(c), np.asarray(a)) for d, (c, a) in cands.items()}
     roots_q = {int(d): root_of[int(d)] for d in cands}
-    gm_agg, _ = GM.from_scores(scores_by_q, gm_cands, roots_q)
+    if args.stream_scores:
+        # T0 item 5: never materialize {query: [N] scores}
+        gm_agg, _ = GM.from_embeddings_streaming(
+            z_test["model"].numpy(), z_test["dataset"].numpy(), gm_cands, roots_q)
+    else:
+        scores_by_q = {int(d): (F_norm(z_test["model"]) @ F_norm(z_test["dataset"])[int(d)]).numpy()
+                       for d in cands}
+        gm_agg, _ = GM.from_scores(scores_by_q, gm_cands, roots_q)
 
     # full-graph embeddings for serving/HNSW export
     with torch.no_grad():
-        z_full = {k: v.cpu() for k, v in model(data.clone().to(device)).items()}
+        if args.chunked_infer:
+            z_full = chunked_forward(model, data, chunk_size=args.chunked_infer,
+                                     device=device)
+        else:
+            z_full = {k: v.cpu() for k, v in model(data.clone().to(device)).items()}
     z_m = z_full["model"].numpy().astype(np.float32)
     z_d = z_full["dataset"].numpy().astype(np.float32)
+    if args.expect_n is not None:
+        assert z_m.shape[0] == args.expect_n, (
+            f"candidate pool is {z_m.shape[0]}, expected {args.expect_n}")
 
     np.save(os.path.join(out, "z_m.npy"), z_m)
     np.save(os.path.join(out, "z_d.npy"), z_d)
@@ -154,12 +281,21 @@ def main():
         **{str(d): np.stack([np.asarray(c, float), np.asarray(a, float)])
            for d, (c, a) in cands.items()})
 
-    idx, hnsw = build_hnsw(z_m, z_d, cands)
+    idx, hnsw = build_hnsw(z_m, z_d, cands, ef=args.ef_construction, M=args.hnsw_M,
+                           threads=args.hnsw_threads, iso_recall=args.iso_recall)
     idx.save_index(os.path.join(out, "hnsw_index.bin"))
+    if hnsw.get("ef_trace"):
+        with open(os.path.join(out, "ef_tuning.json"), "w", encoding="utf-8") as f:
+            json.dump({"target": hnsw["iso_recall"], "ef_search": hnsw["ef_search"],
+                       "trace": hnsw["ef_trace"]}, f, indent=2)
 
     report = dict(
         tag=args.tag, graph=os.path.basename(args.graph),
         seed=args.seed, epochs=args.epochs, device=device,
+        scale_switches={k: getattr(args, k) for k in (
+            "fanout", "sparse_M", "contrast_n_neg", "contrast_max_pos_per_dataset",
+            "chunked_infer", "stream_scores", "skip_diagnostics", "hnsw_threads",
+            "ef_construction", "hnsw_M", "iso_recall", "expect_n")},
         n_models=len(z_m), n_datasets=len(z_d), n_test_datasets=len(cands),
         train_sec=round(time.time() - t0, 1),
         our_gold_at_1=agg["full2k_gold@1"], our_gold_at_10=agg["full2k_gold@10"],

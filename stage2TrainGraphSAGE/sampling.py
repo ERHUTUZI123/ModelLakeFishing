@@ -46,6 +46,43 @@ LINEAGE_RELS = {
 }
 
 
+# ── CSR neighbour index (T0 item 1) ─────────────────────────────────────────
+# The legacy closure asked `torch.isin(src, tensor(sorted(cur)))` per relation
+# per hop -- an O(E) scan of every edge for every frontier. Sorting each relation
+# by source once turns a neighbour lookup into a slice: nbr[ptr[v]:ptr[v+1]].
+
+def build_csr(edge_index, num_src):
+    """(ptr[num_src+1], nbr[E]) with node v's neighbours at nbr[ptr[v]:ptr[v+1]]."""
+    src, dst = edge_index[0], edge_index[1]
+    order = torch.argsort(src)
+    nbr = dst[order].contiguous()
+    ptr = torch.zeros(num_src + 1, dtype=torch.long)
+    if src.numel():
+        ptr[1:] = torch.cumsum(torch.bincount(src[order], minlength=num_src), 0)
+    return ptr, nbr
+
+
+def _sample_neighbours(ptr, nbr, nodes, k, generator=None):
+    """Union of <= k neighbours per node in `nodes` (all of them when deg <= k).
+
+    k=None means "no cap" (the legacy full-neighbour closure). Sampling is
+    WITHOUT replacement inside a node's own adjacency slice, so the fan-out is a
+    hard per-node bound, not an expectation.
+    """
+    out = set()
+    for v in nodes:
+        lo, hi = int(ptr[v]), int(ptr[v + 1])
+        deg = hi - lo
+        if deg == 0:
+            continue
+        if k is None or deg <= k:
+            out.update(nbr[lo:hi].tolist())
+        else:
+            pick = torch.randperm(deg, generator=generator)[:k]
+            out.update(nbr[lo + pick].tolist())
+    return out
+
+
 def _has_sampler_backend() -> bool:
     """LinkNeighborLoader's neighbour sampler needs pyg-lib or torch-sparse."""
     for mod in ("pyg_lib", "torch_sparse"):
@@ -67,23 +104,52 @@ class LightLinkLoader:
     gather), carrying `edge_label_index` (local) + `edge_label` (regression
     target) on the trained_on store and `n_id` per node type.
 
-    Uses FULL-neighbour k-hop expansion (no fan-out cap) -- correct and cheap on
-    the zoo. For the 47K benchmark, install a backend and use LinkNeighborLoader
-    (this class does not subsample, so it will not scale).
+    Two expansion modes:
+
+      fanout=None  : FULL-neighbour k-hop closure (the legacy path -- correct and
+                     cheap on the zoo, but the subgraph is unbounded, so on a
+                     100K lake a single batch can pull in most of the graph).
+      fanout=(k1,k2): at most k_hop neighbours per frontier node per relation
+                     direction, drawn without replacement. The subgraph size is
+                     then bounded by the seeds and the fan-out, independent of N
+                     -- this is what makes the loader usable at 100K/1M.
+
+    Lineage relations take `fanout_lineage` (higher by default): they are the
+    only edge a cold-start model has, the same reasoning that gives them a lower
+    edge-dropout rate.
     """
 
     def __init__(self, data, edge_label_index, edge_label, *,
-                 num_hops=2, batch_size=128, shuffle=True):
+                 num_hops=2, batch_size=128, shuffle=True,
+                 fanout=None, fanout_lineage=None, generator=None):
         self.data = data
         self.eli = edge_label_index
         self.elabel = edge_label
         self.num_hops = num_hops
         self.batch_size = batch_size
         self.shuffle = shuffle
+        self.generator = generator
         # cache message edges per relation for neighbour expansion
         self._edges = {et: data[et].edge_index for et in data.edge_types}
+        self.fanout = list(fanout) if fanout is not None else None
+        if self.fanout is not None:
+            assert len(self.fanout) >= num_hops, "fanout needs one entry per hop"
+            self.fanout_lineage = (list(fanout_lineage) if fanout_lineage is not None
+                                   else [2 * k for k in self.fanout])
+            n_nodes = {t: data[t].num_nodes for t in data.node_types}
+            # forward (src -> dst) and backward (dst -> src) CSR per relation:
+            # the closure walks both directions, exactly as the legacy path did.
+            self._csr, self._csc = {}, {}
+            for et, ei in self._edges.items():
+                st, _rel, dt = et
+                self._csr[et] = build_csr(ei, n_nodes[st])
+                self._csc[et] = build_csr(ei.flip(0), n_nodes[dt])
+        else:
+            self.fanout_lineage = None
 
     def _khop_closure(self, seed_m, seed_d):
+        if self.fanout is not None:
+            return self._khop_closure_fanout(seed_m, seed_d)
         cur = {"model": set(seed_m), "dataset": set(seed_d)}
         for _ in range(self.num_hops):
             add = {"model": set(), "dataset": set()}
@@ -103,6 +169,34 @@ class LightLinkLoader:
             if not grew:
                 break
         return cur
+
+    def _khop_closure_fanout(self, seed_m, seed_d):
+        """Fan-out-capped closure: expand only the CURRENT frontier, and only up
+        to fanout[hop] neighbours per node per relation direction."""
+        visited = {"model": set(seed_m), "dataset": set(seed_d)}
+        frontier = {"model": set(seed_m), "dataset": set(seed_d)}
+        for hop in range(self.num_hops):
+            nxt = {"model": set(), "dataset": set()}
+            for et in self._edges:
+                st, _rel, dt = et
+                k = (self.fanout_lineage[hop] if et in LINEAGE_RELS
+                     else self.fanout[hop])
+                if k is not None and k <= 0:
+                    continue
+                if frontier[st]:
+                    ptr, nbr = self._csr[et]
+                    nxt[dt] |= _sample_neighbours(ptr, nbr, frontier[st], k,
+                                                  generator=self.generator)
+                if frontier[dt]:
+                    ptr, nbr = self._csc[et]
+                    nxt[st] |= _sample_neighbours(ptr, nbr, frontier[dt], k,
+                                                  generator=self.generator)
+            frontier = {t: nxt[t] - visited[t] for t in visited}
+            for t in visited:
+                visited[t] |= frontier[t]
+            if not any(frontier.values()):
+                break
+        return visited
 
     def __iter__(self):
         P = self.eli.size(1)
@@ -131,7 +225,8 @@ class LightLinkLoader:
 
 
 def make_link_loader(train_data, edge_label_index, edge_label, *,
-                     num_neighbors=(10, 10), batch_size=128, shuffle=True):
+                     num_neighbors=(10, 10), batch_size=128, shuffle=True,
+                     fanout=False, fanout_lineage=None, generator=None):
     """
     Loader over the supervised `trained_on` edges.
 
@@ -142,6 +237,13 @@ def make_link_loader(train_data, edge_label_index, edge_label, *,
     edge_label_index : [2, P] positive supervision edges (model_idx, dataset_idx)
     edge_label       : [P] regression target (normalized accuracy) for each
     num_neighbors    : fan-out per hop; length should match GNN depth (2).
+    fanout           : T0 item 1. False (default) keeps the historical
+                       full-neighbour fallback closure bit-for-bit. True caps the
+                       fallback loader's expansion at `num_neighbors` per hop
+                       (lineage relations at `fanout_lineage`, default 2x), which
+                       is what bounds subgraph size at 100K/1M. Ignored when a
+                       real sampler backend is present -- LinkNeighborLoader
+                       always fans out.
 
     Returns a real LinkNeighborLoader when a sampler backend is installed,
     otherwise the pure-python LightLinkLoader (same batch interface).
@@ -155,15 +257,18 @@ def make_link_loader(train_data, edge_label_index, edge_label, *,
             batch_size=batch_size,
             shuffle=shuffle,
         )
-    warnings.warn(
-        "pyg-lib / torch-sparse not installed; falling back to LightLinkLoader "
-        "(full-neighbour, fine for the zoo). Install a backend and this returns "
-        "a real LinkNeighborLoader for the 47K benchmark.",
-        RuntimeWarning,
-    )
+    if not fanout:
+        warnings.warn(
+            "pyg-lib / torch-sparse not installed; falling back to LightLinkLoader "
+            "(full-neighbour, fine for the zoo). Install a backend, or pass "
+            "fanout=True, before scaling past ~30K models.",
+            RuntimeWarning,
+        )
     return LightLinkLoader(
         train_data, edge_label_index, edge_label,
         num_hops=len(num_neighbors), batch_size=batch_size, shuffle=shuffle,
+        fanout=list(num_neighbors) if fanout else None,
+        fanout_lineage=fanout_lineage, generator=generator,
     )
 
 
@@ -209,15 +314,76 @@ def batch_contrastive_masks(batch, M, comp):
       hub_mask_b[i, j] : models i, j in the same lineage component
 
     Returns (pos_mask_b, hub_mask_b) over the batch's local model ordering.
+
+    Still [B, B]: fine up to a few thousand batch nodes, ~6.4 GB of live blocks
+    at B = 20,000. Past that use batch_positive_pairs + losses.contrastive_loss_sampled.
     """
     n_id = batch["model"].n_id
-    Mb = M[n_id]                                   # [B, num_datasets]
+    Mb = M.rows_dense(n_id) if hasattr(M, "rows_dense") else M[n_id]  # [B, num_datasets]
     pos = (Mb @ Mb.t()) > 0                        # [B, B]
     pos.fill_diagonal_(False)
     cb = comp[n_id]
     hub = cb.unsqueeze(0) == cb.unsqueeze(1)       # [B, B]; singletons never match
     hub.fill_diagonal_(False)
     return pos, hub
+
+
+def batch_positive_pairs(batch, M, *, max_per_dataset=None, generator=None):
+    """
+    T0 item 3: the SPARSE form of batch_contrastive_masks' pos_mask.
+
+    Returns (ai, bi) local index pairs -- de-duplicated (a pair co-selected on
+    three datasets is ONE positive, exactly as the boolean mask says) and
+    diagonal-free -- so a [B, B] block is never allocated. Cost is
+    sum_d k_d^2 over the batch's datasets, where k_d is how many of d's high
+    performers landed in this batch; `max_per_dataset` caps k_d by subsampling
+    when a hub dataset would otherwise dominate.
+    """
+    n_id = batch["model"].n_id
+    if hasattr(M, "rows_coo"):
+        loc, col = M.rows_coo(n_id)
+    else:
+        loc, col = (M[n_id] > 0).nonzero(as_tuple=True)
+    B = int(n_id.numel())
+    empty = torch.zeros(0, dtype=torch.long, device=loc.device)
+    if loc.numel() == 0:
+        return empty, empty
+
+    order = torch.argsort(col)
+    loc, col = loc[order], col[order]
+    uniq, counts = torch.unique_consecutive(col, return_counts=True)
+    starts = torch.cumsum(counts, 0) - counts
+
+    if max_per_dataset is not None and bool((counts > max_per_dataset).any()):
+        keep = []
+        for s, c in zip(starts.tolist(), counts.tolist()):
+            if c <= max_per_dataset:
+                keep.append(torch.arange(s, s + c, device=loc.device))
+            else:
+                pick = torch.randperm(c, generator=generator)[:max_per_dataset]
+                keep.append(s + pick.to(loc.device))
+        sel = torch.cat(keep)
+        loc, col = loc[sel], col[sel]
+        uniq, counts = torch.unique_consecutive(col, return_counts=True)
+        starts = torch.cumsum(counts, 0) - counts
+
+    sq = counts * counts
+    total = int(sq.sum())
+    if total == 0:
+        return empty, empty
+    gid = torch.repeat_interleave(torch.arange(counts.numel(), device=loc.device), sq)
+    within = (torch.arange(total, device=loc.device)
+              - torch.repeat_interleave(torch.cumsum(sq, 0) - sq, sq))
+    k = counts[gid]
+    base = starts[gid]
+    ai = loc[base + within // k]
+    bi = loc[base + within % k]
+    keep = ai != bi
+    ai, bi = ai[keep], bi[keep]
+    if ai.numel() == 0:
+        return empty, empty
+    key = torch.unique(ai * B + bi)                 # one pair, however many datasets
+    return key // B, key % B
 
 
 # ── mechanism smoke test ────────────────────────────────────────────────────

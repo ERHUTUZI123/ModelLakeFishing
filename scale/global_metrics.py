@@ -121,6 +121,96 @@ def from_embeddings(z_m: np.ndarray, z_d: np.ndarray, cands: dict,
 
 
 # --------------------------------------------------------------------------
+# T0 item 5: streaming scorer.
+#
+# The caller side of this harness used to materialize a {query: [N] scores}
+# dict -- 517 x 12,000 is 25 MB, 517 x 100,000 is 207 MB, 517 x 1,000,000 is
+# 2 GB, and every one of those vectors exists only to be reduced to three
+# integers (gold / top3 / gap rank). This computes the same three integers
+# without ever holding a full score vector: score the handful of PROBE models a
+# query actually needs, then stream the candidate universe in blocks counting
+# how many models beat each probe.
+#
+# Ranks are integers, so this is not "close to" from_embeddings -- it is equal,
+# and the tests assert per-query equality rather than aggregate agreement.
+# --------------------------------------------------------------------------
+def _probe_ids(cand, acc, gap_delta):
+    """The only models whose score a query's three ranks depend on."""
+    cand = np.asarray(cand)
+    acc = np.asarray(acc, dtype=float)
+    gold = int(cand[int(np.argmax(acc))])
+    top3 = cand[np.argsort(-acc)[: min(3, len(acc))]].astype(int)
+    near = cand[acc >= acc.max() - gap_delta].astype(int)
+    ids = np.unique(np.concatenate([[gold], top3, near]))
+    return gold, top3, near, ids
+
+
+def from_embeddings_streaming(z_m, z_d, cands: dict, roots: dict | None = None,
+                              ks=KS, normalize: bool = True, device: str = "cpu",
+                              model_chunk: int = 50_000, query_chunk: int = 64,
+                              gap_delta: float = GAP_DELTA,
+                              dtype=None) -> tuple[dict, dict]:
+    """Same output as from_embeddings, in O(n_probes) memory per query block.
+
+    device="cuda" moves the (single) resident z_m to the GPU and streams the
+    matmul there; dtype defaults to float64 on CPU (bit-identical to
+    from_embeddings) and float32 on GPU.
+    """
+    import torch
+
+    if dtype is None:
+        dtype = torch.float32 if str(device).startswith("cuda") else torch.float64
+    zm = torch.as_tensor(np.asarray(z_m)).to(dtype)
+    zd = torch.as_tensor(np.asarray(z_d)).to(dtype)
+    if normalize:
+        zm = zm / (zm.norm(dim=1, keepdim=True) + 1e-12)
+        zd = zd / (zd.norm(dim=1, keepdim=True) + 1e-12)
+    zm = zm.to(device)
+    zd = zd.to(device)
+    N = zm.size(0)
+
+    queries = list(cands)
+    per = {}
+    for qs in range(0, len(queries), query_chunk):
+        block = queries[qs:qs + query_chunk]
+        meta, flat_ids, flat_q = [], [], []
+        for qi, d in enumerate(block):
+            cand, acc = cands[d]
+            gold, top3, near, ids = _probe_ids(cand, acc, gap_delta)
+            meta.append((d, gold, top3, near, ids, int(np.asarray(cand).size)))
+            flat_ids.append(ids)
+            flat_q.append(np.full(ids.size, qi))
+        flat_ids = torch.as_tensor(np.concatenate(flat_ids), dtype=torch.long, device=device)
+        flat_q = torch.as_tensor(np.concatenate(flat_q), dtype=torch.long, device=device)
+        zq = zd[torch.as_tensor([int(d) for d in block], dtype=torch.long, device=device)]
+        s_probe = (zm[flat_ids] * zq[flat_q]).sum(-1)                    # [P]
+        greater = torch.zeros_like(s_probe, dtype=torch.long)
+        pcols = torch.arange(flat_ids.numel(), device=device)
+        for ms in range(0, N, model_chunk):
+            sc = zm[ms:ms + model_chunk] @ zq.t()                        # [C, Q]
+            cmp = sc[:, flat_q] > s_probe.unsqueeze(0)
+            # A probe scored by the gather path and by the matmul path can differ
+            # in the last bit, which would let a probe out-rank ITSELF and shift
+            # the rank by one. A rank counts STRICTLY better models and nothing is
+            # strictly better than itself, so mask the diagonal explicitly.
+            here = (flat_ids >= ms) & (flat_ids < ms + sc.size(0))
+            if bool(here.any()):
+                cmp[flat_ids[here] - ms, pcols[here]] = False
+            greater += cmp.sum(0)
+        greater = greater.cpu().numpy()
+
+        off = 0
+        for (d, gold, top3, near, ids, n_cand) in meta:
+            rank = {int(m): int(greater[off + k]) + 1 for k, m in enumerate(ids)}
+            off += ids.size
+            per[d] = {"gold_rank": rank[gold],
+                      "top3_rank": min(rank[int(m)] for m in top3),
+                      "gap_rank": min(rank[int(m)] for m in near),
+                      "n_candidates": n_cand}
+    return aggregate(per, roots, ks), per
+
+
+# --------------------------------------------------------------------------
 # self-test: cross-check gold@K against the established top1_eval, plus hand
 # assertions for top3@10 / gold-gap@10 that top1_eval does not compute.
 # --------------------------------------------------------------------------

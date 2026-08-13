@@ -1,0 +1,124 @@
+[env] staging /u801/x98liu/model_lake/envs/mlf -> /tmp/mlf-x98liu-1507388.O9S9Kb/mlf
+
+real	0m46.547s
+user	0m0.291s
+sys	0m10.361s
+[env] python=/tmp/mlf-x98liu-1507388.O9S9Kb/mlf/bin/python
+Python 3.11.4
+UTC_TIME=2026-08-10T17:27:47+00:00
+RUN_ID=T4_100k_20260810T171552Z
+SLURM_JOB_ID=1507388
+HOSTNAME=watgpu208
+GIT_HEAD=b512213cd5628bc86d84002bc936a8aedaf0e76c
+GIT_DIRTY<<<
+?? logs/
+>>>
+PYTHON=/tmp/mlf-x98liu-1507388.O9S9Kb/mlf/bin/python
+torch 2.12.0+cu130 cuda True
+[in] CORE 30183 (frozen) | HALO 69817 | rung 100k
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+[build_name_embeddings] 0 cached, 69817 to compute
+  [1000/69817] computed
+  [2000/69817] computed
+  [3000/69817] computed
+  [4000/69817] computed
+  [5000/69817] computed
+  [6000/69817] computed
+  [7000/69817] computed
+  [8000/69817] computed
+  [9000/69817] computed
+  [10000/69817] computed
+  [11000/69817] computed
+  [12000/69817] computed
+  [13000/69817] computed
+  [14000/69817] computed
+  [15000/69817] computed
+  [16000/69817] computed
+  [17000/69817] computed
+  [18000/69817] computed
+  [19000/69817] computed
+  [20000/69817] computed
+  [21000/69817] computed
+  [22000/69817] computed
+  [23000/69817] computed
+  [24000/69817] computed
+  [25000/69817] computed
+  [26000/69817] computed
+  [27000/69817] computed
+  [28000/69817] computed
+  [29000/69817] computed
+  [30000/69817] computed
+  [31000/69817] computed
+  [32000/69817] computed
+  [33000/69817] computed
+  [34000/69817] computed
+  [35000/69817] computed
+  [36000/69817] computed
+  [37000/69817] computed
+  [38000/69817] computed
+  [39000/69817] computed
+  [40000/69817] computed
+  [41000/69817] computed
+  [42000/69817] computed
+  [43000/69817] computed
+  [44000/69817] computed
+  [45000/69817] computed
+  [46000/69817] computed
+  [47000/69817] computed
+  [48000/69817] computed
+  [49000/69817] computed
+  [50000/69817] computed
+  [51000/69817] computed
+  [52000/69817] computed
+  [53000/69817] computed
+  [54000/69817] computed
+  [55000/69817] computed
+  [56000/69817] computed
+  [57000/69817] computed
+  [58000/69817] computed
+  [59000/69817] computed
+  [60000/69817] computed
+  [61000/69817] computed
+  [62000/69817] computed
+  [63000/69817] computed
+  [64000/69817] computed
+  [65000/69817] computed
+  [66000/69817] computed
+  [67000/69817] computed
+  [68000/69817] computed
+  [69000/69817] computed
+  [69817/69817] computed
+Loading weights:   0%|          | 0/103 [00:00<?, ?it/s]Loading weights: 100%|██████████| 103/103 [00:00<00:00, 2569.09it/s]
+[halo.desc] MiniLM(cuda) 69817 texts -> (69817, 384)
+[load_or_update_family_vocab] admitted 1555 new families: ['1fixed', 'aam', 'abmil', 'absolute', 'absolutereality', 'abstract', 'accent', 'ace', 'acestep', 'acestep1', 'act', 'actu', 'adapter', 'adaptive', 'aegis', 'aether_v2_7way', 'afm', 'afmoe', 'age', 'agents', 'aic', 'aide', 'aif', 'aifs', 'aist', 'ait', 'albert', 'albrecht', 'all', 'allegro', 'allophant', 'aloha', 'alpaca', 'alpamayo1_5', 'alpamayo_r1', 'alzheimer', 'amazon', 'amd', 'amharic', 'amplify', 'ancient', 'andrea', 'anima', 'animagine', 'animal', 'animatediff', 'anime', 'animegen', 'animov', 'anomalyvfm', 'antispoofing', 'anylora', 'anything', 'apertus', 'apertus1p5', 'apriel', 'arabic', 'arc', 'arcee', 'argonne2', 'argus', 'aria', 'arkasr', 'arktts', 'asl', 'asr', 'astolfomix', 'astral', 'atom', 'attentivefp', 'audar', 'audio', 'audio-classification', 'audio-spectrogram-transformer', 'audiodit', 'audioprotonet', 'autoencoder', 'autotrain', 'avhubert', 'baby', 'babylm', 'babylm_ipa', 'bagel', 'baichuan', 'bailing_moe', 'bailing_moe_linear', 'bailingmm', 'bailingmm_moe_v2_lite', 'ball', 'bamboo', 'bananamind_tts', 'bangla', 'bank', 'bark', 'baroque', 'baseline', 'battery', 'beaver', 'beingh', 'beingvla', 'ben2', 'bengali', 'bernini_renderer', 'bert_crf', 'beyond', 'bge', 'bhili', 'bidirectional_pplx_qwen3', 'bidirlm', 'bidirlm_omni', 'big_bird', 'bigs', 'bilstm', 'bilstm-crf-ner', 'bimanual', 'binaryembedder', 'biome', 'bird', 'birefnet', 'bitnet', 'bitvla', 'blake', 'blip-2', 'block', 'blue', 'bluecube', 'bluelm', 'bonsai', 'boogu', 'book', 'borealis', 'boris', 'box', 'brain', 'breast', 'breeze', 'brick', 'brujula', 'butterfly', 'caca', 'cadence', 'caduceus', 'calm', 'camembert', 'camille', 'canary', 'cancer', 'canet', 'canine', 'capybara', 'car', 'cartpole', 'cat', 'cats', 'cdli', 'ced', 'ceno', 'cerberus_v8x', 'chameleon', 'chatbot', 'chatglm', 'chatterbox', 'chatterbox_turbo', 'checkpoint', 'chess', 'chili', 'chilloutmix', 'chimp', 'chinese', 'chloe', 'chmv2', 'chocollect', 'chorous1', 'chroma', 'chroma1', 'chronoedit', 'chronogpt', 'chronos', 'chunkformer', 'cifar10', 'clap', 'class', 'classification', 'clear', 'clip_multimodal_atlas', 'clip_text_model', 'cloud', 'cod', 'coda', 'codegen', 'coder', 'cogact', 'cognica_poe', 'cogvideox', 'cogvideox1', 'cohere', 'cohere2', 'cohere2_moe', 'cohere2_vision', 'cohere_asr', 'colner', 'color', 'comet', 'comfyui', 'comi', 'commoncanvas', 'conditional_detr', 'conformer', 'conformer_encoder_decoder', 'continual', 'control', 'controllora', 'controlnet', 'convnextv2', 'convtasnet', 'coqui', 'core', 'coreml', 'corpipe25', 'cortexa', 'cosmos', 'cosmos3', 'cosmos3_omni', 'cosyvoice', 'cosyvoice2', 'cosyvoice3', 'course', 'courtside', 'covo_audio', 'craft', 'crane', 'credit', 'crf-tagger', 'crnn', 'cronusvla', 'crop', 'crypto', 'cse571', 'csgo', 'csm', 'ctrl', 'cube', 'custom', 'custom_model', 'customer', 'cute', 'cvlface', 'cxr', 'cyberpunk', 'cyberrealisticpony', 'cydonia', 'd_fine', 'da3', 'dab-detr', 'dac', 'dale', 'dam', 'dark', 'darkit', 'darwin', 'dasheng', 'dass', 'data', 'data2vec-audio', 'dataset', 'davinci', 'ddpm', 'ddpo', 'deberta', 'deberta-v2', 'deci', 'decidiffusion', 'decision_transformer', 'deep', 'deepfake', 'deepgelbooru', 'deepgen', 'deepseek_v2', 'deepseek_v3', 'deepseek_v4', 'deepseekocr', 'deformable_detr', 'deltalm', 'demo', 'densenet121', 'depth', 'depth_anything', 'depth_anything_v2', 'depthanything', 'deta', 'detect', 'detr', 'devstral', 'dia', 'dia2', 'diar', 'dicow', 'diffae', 'diffretriever', 'diffusion', 'diffusionsat', 'dino', 'dinov2', 'dinov2_with_registers', 'dinov3_vit', 'discrete_diffusion', 'disease', 'distilbert', 'ditflow', 'divae', 'dm05', 'doblar', 'doclayout', 'doclayoutv3', 'document', 'docusco', 'dog', 'doge', 'donut', 'dots', 'dots1', 'dots_ocr', 'dpr', 'dpt', 'dqn', 'dr34ml4y', 'dramabox-tts', 'dream', 'dreambooth', 'dreamlike', 'dreamlite', 'dreamshaper', 'drl', 'dual', 'dual_ar', 'duchifat_v2', 'dummy', 'dynamic', 'e2e', 'easysell', 'ebind', 'ecapa', 'echo', 'echo-mdlm', 'echolancer', 'ecommerce', 'eden', 'eend', 'efficientformer', 'effnet', 'eimisanimediffusion', 'elc_psalm', 'electra', 'email', 'embodied', 'emo', 'emoaxis', 'emotion', 'empathy_classifier', 'emu', 'emu3', 'encoder-decoder', 'endlessrp', 'engagement', 'english', 'enhanced', 'ensemble_forecaster', 'epicrealism', 'epicure', 'esg', 'esm', 'esm2', 'esmc', 'esmc_sae', 'esmfold2', 'espnet', 'eurobert', 'eva', 'eva02', 'everything', 'evo1', 'evorag', 'example', 'exaone4', 'experiment6', 'extra_trees', 'extractor', 'f5tts', 'face', 'face_recognition', 'fake', 'falcon_h1', 'fantassified', 'fantasy', 'fashion', 'fastconformer', 'faster', 'fasternet', 'fastspeech2', 'fasttext', 'fastwan', 'fastwan2', 'fetch', 'ffusion', 'fibo', 'fin', 'final', 'fine', 'fineweb_decoder', 'finnish', 'fire', 'firered', 'fireredvad', 'first', 'fish', 'fish_qwen3_omni', 'flair', 'flash', 'flashvsr', 'flaubert', 'flm', 'flood', 'florence2', 'flow', 'flower', 'flux', 'flux-rectified-flow', 'focalnet', 'fold', 'folding', 'food', 'football2vec', 'formulanet', 'frame', 'fraud', 'french', 'fsmn', 'fsmt', 'fugumt', 'fun', 'funnel', 'fusion', 'fuyu', 'galaxy', 'galonmt', 'game', 'garbage', 'gazelle', 'gemma2', 'gemma3', 'gemma3_text', 'gemma3n', 'gemma4', 'gemma4_unified', 'gen', 'gender', 'generative', 'genesis', 'german', 'ghana', 'ghibli', 'ghost', 'gidd', 'gigaam', 'gigaam-ctc', 'gigaam-multilingual-ctc', 'gigachat', 'gigachat3_5', 'gigarembed', 'giorom', 'gist', 'gla', 'gliclass', 'gliner', 'gliner2', 'glm4', 'glm4_moe', 'glm4_moe_lite', 'glm4v', 'glm4v_moe', 'glm5v', 'glm_moe_dsa', 'glm_ocr', 'glmasr', 'glpn', 'got', 'got_ocr2', 'gpt-2', 'gpt2', 'gpt_bigcode', 'gpt_neo', 'gpt_neox', 'gpt_oss', 'gptj', 'gpunet', 'gr00t', 'gr00t_n1', 'gr00t_n1_5', 'gr00tn1d6', 'gr00tn1d7', 'grab', 'grand', 'granitemoehybrid', 'grape', 'graph', 'graphcast', 'green', 'greenvlapolicy', 'gretel', 'grin_qwen2_vl', 'groot', 'grounding-dino', 'guanaco', 'gui', 'gym', 'habibi', 'hackathon', 'hallucination', 'han', 'handwriting', 'har', 'harmon', 'harmonica', 'harmoniqmix', 'hawk_rglru', 'healthcare', 'heart', 'heartcodec', 'heartmula', 'hebrew', 'helios', 'hello', 'helpingai', 'hemlock', 'herbarium', 'heron', 'hibiki', 'hidream', 'hiera', 'hierarchical-transformer', 'hierarchical_model', 'higgs', 'higgs_audio_3', 'higgs_audio_v2', 'higgs_multimodal_qwen3', 'hikari', 'hindi', 'hinglish', 'hipfire', 'hmbench', 'home', 'horus', 'hospital', 'hotel', 'hrm_text', 'huggy', 'human', 'hunflair2', 'hunyuan', 'hunyuan3d', 'hunyuan_image_3_moe', 'hunyuan_v1_dense', 'hunyuan_vl', 'hunyuan_vl_mot', 'hunyuandit', 'hunyuanimage', 'hunyuanvideo', 'hunyuanworld', 'hxhy', 'hy3', 'hy_v3', 'hybrid_gpt', 'hyden', 'i2v', 'i3', 'icefall', 'idefics', 'idefics2', 'idefics3', 'ideogram', 'ilkt', 'illustrious', 'image', 'image-classification', 'imagesuperresolution', 'imbe', 'imrad', 'incomenet', 'index', 'indextts', 'indian', 'indic', 'indicconformer', 'indictrans', 'inf5', 'infinidepth', 'inflect', 'inkdetection_resnet3d', 'inkling', 'inkling_mm_model', 'instantid', 'intact', 'internlm2', 'internvl', 'internvl_chat', 'invoice', 'iquest', 'iquestcoder', 'iquestloopcoder', 'iris', 'irodori', 'isaac', 'jais', 'jamba', 'jan', 'jat', 'jenga', 'jenny', 'jepa', 'jina', 'jina_embeddings_v5_omni', 'jirack', 'jirack_ternary', 'john1604', 'joint_aed_ctc_speech-encoder-decoder', 'joyai', 'joyai_llm_flash', 'jparacrawl', 'juggernaut', 'kairos', 'kalm', 'kanade', 'kanana', 'kandinsky', 'kani', 'kayra', 'kelp', 'keras', 'keural', 'keye', 'keyevl1_5', 'kidney', 'kimi', 'kimi_k2', 'kimi_k25', 'kimi_k3', 'kimi_linear', 'kiwi', 'kohaku', 'kokoro', 'kolors', 'kompress', 'kontext', 'kor', 'korean', 'koshur', 'kpr-bert', 'kraken', 'krea', 'krea2', 'kugelaudio', 'kumru', 'kvasir', 'kyutai_speech_to_text', 'la-canine', 'laguna', 'laguna_dense', 'lance', 'lang', 'language', 'languagebindvideo', 'lapa', 'lasr_ctc', 'latent', 'latin', 'layoutlm', 'layoutlmv2', 'lcm', 'lcnet', 'lco', 'ldm3d', 'lead', 'leaf', 'led', 'legal', 'legato', 'lego', 'lekiwi', 'lenet', 'lenovo', 'lens', 'leoma', 'lerobot', 'lerovla', 'lettuce', 'lfm2', 'lfm2-bidirectional', 'lfm2-vl', 'lfm2_moe', 'lfm2_vl', 'lfm_audio', 'lhm', 'libero', 'librispeech', 'lid', 'lighton_ocr', 'lightonocr', 'lightricks', 'lightweight', 'lille-130m', 'lilt', 'lingbot', 'lingbotvla', 'lingshu', 'live', 'llada', 'llada2_moe', 'llama4_text', 'llava_eurobert_audio', 'llava_llama', 'llava_next', 'llava_onevision', 'llava_phi', 'llava_topdown_llama', 'llmjpvl', 'lmr', 'loan', 'local', 'locus', 'lofi', 'logistic_regression', 'longcat', 'longlive', 'longt5', 'lora', 'loras', 'lotus', 'lowpoly', 'lstm', 'ltgbert', 'ltx', 'ltx2', 'ltxv', 'luciole', 'luke', 'luna', 'lunar', 'lunarlander', 'luxtts', 'lw_detr', 'm2m-100', 'm2m_100', 'madlad400', 'magic', 'magicbrush', 'magistral', 'magpie', 'maize', 'majestrino', 'malicious', 'malware', 'mamba2_s2s', 'manga', 'mantis', 'map', 'marigold', 'martial', 'mask2former', 'maskformer', 'maskgct', 'matcha', 'math', 'matter', 'mbart', 'mcorec', 'mdbr', 'mdlm', 'meanvc2', 'med', 'medical', 'medium', 'medraq', 'medsam2', 'mega', 'meinamix', 'meinaunreal', 'mellum', 'mellum2', 'melotts', 'mental', 'merge', 'merged', 'mert_model', 'metaphorstar', 'metaseg', 'metpredict_dpt', 'mgpt2', 'mibot', 'midashenglm', 'midjourney', 'miku', 'mimelens', 'mimo', 'mimo_v2', 'minecraft', 'minicpm', 'minicpm-v', 'minicpmo', 'minicpmv', 'minicpmv4_6', 'minimax', 'minimax_m2', 'minimax_m3_vl', 'minimind', 'minit2i', 'minivla', 'miocodec', 'mira', 'mirror', 'mist_finetuned', 'mistral3', 'mixtral', 'mllama', 'mlx', 'mm-grounding-dino', 'mms', 'mnist', 'mobilenet_v2', 'mobilevit', 'mobtranslate', 'mochi', 'moda', 'mode', 'model1', 'model2vec', 'models', 'modern', 'modern_biaffine_parser', 'modernbert', 'modernbert-decoder', 'moirai', 'mola_lm', 'moment', 'mon', 'monika', 'monkeyocr', 'monolr', 'moondream1', 'moonshine', 'moonshine_streaming', 'mopet', 'morph-t5-auto', 'morph-t5-concat', 'morph-t5-sum', 'moshika', 'moss', 'moss_audio', 'moss_transcribe_diarize', 'moss_tts_delay', 'moss_tts_local', 'moss_tts_nano', 'moss_vl', 'motif', 'motion', 'motor', 'motus', 'movie', 'mplug_docowl', 'mplug_owl2', 'mplugowl3', 'mpnet', 'msp', 'mt1', 'mt2', 'mt5', 'multi', 'multi30k', 'multilingual', 'multimodal', 'multiple', 'multitalker', 'multitask', 'munche', 'muq', 'music', 'musicgen', 'musicgen_melody', 'musilingo', 'mvp', 'mwo', 'mxbai', 'mybert', 'mymodel', 'myx', 'nanbeige', 'nanbeige4', 'nandi', 'nano', 'nano-transformer', 'nanochat', 'nanofable', 'nanogpt', 'nanonets', 'nanovlm', 'nema', 'nemo', 'nemo-conformer-aed', 'nemo-conformer-rnnt', 'nemo-conformer-tdt', 'nemo.collections.asr.models.ctc_bpe_models.encdecctcmodelbpe', 'nemotron_h', 'ner', 'nest', 'netayume', 'neural_forecasters', 'neurocuda_snn', 'neutts', 'new', 'newbie', 'next', 'next2', 'nextstep', 'nigeria', 'nllb', 'nlp', 'nmt', 'nomic_bert', 'nomicembed', 'noobai', 'norovox_alpha_moe', 'nps_score_regression', 'nsfw', 'nunchaku', 'nuner', 'nv_esm', 'nvembed', 'nvidia', 'nyc', 'nytetydenoobaixlvpred1', 'object', 'ocr', 'ocrv3', 'ocrv4', 'ocrv5', 'ocrv6', 'oct', 'octo', 'offline', 'ogma', 'old', 'olmo2', 'olmo3', 'olmoe', 'omi', 'omni', 'omniasr', 'omnilingual_asr_ctc', 'omnivoice', 'omniweaving', 'omx', 'one', 'oneformer', 'onnx', 'onyx', 'open_provence', 'openai_privacy_filter', 'openarm', 'opencerebrum', 'openenv', 'openjourney', 'openvla', 'openvoicev2', 'opus', 'opusmt', 'orion', 'orkhon', 'oron', 'orpheus', 'other', 'ouro', 'out', 'outetts', 'overspecialization', 'ovis', 'ovis2_5', 'ovis_u1', 'ovos', 'owlv2', 'owlvit', 'owsm', 'pact', 'paddleocr', 'paddleocr_vl', 'paligemma', 'panda', 'panguembedded', 'pantagruel_uni', 'paper', 'paraformer', 'parakeet', 'parakeet_ctc', 'parakeet_rnnt', 'parakeet_tdt', 'parambharatgen', 'paraphrase', 'parler_tts', 'patchtst', 'pawn', 'pdiscoformer', 'pelican1', 'perceiver', 'perception_lm', 'persian', 'person', 'pet', 'phi3', 'phi3_v', 'phoonnx', 'photo', 'pi0', 'pi05', 'pi0fast', 'pi1m', 'pick', 'pickup', 'pii', 'pim', 'pip', 'pipeline', 'piper', 'pipertts', 'pit', 'pix2pix', 'pix2struct', 'pixart', 'pixel', 'pixelgen', 'pixelmodel', 'pixtral', 'place', 'plamo', 'plamo2', 'plamo2vl', 'plamo3', 'plant', 'playground', 'pleias', 'pneumonia', 'pnp', 'poca', 'pocket', 'poison', 'pokemon', 'policy', 'polyp', 'pongnoframeskip', 'pony', 'pore_codec_rsq742c12a', 'pos', 'pothole', 'potion', 'powsm', 'pp_doclayout_v3', 'pp_lcnet', 'pp_ocrv6_small_det', 'pp_ocrv6_small_rec', 'pplx', 'predict', 'prithvi', 'privacy', 'privacy_filter', 'proj', 'project', 'prometheus', 'protogen', 'prx', 'ps3', 'pthql', 'puli', 'pusht', 'pussy', 'pvt', 'pvt_v2', 'pyannote', 'pyramids', 'pytorch', 'qari', 'qed', 'qh_360vl', 'qhflow2', 'qianfanvl_chat', 'qie', 'quantized', 'quantum', 'quark', 'quasar', 'quasar_long', 'quickmt', 'quyen', 'qwen2', 'qwen2_5_omni', 'qwen2_5_omni_thinker', 'qwen2_5_vl', 'qwen2_audio', 'qwen2_vl', 'qwen3', 'qwen3_5', 'qwen3_5_moe', 'qwen3_5_moe_text', 'qwen3_5_text', 'qwen3_asr', 'qwen3_moe', 'qwen3_next', 'qwen3_omni_moe', 'qwen3_tts', 'qwen3_vl', 'qwen3_vl_audio', 'qwen3_vl_moe', 'qwq', 'raehoshi', 'rag', 'random_forest', 'raon', 'rapid', 'rawnet2', 'ray', 'rdt', 'reactplusplus', 'readme', 'real', 'realistic', 'realtime', 'realvisxl', 'recnext', 'record', 'recursive_compressor', 'red', 'redshift', 'refact', 'refinedwebmodel', 'refocus', 'reform', 'reinforce', 'relik-reader', 'research', 'resume', 'retnet', 'rf_detr', 'ring', 'rldx-1', 'rmbg', 'roberta', 'roberta-prelayernorm', 'robo', 'robot', 'robotics', 'roboverse', 'roformer', 'rogue', 'router', 'rskill', 'rt_detr', 'rt_detr_v2', 'rtmdet', 'rtmw', 'rvc', 's2v', 'sa2va_chat', 'sac', 'sae', 'sailor', 'salama', 'salamandra', 'salamandrata', 'sam', 'sam2', 'sam2_video', 'sam3', 'sam3_lite_text', 'sam3_video', 'sana', 'sana1', 'sandwich', 'sanskrit', 'sapiens', 'sarashina2', 'sarashina2_vision', 'sarm', 'sarvam', 'sarvam_mla', 'sarvam_moe', 'scalesurfer-stats-prediction', 'scalesurfer-transunet3d', 'scena', 'scenema-audio', 'schp', 'scispacy', 'scratch_llama', 'screwdriver', 'sd1', 'sd15', 'sd3', 'sdart', 'sdpose', 'sdxs', 'seallm', 'seamless_m4t_v2', 'sec', 'second', 'security', 'seed', 'seed_oss', 'seedance', 'seedvr2', 'sefi', 'segformerforsemanticsegmentation', 'segmentation', 'self', 'semantic', 'semeval26', 'sensevoice', 'sensevoicesmall', 'sentiment', 'sentimentizer', 'sentinel-src-mqm', 'sepformer', 'seq2seq', 'ser', 'serving', 'sesame', 'set', 'sew', 'sew-d', 'shape', 'shenava', 'sherpa', 'sherpa-onnx-axmodel', 'sidon', 'sig', 'siglip', 'siglip2', 'siglip_vision_model', 'sign', 'silero', 'silma', 'sim', 'simpletuner', 'simpsons', 'single', 'sinhala', 'siri', 'skillforge', 'skin', 'skywork', 'slanext', 'slide', 'slm', 'slovenian', 'smallthinker', 'smart', 'smolvla', 'smolvlm', 'smolvlm2', 'snowballtarget', 'snowflake', 'so100', 'so101', 'soarm101', 'soda_hier', 'soloba', 'soloni', 'sona-lora', 'sonics', 'sora', 'sosa', 'sotemixv2', 'soulx', 'sound', 'spacy', 'spam', 'span-marker', 'spanish', 'spark', 'sparsetral', 'spatialgt', 'spatialvla', 'speaker', 'speakerverification', 'speech', 'speech-encoder-decoder', 'speech_to_text', 'speech_to_text_transformer', 'speechbrain', 'speecht5', 'spiderpatchclassifier', 'spike_whale', 'splade', 'splinter', 'sprvla', 'spydaz', 'srpo', 'ssl', 'sslzip', 'stable', 'stable-diffusion', 'stablediffusion', 'stablelm_epoch', 'stack', 'stanza', 'starcoder2', 'staro', 'starvector', 'static', 'staticvectors', 'stationary', 'step', 'step1x', 'step3p5', 'step3p7', 'step_audio_2', 'stock', 'streaming', 'stroke', 'structformer', 'stt', 'student', 'style', 'style_text_to_speech_2', 'styletts2', 'sugoi', 'sundial', 'super', 'superb2', 'supertonic', 'support', 'supra', 'susono', 'svc', 'svm', 'swarm_agi', 'swinv2', 't2iadapter', 't2v', 't5gemma2', 'tabfm', 'table-transformer', 'tabpfn', 'tabular', 'tacotron2', 'talk2dino', 'talkie', 'tapas', 'tars', 'taskone', 'tequmsa', 'test', 'test1', 'testing', 'testmodel', 'text', 'text-to-speech', 'textcat', 'textual', 'tfidf-qa', 'thai', 'thaillm', 'theartist', 'thermalgen', 'ti2v', 'tibetan', 'tifa', 'tiger', 'tihado', 'time', 'time_moe', 'time_series_transformer', 'timer-s1', 'timesfm2_5', 'timesformer', 'timm_wrapper', 'tinygpt', 'tinymemorylm', 'tinynet', 'tinytimemixer', 'tipsv2', 'tirex', 'titan', 'toilet', 'tokencompose', 'tolm', 'toto', 'tower', 'towerinstruct', 'toxic', 'toxicthesis', 'traditional_forecasters', 'train', 'trained', 'training', 'translate', 'translation', 'translator', 'transnormerllm', 'travisionlm', 'trellis', 'trillion', 'trinity', 'trm_text_ism', 'tta', 'tts', 'turbowan2', 'turkish', 'turn', 'twinflow', 'txtai', 'typhoon', 'u2net', 'uaglnet', 'ucf', 'ufm', 'ultravox', 'umt5', 'unetr', 'uni', 'uniformer', 'unispeech-sat', 'unitrefine', 'universal', 'universal_vision', 'unlimited', 'unlimited-ocr', 'uperhover_uni2', 'upos', 'urchin_parallel', 'usad', 'usad2', 'uzbek', 'v8', 'vace', 'vae', 'vaetki', 'vbai', 'vbvr', 'vctk', 'vctrl', 'vectorsynth', 'vehicle', 'vehiclenet', 'veo3', 'vgg16', 'vggt', 'vibe', 'vibevoice', 'vibevoice_asr', 'vibevoice_streaming', 'vica_qwen', 'vicuna', 'videomae', 'videorefer_qwen2', 'vieneu', 'viet', 'vietnamese', 'vigia', 'viking', 'vila', 'villanova', 'vine', 'vipragsent', 'vision', 'vision-encoder-decoder', 'visionpsynano', 'visualclozepipeline', 'visualears', 'vit_b', 'vits', 'vla', 'vlajepa', 'vlm', 'voice', 'voiceclap-small', 'vosk', 'voxcpm', 'voxcpm1', 'voxcpm2', 'voxlect', 'voxtral', 'voxtral_realtime', 'voxtral_tts', 'voxtream2', 'vqa', 'vqbet', 'vtla', 'vtp', 'wagmi', 'waifu', 'wan', 'wan2', 'wan22', 'waste', 'watermark', 'wav2vec', 'wav2vec2-bert', 'wav2vec2-conformer', 'wave', 'wavlm', 'weather', 'web', 'weightformer', 'whipstr', 'whistle', 'wiola', 'wizardlm', 'wmt22', 'wmt26', 'woosh', 'world', 'wren', 'wsa', 'wsj0', 'wubble', 'xauusd', 'xcodec2', 'xcomet', 'xgboost', 'xgbregressor', 'xglm', 'xlm-roberta', 'xlm-roberta-joke-rater', 'xlm-token', 'xls', 'xmod', 'xpathology', 'xpertgpt', 'xtts', 'xttsv2', 'xvapitch', 'xvla', 'yam', 'yamnet', 'yangsamy', 'yanoljanext', 'yayoi', 'yiffymix', 'yolo', 'yolos', 'yolov5', 'yolov8', 'yolov8-seg', 'youtube', 'zero', 'zero_swot_encoder', 'zhinao', 'zipformer', 'zipformer_ctc', 'zipvoice']
+
+[gates]
+[build_name_embeddings] 0 cached, 100 to compute
+  [100/100] computed
+  [auc] full    0.9729
+  [auc] e_name  0.7093
+  [auc] e_desc  0.9714
+Loading weights:   0%|          | 0/103 [00:00<?, ?it/s]Loading weights: 100%|██████████| 103/103 [00:00<00:00, 7718.93it/s]
+[ablation.name_only] MiniLM(cuda) 12000 texts -> (12000, 384)
+  [ablation] name_only    AUC 0.8472
+Loading weights:   0%|          | 0/103 [00:00<?, ?it/s]Loading weights: 100%|██████████| 103/103 [00:00<00:00, 6807.33it/s]
+[ablation.name_size] MiniLM(cuda) 12000 texts -> (12000, 384)
+  [ablation] name_size    AUC 0.9313
+Loading weights:   0%|          | 0/103 [00:00<?, ?it/s]Loading weights: 100%|██████████| 103/103 [00:00<00:00, 6604.70it/s]
+[ablation.name_family] MiniLM(cuda) 12000 texts -> (12000, 384)
+  [ablation] name_family  AUC 0.9146
+Loading weights:   0%|          | 0/103 [00:00<?, ?it/s]Loading weights: 100%|██████████| 103/103 [00:00<00:00, 5587.99it/s]
+[ablation.full] MiniLM(cuda) 12000 texts -> (12000, 384)
+  [ablation] full         AUC 0.9655
+
+[ok] x_m [100000, 448] -> /u801/x98liu/model_lake/data1m/feats/100k
+  sha256                 d7573a020779e69c
+  CORE verbatim          True
+  shape / no NaN         True / True
+  row-order (100 rows)    max|d| 0.00e+00 -> True
+  family_vocab           341 -> 1896 (+1555)
+  descriptor chars       CORE 52.3 | HALO 57.3 (delta +5.0)
+  size clause            CORE 0.4791 | HALO 0.5775
+  G-B4 separability AUC  {'full': 0.9729, 'e_name': 0.7093, 'e_desc': 0.9714, 'n_per_class': 30183}
+  G-B4 clause ablation   {'n_per_class': 6000, 'name_only': 0.8472, 'name_size': 0.9313, 'name_family': 0.9146, 'full': 0.9655}
+[done] artifacts in /u801/x98liu/model_lake/data1m/feats/100k ; report copied to /u801/x98liu/model_lake/runs/T4_100k_20260810T171552Z

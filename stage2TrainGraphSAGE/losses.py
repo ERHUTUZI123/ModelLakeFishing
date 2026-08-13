@@ -347,8 +347,151 @@ def contrastive_supervision(data, *, acc_thresh: float = 0.8,
     return pos_mask, _hub_mask(data, num_models)
 
 
+# ── T0 item 2: sparse membership ────────────────────────────────────────────
+# M is [N_model, N_dataset] and 0/1. Dense it is 144 MB at 12K x 3K, 3.84 GB at
+# 100K x 9,603 and 38.4 GB at 1M -- while carrying ~31K non-zeros (density
+# 3e-5). SparseMembership keeps the same information as two sorted index arrays
+# (CSR by model row, CSC by dataset column) and exposes exactly the access
+# patterns the training / eval path uses, so call sites do not branch on the
+# representation. `.to_dense()` is the equivalence oracle used by the tests.
+
+class SparseMembership:
+    """CSC/CSR-backed 0/1 membership matrix; a drop-in for the dense M."""
+
+    def __init__(self, rows, cols, shape, dtype=torch.float32):
+        rows = torch.as_tensor(rows, dtype=torch.long)
+        cols = torch.as_tensor(cols, dtype=torch.long)
+        assert rows.numel() == cols.numel()
+        self.shape = (int(shape[0]), int(shape[1]))
+        self.dtype = dtype
+        n_m, n_d = self.shape
+        # de-duplicate: the dense build assigns 1.0, so a repeated (m, d) pair
+        # must not become a 2 here (duplicate trained_on edges exist upstream).
+        if rows.numel():
+            keys = torch.unique(rows * n_d + cols)
+            rows, cols = keys // n_d, keys % n_d
+        # CSC: column-major order (dataset -> its high performers)
+        o = torch.argsort(cols * n_m + rows)
+        self.col_rows = rows[o].contiguous()
+        self.col_ptr = torch.zeros(n_d + 1, dtype=torch.long)
+        if cols.numel():
+            self.col_ptr[1:] = torch.cumsum(torch.bincount(cols[o], minlength=n_d), 0)
+        # CSR: row-major order (model -> the datasets it tops)
+        o = torch.argsort(rows * n_d + cols)
+        self.row_cols = cols[o].contiguous()
+        self.row_ptr = torch.zeros(n_m + 1, dtype=torch.long)
+        if rows.numel():
+            self.row_ptr[1:] = torch.cumsum(torch.bincount(rows[o], minlength=n_m), 0)
+
+    # -- construction ------------------------------------------------------
+    @classmethod
+    def from_dense(cls, M):
+        rows, cols = (M > 0).nonzero(as_tuple=True)
+        return cls(rows.cpu(), cols.cpu(), M.shape, dtype=M.dtype)
+
+    # -- plumbing ----------------------------------------------------------
+    @property
+    def device(self):
+        return self.col_rows.device
+
+    @property
+    def nnz(self):
+        return int(self.col_rows.numel())
+
+    def size(self, dim=None):
+        return self.shape if dim is None else self.shape[dim]
+
+    def to(self, device):
+        for k in ("col_rows", "col_ptr", "row_cols", "row_ptr"):
+            setattr(self, k, getattr(self, k).to(device))
+        return self
+
+    def float(self):
+        self.dtype = torch.float32
+        return self
+
+    def to_dense(self):
+        out = torch.zeros(self.shape, dtype=self.dtype, device=self.device)
+        rows = torch.repeat_interleave(
+            torch.arange(self.shape[0], device=self.device),
+            self.row_ptr[1:] - self.row_ptr[:-1])
+        out[rows, self.row_cols] = 1
+        return out
+
+    # -- access patterns ---------------------------------------------------
+    def col_ids(self, d):
+        """LongTensor of model ids marked high performer on dataset d."""
+        return self.col_rows[self.col_ptr[d]:self.col_ptr[d + 1]]
+
+    def col_dense(self, d):
+        v = torch.zeros(self.shape[0], dtype=self.dtype, device=self.device)
+        v[self.col_ids(d)] = 1
+        return v
+
+    def row_ids(self, m):
+        """LongTensor of dataset ids model m tops."""
+        return self.row_cols[self.row_ptr[m]:self.row_ptr[m + 1]]
+
+    def rows_dense(self, n_id):
+        """Dense [len(n_id), N_dataset] block -- the per-batch view."""
+        n_id = torch.as_tensor(n_id, dtype=torch.long, device=self.device)
+        starts, ends = self.row_ptr[n_id], self.row_ptr[n_id + 1]
+        counts = ends - starts
+        out = torch.zeros((n_id.numel(), self.shape[1]),
+                          dtype=self.dtype, device=self.device)
+        total = int(counts.sum())
+        if total == 0:
+            return out
+        local = torch.repeat_interleave(
+            torch.arange(n_id.numel(), device=self.device), counts)
+        offs = (torch.arange(total, device=self.device)
+                - torch.repeat_interleave(torch.cumsum(counts, 0) - counts, counts)
+                + torch.repeat_interleave(starts, counts))
+        out[local, self.row_cols[offs]] = 1
+        return out
+
+    def rows_coo(self, n_id):
+        """(local_row, col) pairs of the batch block -- the sparse rows_dense."""
+        n_id = torch.as_tensor(n_id, dtype=torch.long, device=self.device)
+        starts, ends = self.row_ptr[n_id], self.row_ptr[n_id + 1]
+        counts = ends - starts
+        total = int(counts.sum())
+        if total == 0:
+            empty = torch.zeros(0, dtype=torch.long, device=self.device)
+            return empty, empty
+        local = torch.repeat_interleave(
+            torch.arange(n_id.numel(), device=self.device), counts)
+        offs = (torch.arange(total, device=self.device)
+                - torch.repeat_interleave(torch.cumsum(counts, 0) - counts, counts)
+                + torch.repeat_interleave(starts, counts))
+        return local, self.row_cols[offs]
+
+    def sum(self, dim=None):
+        if dim in (0, -2):
+            return (self.col_ptr[1:] - self.col_ptr[:-1]).to(self.dtype)
+        if dim in (1, -1):
+            return (self.row_ptr[1:] - self.row_ptr[:-1]).to(self.dtype)
+        return torch.tensor(float(self.nnz), dtype=self.dtype, device=self.device)
+
+    def __getitem__(self, key):
+        if isinstance(key, tuple):
+            r, c = key
+            if isinstance(r, slice) and r == slice(None):
+                return self.col_dense(int(c))          # M[:, d]
+            if isinstance(r, int) and isinstance(c, int):
+                col = self.col_ids(c)                  # M[m, d]
+                return (col == r).any().to(self.dtype)
+            return self.col_dense(int(c))[torch.as_tensor(r, dtype=torch.long)]
+        return self.rows_dense(key)                    # M[n_id]
+
+    def __repr__(self):
+        return (f"SparseMembership(shape={self.shape}, nnz={self.nnz}, "
+                f"density={self.nnz / max(1, self.shape[0] * self.shape[1]):.2e})")
+
+
 def high_performer_membership(trained_on_index, trained_on_attr,
-                              num_models, num_datasets, *, top_frac=0.1, top_k=None):
+                              num_models, num_datasets, *, top_frac=0.1, top_k=None,
+                              sparse=False):
     """
     Per-dataset high-performer membership M[model, dataset].
 
@@ -357,9 +500,13 @@ def high_performer_membership(trained_on_index, trained_on_attr,
     dataset, so a dataset where everyone scores ~0.9 still yields a small, sharp
     positive set instead of admitting (almost) everyone the way a global
     accuracy threshold does.
+
+    sparse=True returns a SparseMembership carrying identical entries (verified
+    element-wise in tests/test_t0_scale.py) without ever allocating the dense
+    [N_model, N_dataset] block.
     """
-    M = torch.zeros(num_models, num_datasets)
     src, dst, acc = trained_on_index[0], trained_on_index[1], trained_on_attr.float()
+    rows, cols = [], []
     for d in torch.unique(dst).tolist():
         sel = dst == d
         models_d, accs_d = src[sel], acc[sel]
@@ -368,7 +515,14 @@ def high_performer_membership(trained_on_index, trained_on_attr,
             continue
         kk = min(int(top_k), n) if top_k is not None else max(1, int(round(top_frac * n)))
         top = torch.topk(accs_d, kk).indices
-        M[models_d[top], d] = 1.0
+        rows.append(models_d[top])
+        cols.append(torch.full((int(top.numel()),), d, dtype=torch.long))
+    rows = torch.cat(rows) if rows else torch.zeros(0, dtype=torch.long)
+    cols = torch.cat(cols) if cols else torch.zeros(0, dtype=torch.long)
+    if sparse:
+        return SparseMembership(rows, cols, (num_models, num_datasets))
+    M = torch.zeros(num_models, num_datasets)
+    M[rows, cols] = 1.0
     return M
 
 
@@ -413,14 +567,15 @@ def lineage_components(data, num_models):
 
 
 def topk_membership(data, *, top_frac=0.1, top_k=None,
-                    trained_on_index=None, trained_on_attr=None):
+                    trained_on_index=None, trained_on_attr=None, sparse=False):
     """Per-dataset top-fraction high-performer membership M [N_model, N_dataset].
-    Pass TRAIN-visible trained_on_index/attr (never test edges)."""
+    Pass TRAIN-visible trained_on_index/attr (never test edges).
+    sparse=True returns a SparseMembership (see the class docstring)."""
     num_models = data["model"].num_nodes
     num_datasets = data["dataset"].num_nodes
     idx, attr = _resolve_trained_on(data, trained_on_index, trained_on_attr)
     return high_performer_membership(idx, attr, num_models, num_datasets,
-                                     top_frac=top_frac, top_k=top_k)
+                                     top_frac=top_frac, top_k=top_k, sparse=sparse)
 
 
 def pool_membership_by_root(M, root_ids):
@@ -436,17 +591,41 @@ def pool_membership_by_root(M, root_ids):
 
     root_ids : LongTensor [N_dataset] integer root code per dataset (mappedID order).
     Returns M_pooled (same shape/dtype as M).
+
+    T0 item 2: the per-root python loop is replaced by one scatter-reduce (amax)
+    into a compact [N_model, N_root] block plus a gather back -- same result,
+    O(nnz) instead of O(N_root) dense column slices. A SparseMembership in gives
+    a SparseMembership out, with no dense block allocated at all.
     """
+    root_ids = torch.as_tensor(root_ids, dtype=torch.long)
+    if isinstance(M, SparseMembership):
+        root_ids = root_ids.to(M.device)
+        rows = torch.repeat_interleave(
+            torch.arange(M.shape[0], device=M.device),
+            M.row_ptr[1:] - M.row_ptr[:-1])
+        roots = root_ids[M.row_cols]                          # nnz -> its root
+        pairs = torch.unique(rows * (int(root_ids.max()) + 1) + roots)
+        base = int(root_ids.max()) + 1
+        p_rows, p_roots = pairs // base, pairs % base
+        # expand every (model, root) back to every dataset column in that root
+        order = torch.argsort(root_ids)
+        cnt = torch.bincount(root_ids, minlength=base)
+        ptr = torch.zeros(base + 1, dtype=torch.long, device=M.device)
+        ptr[1:] = torch.cumsum(cnt, 0)
+        reps = cnt[p_roots]
+        out_rows = torch.repeat_interleave(p_rows, reps)
+        starts = ptr[p_roots]
+        offs = (torch.arange(int(reps.sum()), device=M.device)
+                - torch.repeat_interleave(torch.cumsum(reps, 0) - reps, reps)
+                + torch.repeat_interleave(starts, reps))
+        return SparseMembership(out_rows.cpu(), order[offs].cpu(), M.shape, dtype=M.dtype)
     M = M.float()
-    out = torch.zeros_like(M)
-    for r in torch.unique(root_ids).tolist():
-        cols = (root_ids == r).nonzero().flatten()
-        if cols.numel() == 1:
-            out[:, cols] = M[:, cols]                 # singleton root: unchanged
-        else:
-            pooled = (M[:, cols].sum(dim=1, keepdim=True) > 0).float()
-            out[:, cols] = pooled                     # broadcast root-union to all members
-    return (out > 0).to(M.dtype) if M.dtype != torch.float32 else out
+    uniq, inv = torch.unique(root_ids, return_inverse=True)
+    inv = inv.to(M.device)
+    pooled = torch.zeros(M.size(0), uniq.numel(), dtype=M.dtype, device=M.device)
+    pooled.scatter_reduce_(1, inv.unsqueeze(0).expand(M.size(0), -1), M,
+                           reduce="amax", include_self=True)
+    return pooled[:, inv]
 
 
 def per_dataset_density(trained_on_index, M, *, min_models=2):
@@ -454,29 +633,44 @@ def per_dataset_density(trained_on_index, M, *, min_models=2):
     where n = models evaluated on it and k = those selected as top performers.
     Scale-safe (no N x N)."""
     dst = trained_on_index[1]
+    col_sum = M.sum(0)                       # one pass, dense or sparse alike
     ds = []
     for d in torch.unique(dst).tolist():
         n = int((dst == d).sum())
         if n < min_models:
             continue
-        k = int(M[:, d].sum())
+        k = int(col_sum[d])
         ds.append((k * (k - 1)) / (n * (n - 1)) if n > 1 else 0.0)
     return float(np.mean(ds)) if ds else float("nan")
 
 
-def global_positive_density(M, *, max_dense=2000, n_sample=200_000, generator=None):
+def global_positive_density(M, *, max_dense=2000, n_sample=200_000, generator=None,
+                            pair_chunk=4096):
     """Fraction of model pairs co-selected on >=1 dataset. Exact for small N,
-    else estimated from `n_sample` random pairs (47K-safe)."""
+    else estimated from `n_sample` random pairs (47K-safe).
+
+    T0 item 2: the sampled branch used to materialize M[i] for all 200K sampled
+    rows at once -- 200,000 x N_dataset, i.e. 7.7 GB at N_dataset=9,603, and one
+    of the two OOMs that blocked P3 at full scale. Pairs are now processed in
+    `pair_chunk`-sized blocks, so peak memory is pair_chunk x N_dataset
+    regardless of n_sample.
+    """
     N = M.size(0)
-    if N <= max_dense:
+    if N <= max_dense and not isinstance(M, SparseMembership):
         P = (M @ M.t()) > 0
         P.fill_diagonal_(False)
         return float(P.sum()) / (N * (N - 1))
     i = torch.randint(N, (n_sample,), generator=generator)
     j = torch.randint(N, (n_sample,), generator=generator)
     keep = i != j
-    co = (M[i[keep]] * M[j[keep]]).sum(-1) > 0
-    return float(co.float().mean())
+    i, j = i[keep], j[keep]
+    hits, total = 0, int(i.numel())
+    for s in range(0, total, pair_chunk):
+        a, b = i[s:s + pair_chunk], j[s:s + pair_chunk]
+        Ma = M.rows_dense(a) if isinstance(M, SparseMembership) else M[a]
+        Mb = M.rows_dense(b) if isinstance(M, SparseMembership) else M[b]
+        hits += int(((Ma * Mb).sum(-1) > 0).sum())
+    return float(hits) / max(1, total)
 
 
 def uniformity_loss(z, *, n_pairs: int = 4096, t: float = 2.0, generator=None):
@@ -527,6 +721,81 @@ def contrastive_loss(z_model, pos_mask, hub_mask, *,
     pos_log_prob = log_prob.masked_fill(~pos_mask, 0.0)
     loss_i = -pos_log_prob.sum(dim=1) / pos_count.clamp_min(1).float()
     return loss_i[valid].mean()
+
+
+def contrastive_loss_sampled(z_model, pos_pairs, comp_b, *,
+                             temperature: float = 0.2, hard_neg_weight: float = 2.0,
+                             n_neg: int = 256, generator=None):
+    """
+    T0 item 3: the O(B x n_neg) form of contrastive_loss.
+
+    contrastive_loss materializes five [B, B] blocks (sim, weight, logits,
+    log_prob + the two masks). At B = 20,000 -- a plausible fan-out-capped
+    subgraph on the 100K lake -- that is ~6.4 GB, so the dense form cannot run
+    there at all. This computes the SAME objective
+
+        loss_i = logsumexp_j(w_ij * s_ij) - mean_{p in P_i} s_ip
+
+    with the denominator restricted to P_i plus `n_neg` negatives sampled
+    uniformly from the batch, and positives carried sparsely as index pairs
+    instead of a [B, B] mask.
+
+    pos_pairs : (ai, bi) LongTensors of LOCAL positive pairs, de-duplicated,
+                diagonal-free (sampling.batch_positive_pairs builds them).
+    comp_b    : [B] lineage component id per batch model -- the sparse stand-in
+                for hub_mask (singletons hold unique component ids, so equality
+                alone never fires for them).
+    n_neg     : None means "every batch model is a negative", which makes this
+                mathematically identical to contrastive_loss; the equivalence
+                test pins that, so the sampling is the ONLY approximation.
+
+    D-14: this changes the champion configuration, so its effect on gold@10 is
+    measured against the dense form rather than assumed (docs/1M/T0.md).
+    """
+    ai, bi = pos_pairs
+    z = z_model
+    B = z.size(0)
+    if ai.numel() == 0:
+        return z.new_zeros(())
+    exact = n_neg is None
+    anchors, inv = torch.unique(ai, return_inverse=True)
+    A = int(anchors.numel())
+    sim_pos = (z[ai] * z[bi]).sum(-1) / temperature                  # [P]
+    za = z[anchors]                                                  # [A, dim]
+
+    if exact:
+        neg = torch.arange(B, device=z.device).expand(A, B)
+        sim_neg = (za @ z.t()) / temperature                         # [A, B]
+    else:
+        neg = torch.randint(B, (A, int(n_neg)), generator=generator, device=z.device)
+        sim_neg = torch.bmm(z[neg], za.unsqueeze(2)).squeeze(2) / temperature
+
+    pos_key = torch.sort(ai * B + bi).values
+    is_pos = torch.isin(anchors.unsqueeze(1) * B + neg, pos_key)
+    is_self = neg == anchors.unsqueeze(1)
+    hub = comp_b[anchors].unsqueeze(1) == comp_b[neg]
+
+    w = torch.ones_like(sim_neg)
+    w[hub & ~is_pos & ~is_self] = hard_neg_weight                    # hard negatives
+    logits = sim_neg + torch.log(w.clamp_min(1e-12))
+    if exact:
+        # positives already sit in the row (weight 1); only self is excluded
+        denom = torch.logsumexp(logits.masked_fill(is_self, float("-inf")), dim=1)
+    else:
+        # sampled positives would double count -- drop them and add P_i exactly
+        logits = logits.masked_fill(is_self | is_pos, float("-inf"))
+        mx = torch.full((A,), float("-inf"), device=z.device, dtype=sim_pos.dtype)
+        mx = mx.index_reduce(0, inv, sim_pos, "amax", include_self=False)
+        sp = torch.zeros(A, device=z.device, dtype=sim_pos.dtype).index_add(
+            0, inv, torch.exp(sim_pos - mx[inv]))
+        lse_pos = mx + torch.log(sp)
+        denom = torch.logaddexp(torch.logsumexp(logits, dim=1), lse_pos)
+
+    cnt = torch.zeros(A, device=z.device, dtype=sim_pos.dtype).index_add(
+        0, inv, torch.ones_like(sim_pos))
+    mean_pos = torch.zeros(A, device=z.device, dtype=sim_pos.dtype).index_add(
+        0, inv, sim_pos) / cnt
+    return (denom - mean_pos).mean()
 
 
 # ── combined ─────────────────────────────────────────────────────────────────
@@ -619,6 +888,14 @@ def dataset_to_model_contrastive_from_edges(z_dict, edge_label_index, edge_label
     return (loss, {"n_datasets": n_datasets}) if return_stats else loss
 
 
+def _pos_ids(M, d):
+    """Model ids marked positive on dataset d -- one code path for dense M and
+    SparseMembership (the sparse form never builds the [N_model] column)."""
+    if isinstance(M, SparseMembership):
+        return M.col_ids(int(d))
+    return (M[:, d] > 0).nonzero().flatten()
+
+
 def build_global_negative_pools(task_type_id, trained_on_index, trained_on_attr, M, *,
                                 include_known_low=False, low_frac=0.3):
     """Top-1/global guide Phase 1: RELIABLE global negative pools per dataset.
@@ -696,7 +973,8 @@ def global_retrieval_loss(z_dict, M, pools, *, temperature=0.1, n_neg=64,
     datasets. Unobserved models never appear (they are not in any pool).
     """
     z_m, z_d = z_dict["model"], z_dict["dataset"]
-    ds_all = [d for d in pools if int(M[:, d].sum()) > 0]
+    col_sum = M.sum(0)
+    ds_all = [d for d in pools if int(col_sum[d]) > 0]
     if not ds_all:
         loss = z_m.new_zeros(())
         return (loss, {"n_datasets": 0}) if return_stats else loss
@@ -708,7 +986,7 @@ def global_retrieval_loss(z_dict, M, pools, *, temperature=0.1, n_neg=64,
 
     losses, n_negs_used = [], 0
     for d in ds_batch:
-        pos = (M[:, d] > 0).nonzero().flatten().to(z_m.device)
+        pos = _pos_ids(M, d).to(z_m.device)
         pool = pools[d].to(z_m.device)
         if pool.numel() > n_neg:
             if hard_frac > 0:
@@ -800,7 +1078,7 @@ def global_lake_loss(z_dict, M, q, logq, *, temperature=0.1, n_neg=64,
     q_dev, logq_dev = q.to(dev), logq.to(dev)
     losses, n_neg_used, n_hard_used = [], 0, 0
     for d in ds_batch:
-        pos = (M[:, d] > 0).nonzero().flatten().to(dev)
+        pos = _pos_ids(M, d).to(dev)
         samp = torch.multinomial(q_dev, n_neg, replacement=True, generator=generator)
         samp = samp[~torch.isin(samp, pos)]               # positives never negatives
         logits = [z_m[pos] @ z_d[d] / temperature,
@@ -838,10 +1116,10 @@ def mine_hard_negative_sets(z_dict, M, *, hard_k=20):
     z_m, z_d = z_dict["model"].detach(), z_dict["dataset"].detach()
     hard = {}
     for d in (M.sum(0) > 0).nonzero().flatten().tolist():
-        pos = (M[:, d] > 0)
+        pos = _pos_ids(M, d).to(z_m.device)
         s = z_m @ z_d[d]
         s[pos] = float("-inf")                    # positives can't be hard negatives
-        k = min(hard_k, int((~pos).sum()))
+        k = min(hard_k, int(s.numel() - pos.numel()))
         hard[d] = torch.topk(s, k).indices.cpu()
     return hard
 
@@ -875,10 +1153,10 @@ def mine_alibi_hard_negative_sets(z_dict, M, deg, dataset_task_id, model_tasks, 
     thresh = torch.quantile(lab, deg_quantile) if lab.numel() else torch.tensor(1.0)
     hard = {}
     for d in (M.sum(0) > 0).nonzero().flatten().tolist():
-        pos = (M[:, d] > 0)
+        pos = _pos_ids(M, d).to(z_m.device)
         s = z_m @ z_d[d]
         s[pos] = float("-inf")
-        k_mine = min(hard_k * overshoot, int((~pos).sum()))
+        k_mine = min(hard_k * overshoot, int(s.numel() - pos.numel()))
         cand = torch.topk(s, k_mine).indices.cpu()
         td = int(dataset_task_id[d])
         keep = []

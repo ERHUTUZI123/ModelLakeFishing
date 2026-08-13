@@ -1,0 +1,89 @@
+{
+  "written_at": "2026-08-10T17:28:39+00:00",
+  "rung": "100k",
+  "n": 100000,
+  "n_core": 30183,
+  "n_halo": 69817,
+  "core_graph": "/u801/x98liu/model_lake/codes/ModelLakeFishing/stage1BuildTransferGraph/hgraph_ml_v2.pt",
+  "ladder_csv": "/u801/x98liu/model_lake/data1m/ladder/100k_model_ids.csv",
+  "ladder_sha256": "ccf288aee2a3caee10b60ab8a7ee3031f44d5766e33074e4090eb35cb128b0ab",
+  "encoder": "all-MiniLM-L6-v2",
+  "device": "cuda",
+  "batch_size": 256,
+  "name_seed": 42,
+  "name_dim": 64,
+  "desc_dim": 384,
+  "descriptor_fn": "scale.modellens_build_graph.model_descriptor",
+  "x_m_sha256": "d7573a020779e69c082cf686933204d5fe3261960fe4e1525f5a264596721da5",
+  "x_m_shape": [
+    100000,
+    448
+  ],
+  "gates": {
+    "core_verbatim": true,
+    "shape_ok": true,
+    "no_nan_inf": true,
+    "family_vocab_append_only": true,
+    "row_order_k": 100,
+    "row_order_max_delta": 0.0,
+    "row_order_ok": true
+  },
+  "family_vocab": {
+    "core_rows": 341,
+    "after_rows": 1896,
+    "new_rows": 1555,
+    "path": "/u801/x98liu/model_lake/data1m/feats/100k/family_vocab.csv"
+  },
+  "size_bucket": {
+    "num_buckets": 15,
+    "core_unknown_share": 0.52089,
+    "halo_unknown_share": 0.42255
+  },
+  "family_id": {
+    "core_other_share": 0.34158,
+    "halo_other_share": 0.12497,
+    "halo_distinct_ids": 1691
+  },
+  "descriptor_text": {
+    "core": {
+      "n": 30183,
+      "char_mean": 52.298,
+      "char_median": 51.0,
+      "char_std": 20.357,
+      "char_p10": 27.0,
+      "char_p90": 77.0,
+      "with_size_clause": 0.47911,
+      "with_family_clause": 0.66024
+    },
+    "halo": {
+      "n": 69817,
+      "char_mean": 57.272,
+      "char_median": 57.0,
+      "char_std": 15.395,
+      "char_p10": 38.0,
+      "char_p90": 76.0,
+      "with_size_clause": 0.5775,
+      "with_family_clause": 1.0
+    },
+    "char_mean_delta": 4.974
+  },
+  "halo_feature_health": {
+    "all_zero_rows": 0,
+    "l2_norm_mean": 1.0757,
+    "l2_norm_min": 1.0134,
+    "l2_norm_max": 1.2846
+  },
+  "separability_auc": {
+    "full": 0.9729,
+    "e_name": 0.7093,
+    "e_desc": 0.9714,
+    "n_per_class": 30183
+  },
+  "auc_ablation": {
+    "n_per_class": 6000,
+    "name_only": 0.8472,
+    "name_size": 0.9313,
+    "name_family": 0.9146,
+    "full": 0.9655
+  }
+}

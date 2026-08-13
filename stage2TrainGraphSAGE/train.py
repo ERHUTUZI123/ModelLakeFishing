@@ -44,13 +44,14 @@ from ModelLakeFishing.stage2TrainGraphSAGE.losses import (  # noqa: E402
     TRAINED_ON, PerfScorer, accuracy_lookup, perf_supervision, perf_loss,
     perf_ranking_loss, raw_dot_ranknet_loss, split_trained_on, topk_membership,
     lineage_components, per_dataset_density, global_positive_density,
-    contrastive_loss, dataset_to_model_contrastive,
+    contrastive_loss, contrastive_loss_sampled, dataset_to_model_contrastive,
     dataset_to_model_contrastive_from_edges, uniformity_loss,
     global_retrieval_loss, global_lake_loss, mine_hard_negative_sets,
     mine_alibi_hard_negative_sets, dataset_push_apart_loss,
 )
 from ModelLakeFishing.stage2TrainGraphSAGE.sampling import (  # noqa: E402
     make_link_loader, apply_edge_dropout, batch_contrastive_masks,
+    batch_positive_pairs,
 )
 from ModelLakeFishing.stage2TrainGraphSAGE.learnable import (  # noqa: E402
     save_checkpoint, load_checkpoint,
@@ -79,7 +80,9 @@ def train(model, scorer, train_data, eli, target, M, comp, *,
           rank_gap_weighted=False,
           val_data=None, val_lookup=None, patience=0, eval_every=1,
           lambda_dm_contrast=0.0, dm_temperature=0.1, dm_top_frac=0.10,
-          global_ctx=None, zpush_ctx=None):
+          global_ctx=None, zpush_ctx=None,
+          fanout=False, contrast_n_neg=None, contrast_max_pos_per_dataset=None,
+          resume_state=None, history0=None, on_epoch_end=None):
     """
     Per batch: lambda_rank * ranking + lambda_contrast * contrast (+ optional
     lambda_mse * MSE, + optional lambda_uniform * uniformity). Ranking (not MSE)
@@ -93,8 +96,27 @@ def train(model, scorer, train_data, eli, target, M, comp, *,
         device = next(model.parameters()).device
     opt = torch.optim.Adam(list(model.parameters()) + list(scorer.parameters()), lr=lr)
     loader = make_link_loader(train_data, eli, target,
-                              num_neighbors=num_neighbors, batch_size=batch_size)
-    history = []
+                              num_neighbors=num_neighbors, batch_size=batch_size,
+                              fanout=fanout)
+    # T6 (100kplan §9.3): resume and per-epoch checkpointing. Both default to
+    # None, so every historical run takes exactly the same path as before --
+    # start_epoch stays 0, history starts empty, no callback fires.
+    start_epoch = 0
+    if resume_state is not None:
+        model.load_state_dict(resume_state["model"])
+        scorer.load_state_dict(resume_state["scorer"])
+        opt.load_state_dict(resume_state["opt"])
+        start_epoch = int(resume_state["epoch"]) + 1
+        # The RNG has to be restored HERE, not in the caller: train_eval_one
+        # does torch.manual_seed(init_seed) when it builds the model, which
+        # would overwrite anything restored earlier. Restoring after that call
+        # is what makes a resumed run follow the same batch order, edge dropout
+        # and negative samples as the run it continues.
+        rng = resume_state.get("rng")
+        if rng is not None:
+            from ModelLakeFishing.scale1m.checkpoint import set_rng_state
+            set_rng_state(rng)
+    history = list(history0 or [])
     # ── Top-1 guide Phase 1: global sampled-softmax negatives ────────────────
     # global_ctx = {pools, M, lambda_g, temperature, n_neg, n_datasets, hard_frac}
     # The global term scores EVERY indexed model, so it needs a full-graph
@@ -115,7 +137,7 @@ def train(model, scorer, train_data, eli, target, M, comp, *,
     use_val = val_data is not None and val_lookup is not None
     best_val, best_state, bad_epochs = -2.0, None, 0
     import copy
-    for epoch in range(epochs):
+    for epoch in range(start_epoch, epochs):
         model.train()
         # v3 L2: mine 'currently-beats-the-labeled-best' negatives EXACTLY once,
         # from a clean (no-dropout) train-graph forward -- never re-mined, so no
@@ -149,7 +171,6 @@ def train(model, scorer, train_data, eli, target, M, comp, *,
             opt.zero_grad()
             z = model(batch)
             eli_b, el_b = batch[TRAINED_ON].edge_label_index, batch[TRAINED_ON].edge_label
-            pb, hb = batch_contrastive_masks(batch, M, comp)
 
             parts, total = {}, z["model"].new_zeros(())
             if lambda_mse > 0:
@@ -165,7 +186,16 @@ def train(model, scorer, train_data, eli, target, M, comp, *,
                     lrank = perf_ranking_loss(scorer, z, eli_b, el_b, margin=rank_margin)
                 total = total + lambda_rank * lrank
                 parts["rank"] = float(lrank.detach())
-            lc = contrastive_loss(z["model"], pb, hb)
+            if contrast_n_neg is None:
+                pb, hb = batch_contrastive_masks(batch, M, comp)
+                lc = contrastive_loss(z["model"], pb, hb)
+            else:
+                # T0 item 3: sparse positives + sampled negatives (no [B,B] block)
+                pairs = batch_positive_pairs(
+                    batch, M, max_per_dataset=contrast_max_pos_per_dataset)
+                lc = contrastive_loss_sampled(
+                    z["model"], pairs, comp[batch["model"].n_id],
+                    n_neg=contrast_n_neg)
             total = total + lambda_contrast * lc
             parts["contrast"] = float(lc.detach())
             if lambda_dm_contrast > 0:
@@ -228,6 +258,9 @@ def train(model, scorer, train_data, eli, target, M, comp, *,
                 if patience and bad_epochs >= patience:
                     break
             model.train()
+        if on_epoch_end is not None:
+            on_epoch_end(epoch, history[-1],
+                         dict(model=model, scorer=scorer, opt=opt, loader=loader))
     if use_val and best_state is not None:
         model.load_state_dict(best_state[0])
         scorer.load_state_dict(best_state[1])
