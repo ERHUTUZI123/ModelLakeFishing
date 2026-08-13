@@ -1,0 +1,16 @@
+# core.autocrlf=true rewrites line endings on checkout. For most files that is
+# harmless; for these three it is not.
+#
+# *.csv -- family_vocab.csv is a checkpoint binding credential: the checkpoint
+#   stores its sha256, and the vocab is "the only credential for embedding-row
+#   identity" (CLAUDE.md Step 6). A CRLF checkout changes that sha256 without
+#   changing a single family name, so the binding fails against a file whose
+#   content is in fact correct. This already happened: the copy under
+#   data1m/feats/100k/ was CRLF (sha 0fbf5c11...) while every T6 checkpoint
+#   bound the LF form (sha f40af358...). See docs/1M/T6more.md P2-1.
+#
+# *.sh / *.sbatch -- these run on Linux. A CRLF shebang line is a
+#   "bad interpreter: ^M" failure at job start, after the queue wait.
+*.csv text eol=lf
+*.sh text eol=lf
+*.sbatch text eol=lf
