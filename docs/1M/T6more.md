@@ -45,7 +45,8 @@
 |---|---|---|---|
 | 12k | `00ac2434cd8ecaa2f633bc377b25d1d5ae0a7d50cbcab88774355efc47a11d34` | `stage1BuildTransferGraph/hgraph_ml_v2_sub.pt` | ✅ **逐字节相同** |
 | 30k | `e6ae2dfeb59779f4cb0242a08bf90d6628699e90a9a648048b799d9cc7d71cda` | `stage1BuildTransferGraph/hgraph_ml_v2.pt` | ✅ **逐字节相同** |
-| 100k | `7fbc3c47ca66227c408a78e03197602f0e405bd15a2d7da77fdd10a2f8a651a0` | 远端 `data1m/graphs/hgraph_100k.pt` | ✅ **远端 `sha256sum` 实测相同**（2026-08-13） |
+| 100k（8-11 训练用，**已归档**） | `7fbc3c47ca66227c408a78e03197602f0e405bd15a2d7da77fdd10a2f8a651a0` | 远端 `hgraph_100k_norel_7fbc3c47.pt` | ✅ 远端实测相同；血缘无关系类型（§1.8） |
+| 100k（**现行**，带关系类型） | `16f3521482a8efd69d491b66f84624d9e0086f3cb42288d69a9c7f022492060f` | 远端 `hgraph_100k.pt` | ✅ 2026-08-13 重建，33/33 门过（§3.4） |
 
 > 12k/30k 这两行是**铁律 1 在这两档上的直接证据**：训练用的图与本地冻结的 CORE 图逐字节相同。
 > 100k 这一行现在也闭合了：远端实测 `7fbc3c47ca66227c408a78e03197602f0e405bd15a2d7da77fdd10a2f8a651a0`，
@@ -90,16 +91,15 @@
 **丢的是什么**：`r_mm'` 的离散有序权重（quantized > adapter > finetune > merge）在这张图上**没有输入**。
 那是 CLAUDE.md 点名的 novel contribution，也是 D-37 花力气从 `baseModels` 抢回 94.9% 血缘声明的目的。
 
-**两条路，请你选一条**：
+**✅ 裁定：走 B（用户 2026-08-13 定），已执行。** 见 §3.4。
 
-| | 做法 | 代价 | 后果 |
-|---|---|---|---|
-| **A（保守）** | 现在把 `hf_canon.parquet` 传上去，但**不重建 R2 的图**；R2 全程按「血缘无关系类型」如实披露，R3/R4 起用带 relation 的图 | 0 | T6/T7/T8 全部沿用现有 checkpoint；R2 报告里 `r_mm'` 只能报「边存在」不能报「按类型加权」 |
-| **B（彻底）** | 传 parquet → 重建 100K 图 → 重跑 T6 六个 run | 图 sha 变、**六个 checkpoint 作废**；但重跑很便宜（12K 93 s、100K 108 s，整条工作流 21 分钟） | R2 起就有完整的 `r_mm'` 输入；**必须在 T7 之前决定**，T7/T8 跑完再改代价成倍 |
+| | 做法 | 结果 |
+|---|---|---|
+| A（保守） | 不重建，R2 如实披露「血缘无关系类型」 | 未采用 |
+| **B（采用）** | 传 parquet → 重建 100K 图 → 重跑 100K 档的 run | ✅ 图已重建并验过；4 个 run 已提交 |
 
-**我的建议是 B，但这取决于一件我不知道的事**：R2 的报告要不要把「血缘边按关系类型加权」作为卖点之一。
-要，就现在做——重跑成本是分钟级，而 T7/T8 之后再返工要连带重做导出、索引和三轴评测。
-不要，就选 A，并且**在 R2_EXECUTION.md 里明写这一档的血缘边没有关系类型**，别让读者以为 D-37 的成果进了这一档。
+> **只重跑 100K 档，不动 12k/30k。** 那两档绑的是 CORE 图（`00ac2434…` / `e6ae2dfe…`），
+> 本次重建一个字节都没碰它们，所以它们的 checkpoint 与 binding 依然成立。
 
 ### 1.3 family_vocab（checkpoint 的身份凭据）
 
@@ -407,6 +407,62 @@ b3bc1a42f680aeca5f8a1e27480b0018c1b65c7d424683d71e625d7014ab8b86  T5_GATES_100k.
 - [ ] 新字段 `checkpoints_written` / `checkpoints_retained` / `run_dir_reused: false` 都在
 - [ ] 记下两个 run 的 `train_row.head.n_datasets`（seed 0 是 517）—— 12K 档划分噪声的第一组实测
 
+### 3.4 §1.8 裁定 B 的执行：100K 图已带关系类型重建　✅ 图已验 ／ 🟡 run 排队中
+
+**① 补传缺失的输入**（这是整件事的根因）：
+
+```text
+36a557958dc464d43a9b28f96d69ec1a9525bb9535566c003a424e28c0d531e5  hf_canon.parquet  (30,487,319 B)
+```
+传输后远端复算一致；`CANON_REPORT.json` 一并上传。
+
+**② 先保住旧图再重建**——`T6_20260811T174245Z` 那套证据引用的是 `7fbc3c47…`，
+文件不能就这么消失，否则那份冻结证据永远无法复验：
+
+```text
+hgraph_100k_norel_7fbc3c47.pt        旧图（223,352,080 B，sha 7fbc3c47…）
+norel_GRAPH_REPORT_100k.json         旧图的三份报告，同样留存
+norel_T5_GATES_100k.json
+norel_lineage_stats.json
+```
+
+**③ 重建**（作业 `1510210`，RUN_ID `T5_100k_rel_20260813T170032Z`，CPU 4 核，`COMPLETED 0:0`，**用时 1 分 00 秒**）。
+
+**④ 验收——这是一次教科书式的受控改动，只有一个量变了**：
+
+| 量 | 旧图 | 新图 | |
+|---|---|---|---|
+| `graph_sha256` | `7fbc3c47ca66227c…` | **`16f3521482a8efd69d491b66f84624d9e0086f3cb42288d69a9c7f022492060f`** | 变（预期） |
+| `lineage.relation_counts` | `unknown 16385` | **`finetune 10226 / quantized 4360 / adapter 1608 / merge 76 / unknown 115`** | 变（目的） |
+| `built_at` | 2026-08-10T21:44:40Z | 2026-08-13T17:01:41Z | 变（预期） |
+| `core_graph_sha256` | `e6ae2dfe…` | **相同** | ✅ |
+| `ladder_sha256` | `ccf288ae…` | **相同** | ✅ |
+| `x_m_sha256` | `d7573a02…` | **相同** | ✅ |
+| `family_vocab_sha256` | `f40af358…` | **相同** | ✅ |
+| 血缘拓扑 12 项 | — | **逐项相同**（16427 = 42+606+0+15779、components 3709、largest 159、unresolved 10887、self_loop_dropped 400 …） | ✅ |
+| 五种边的边数 | — | **逐项相同** | ✅ |
+| 文件大小 | 223,352,080 B | **223,352,080 B** | ✅ |
+| T5 门禁 | 33/33 | **33/33，`passed: true`** | ✅ |
+| test 边 sha | `66c81823…` | **相同**，65,968 边 | ✅ |
+
+🔑 **新图的 `relation_counts` 与本地排练件逐项相同**（`finetune 10226 / quantized 4360 / adapter 1608 / merge 76 / unknown 115`）
+⇒ 关系解析是确定性的、可复现的，这次拿到的就是本该在 8-10 号那次拿到的东西。
+
+**⑤ 四个 100K run 已提交**（`RUN_ID` 换了前缀 `R2rel_`，这样 8-11 号那套 run 目录原封不动、两套证据可并排复验）：
+
+| run | JobID | epochs |
+|---|---|---|
+| `R2rel_100k_s0_e2` | 1510211 | 2（冒烟） |
+| `R2rel_100k_s0_e25` | 1510212 | 25 |
+| `R2rel_100k_s1_e25` | 1510213 | 25 |
+| `R2rel_100k_s2_e25` | 1510214 | 25 |
+
+> **预期这四个 run 的 loss 与 8-11 号那四个几乎相同。** 因为 `relation_weights_applied=false`、
+> `weighted_relations=[]`，`relation_id` 目前**不进入任何一项计算**。所以重跑的真正目的有两个：
+> ① **绑定完整性**——`hgraph_100k.pt` 这个路径上现在是新图，checkpoint 必须绑新 sha，
+> 否则 T7 一加载就会撞 `IncompatibleCheckpoint`；② 让 `r_mm'` 从此有输入可用。
+> **而且「loss 应当几乎相同」本身就是一条检查**：如果差得多，说明这次重建不止改了 relation，要查。
+
 ---
 
 ## 4. 交给 T7/T8 的观察项（现在不下结论）
@@ -443,7 +499,9 @@ T7 开工前逐条勾。前四条不过就别开 T7。
 - [x] **G-T6b-5** `_GIT_ROOT` 修复已完成并有回归测试；**运行时验证**随 §3.3 的新 run 一起完成
 - [x] **G-T6b-6** P2-1..P2-5 五条全部完成（§2.4–§2.7），另修一条 CRLF 指纹污染
 - [x] **G-T6b-7** P3 的四条观察项已写入 §4，待抄进 T7/T8 开工清单
-- [ ] **G-T6b-8** 🔴 **新增**：§1.8 的血缘 `relation_id` 走 A 还是 B，**必须在 T7 之前定**
+- [x] **G-T6b-8** ✅ §1.8 已裁定走 **B**：图已带关系类型重建（`16f35214…`，33/33 门过，只有 relation 变）　→ §3.4
+- [ ] **G-T6b-9** 🟡 **新增**：四个 `R2rel_100k_*` run 跑完、机制门过、`binding.graph_sha256 == 16f35214…`；
+      并与 8-11 号那四个的 loss 对拍（应几乎相同，差得多就要查）　→ §3.4 ⑤
 
 > **G-C2 本身不在这张表里。** 它要等 T7 导出 + T8 评测，`gold10_validated=false` 现在保持正确。
 > 本篇做的是**把 G-C2 判得动的前提条件补齐**——图可验、代码可追、seed 口径可比、噪声带有得测。
@@ -462,24 +520,43 @@ T7 开工前逐条勾。前四条不过就别开 T7。
 | `remote_code_asrun.sha256` | `e241998d8f9aa8e638205483d6c0452e34bb29900a0656e8355b1b6531850ec5` | §3.2（111 文件） |
 | `family_vocab_core_341.csv` | `d4e6b6823edcc5b76f797479ceaf27aec0ead552cac18bcc5f60012b0935ec54` | §3.3（远端产物） |
 
-### 6.2 待作业跑完后回收（`19:28:55` 之后）
+### 6.2 待作业跑完后回收（预约 `19:28:55` 起跑）
+
+**排队中的六个作业**（全部等 watgpu808 的 GPU；节点 pin 是有意保留的，见 §3.3）：
+
+| JobID | run | 用途 |
+|---|---|---|
+| 1510204 | `R2_12k_s1_e25` | 12K 划分噪声（P1-3b） |
+| 1510205 | `R2_12k_s2_e25` | 同上 |
+| 1510211 | `R2rel_100k_s0_e2` | 新图冒烟（§3.4） |
+| 1510212 | `R2rel_100k_s0_e25` | 新图 seed 0 |
+| 1510213 | `R2rel_100k_s1_e25` | 新图 seed 1 |
+| 1510214 | `R2rel_100k_s2_e25` | 新图 seed 2 |
 
 ```bash
-# 远端：两个 run 的小证据包
+# 远端：打小证据包（checkpoint 不下载）
 source ~/.mlf_env
-for r in R2_12k_s1_e25 R2_12k_s2_e25; do
-  cd "$OUTPUT_ROOT/runs/$r" && tar czf ~/t6more_$r.tgz \
-    MANIFEST.json metrics metadata stdout/train.log
+for r in R2_12k_s1_e25 R2_12k_s2_e25 \
+         R2rel_100k_s0_e2 R2rel_100k_s0_e25 R2rel_100k_s1_e25 R2rel_100k_s2_e25; do
+  [ -f "$OUTPUT_ROOT/runs/$r/MANIFEST.json" ] || { echo "MISSING $r"; continue; }
+  ( cd "$OUTPUT_ROOT/runs/$r" && tar czf ~/t6more_$r.tgz \
+      MANIFEST.json metrics metadata stdout/train.log )
 done
-sacct -j 1510203,1510204,1510205 \
+sacct -j 1510203,1510204,1510205,1510210,1510211,1510212,1510213,1510214 \
   --format=JobID,JobName%22,Submit,Start,End,Elapsed,MaxRSS,AllocTRES,ExitCode
 ```
 
 ```powershell
 # 本地：拉回来
-scp x98liu@watgpu.cs.uwaterloo.ca:~/t6more_R2_12k_s*.tgz `
+scp x98liu@watgpu.cs.uwaterloo.ca:~/t6more_*.tgz `
     D:\research\model_lake\data\runs\T6more_20260813\
 ```
+
+**回收后逐项核对**（前两条是本篇两个修复的运行时验收，第三条是 §3.4 的对拍）：
+
+1. `metadata.git_head == 304e11b85d7cfff69cfdbf9de3a852b32ea4c780`，`git_status` 为空
+2. 12K 两个 run 的 `binding.family_vocab_sha256 == d4e6b682…`；四个 100K run 的 `== f40af358…`
+3. 四个 `R2rel_100k_*` 的 `binding.graph_sha256 == 16f35214…`，且 loss 与 8-11 号对应 run 几乎相同
 
 然后跑一遍门禁复验（会顺带把 override 字段写进报告）：
 
