@@ -4,11 +4,11 @@
 
 **一句话：训练本身合格，六个 run 的机制门都是真的过了；卡住 T7 的不是训练，是三条证据链。**
 
-> **执行状态（2026-08-13，远端已执行）**：`§3.1` 与 `§3.2` **两条阻塞已全部闭合**，
-> 本地 9 项早先已完成（§2）。`§3.3` 的 vocab 已在远端产出并逐位对上，
-> **12K 的两个 seed 已提交、在排队**（`Reason=Priority`，watgpu808 两张 GPU 满，预约起跑 `19:28:55`）。
-> 唯一新增的红旗是 **§1.8：远端正式图的血缘 `relation_id` 全是 `unknown`**——需要你定一次。
-> 所有已确定的数字与指纹在 **§1 指纹台账**，那一节是本篇给后续阶段的主要交付。
+> **执行状态（2026-08-14 收尾）**：**六个作业全部 `COMPLETED`、机制门 6/6 过、证据已回收本地。**
+> 三条远端阻塞（§3.1 图门禁 / §3.2 as-run 对账 / §3.3 12K 补 seed）**全部闭合**；
+> §1.8 的血缘 `relation_id` 按你的裁定走 B，图已重建、四个 100K run 已在新图上重跑。
+> **唯一还开着的是 G-T6b-4（G-C2 锚点判据）——它必须等 T7，本篇给不出 `gold@10`。**
+> 所有数字与指纹在 **§1 指纹台账**（§1.9 是最终结果表），那是本篇给后续阶段的主要交付。
 
 ---
 
@@ -21,14 +21,16 @@
 | P1-2 ② | 提交 T6 源码树 | ✅ 完成 `3992d67` | §2.1 |
 | P1-2 ③ | 修 `_git()` 的 cwd + 回归测试 | ✅ 完成，7 个新测试 | §2.2 |
 | P1-3a | seed 语义定案 | ✅ **已查清并登记 D-43** | §2.3 |
-| P1-3b | 12K 补 seed 1/2 | 🟡 **已提交，排队中**（1510204 / 1510205） | §3.3 |
+| P1-3b | 12K 补 seed 1/2 | ✅ **已完成**：两个 run 机制门过，划分噪声首次有实测 | §3.3 |
 | P2-1 | 12k/30k 的 `family_vocab.csv` | ✅ 完成，**远端产物与本地逐位相同** | §2.4 / §3.3 |
 | P2-2 | override 写进 gate report / SUMMARY | ✅ 完成，端到端验过 | §2.5 |
 | P2-3 | run 目录复用登记 | ✅ 完成 | §2.6 |
 | P2-4 | `checkpoints` 字段语义 | ✅ 完成 | §2.6 |
 | P2-5 | `--amp` 决策登记 | ✅ 完成 **D-42** | §2.7 |
 | ＋ | **新发现 1**：CRLF 污染 vocab 指纹 | ✅ 已修 + 已加 `.gitattributes` | §2.4 |
-| ＋ | 🔴 **新发现 2**：远端图的血缘 `relation_id` 全 `unknown` | ⏸ **待你裁定** | §1.8 |
+| ＋ | **新发现 2**：远端图的血缘 `relation_id` 全 `unknown` | ✅ 裁定 B，图已重建并逐张量验过 | §1.8 / §3.4 |
+| ＋ | **新发现 3**：`--time` 占位值 4h 把队列拖成 20 小时 | ✅ 已改 30m，省约 14 小时 | §3.3 |
+| ＋ | **新发现 4**：`dirty=True` 是假阳性（untracked 也算脏） | ✅ 已改 `-uno` + 新测试 | §3.5 |
 
 全套测试：**206 passed**（`scale1m/tests` 140 + `stage2TrainGraphSAGE/tests` 66），改动后重跑通过。
 
@@ -70,7 +72,48 @@
 >
 > 🔴 **但实测同时抓出了第四处不同，而本篇定的规矩正是「第四处不同才是问题」。** 见 §1.8。
 
-### 1.8 🔴 待裁定：远端正式图的血缘 `relation_id` 全部是 `unknown`
+### 1.9 最终结果表（2026-08-14，六个新 run）
+
+交付包 `t6more_delivery.tgz` sha256 `b9f3da331696405bbbc545dddc0df88ff8a7330e9856871058eb5a47ca725fe1`，
+本地在 `D:\research\model_lake\data\runs\T6more_20260813\`。**六个 run 机制门全过。**
+
+| run | N | ep | 墙钟 | 峰值显存 | loss first → last | τ_macro | mean_cos | hit@10 | held-out ds |
+|---|---:|---:|---:|---:|---|---:|---:|---:|---:|
+| `R2_12k_s1_e25` | 12,000 | 25 | 92.2 s | 0.555 GB | 18.4670 → 13.7523 | 0.2822 | 0.5501 | 0.7500 | **496** |
+| `R2_12k_s2_e25` | 12,000 | 25 | 91.6 s | 0.593 GB | 19.3306 → 13.6751 | 0.2978 | 0.5969 | 0.7495 | **539** |
+| `R2rel_100k_s0_e2` | 100,000 | 2 | 14.2 s | 1.722 GB | 19.3544 → 17.9450 | 0.0818 | 0.7452 | 0.7493 | 734 |
+| `R2rel_100k_s0_e25` | 100,000 | 25 | 111.0 s | 1.728 GB | 19.3912 → 15.2559 | 0.1917 | 0.7390 | 0.7602 | 734 |
+| `R2rel_100k_s1_e25` | 100,000 | 25 | 112.3 s | 1.707 GB | 19.2707 → 14.9203 | 0.1761 | 0.7754 | 0.8219 | 775 |
+| `R2rel_100k_s2_e25` | 100,000 | 25 | 104.9 s | 1.725 GB | 20.0581 → 14.9912 | 0.1778 | 0.7868 | 0.7991 | 936 |
+
+**三条运行时验收全部通过**（这是本篇三个修复的实证，不是声明）：
+
+| 验的是什么 | 实测 |
+|---|---|
+| P1-2③ `_GIT_ROOT` 修复 | 六个 run 的 `git_head` 全是 **`304e11b85d7cfff69cfdbf9de3a852b32ea4c780`**（此前是空串） |
+| P2-1 vocab 绑定 | 12K 两个 run `binding.family_vocab_sha256 = d4e6b682…`；四个 100K run `= f40af358…`（此前 12k/30k 是 `null`） |
+| P2-4 checkpoint 字段 | `checkpoints_written` 5 个 vs `checkpoints_retained` `[best.pt, epoch_14, epoch_19, epoch_24, last.pt]` —— 字段拆分后一眼看出 `_prune` 剪掉了 epoch 4/9 |
+| P2-3 run 目录 | 六个都是 `run_dir_reused: false`（新 RUN_ID，未复用） |
+
+### 1.10 🔑 12K 划分噪声：项目里第一次有这个数
+
+G-C2 引用的「`0.4159 ± 3-seed 噪声`」，那条噪声带在本篇之前**从未存在**（§1.7）。三个 split seed 的 12K 现在齐了：
+
+| | seed 0 | seed 1 | seed 2 | 散布 |
+|---|---:|---:|---:|---|
+| held-out 数据集数 | 517 | 496 | 539 | **每个 seed 的测试集都不一样** |
+| loss_last | 13.8466 | 13.7523 | 13.6751 | 0.17（1.2%） |
+| τ_macro | 0.2986 | 0.2822 | 0.2978 | 0.016 |
+| mean_cos | 0.5253 | 0.5501 | 0.5969 | 0.072 |
+| hit@10 | 0.7660 | 0.7500 | 0.7495 | 0.017 |
+
+> 🔴 **但这还不是 G-C2 能判的东西。** 上面没有一个是 `gold@10`——它要等 T7 导出 held-out 前向之后才算得出来。
+> 本篇能做到的是**把三个 checkpoint 备齐**，让 T7 一次性导出三份、直接给出 `gold@10` 的划分噪声带。
+> **在那之前，任何拿单个数字与 0.4159 比对的说法都不成立。**
+
+---
+
+### 1.8 已裁定：远端正式图的血缘 `relation_id` 全部是 `unknown`
 
 **事实。** 两份 100K 图的血缘**拓扑完全一致**——`total 16427 = core_core 42 + core_halo 606 + halo_core 0 + halo_halo 15779`，
 `n_models_with_lineage 20135`、`n_components 3709`、`largest_component 159`、
@@ -377,12 +420,12 @@ b3bc1a42f680aeca5f8a1e27480b0018c1b65c7d424683d71e625d7014ab8b86  T5_GATES_100k.
 这验证了 [`dump_family_vocab.py`](../../scale1m/dump_family_vocab.py) 里显式写 LF 的那行——
 跨平台产出同一个指纹，正是 checkpoint 绑定需要的性质。
 
-**两个训练作业**：
+**两个训练作业 ✅ 已完成**（数字见 §1.9 / §1.10）：
 
-| run | JobID | 状态 |
+| run | JobID | 结果 |
 |---|---|---|
-| `R2_12k_s1_e25` | **1510204** | PENDING（`Reason=Priority`） |
-| `R2_12k_s2_e25` | **1510205** | PENDING（`Reason=Priority`） |
+| `R2_12k_s1_e25` | **1510204** | ✅ 机制门过，92.2 s，held-out 496 |
+| `R2_12k_s2_e25` | **1510205** | ✅ 机制门过，91.6 s，held-out 539 |
 
 提交时带了 `--dependency=afterok:1510203` 和
 `T6_RUNTIME_ENV=/u801/x98liu/model_lake/t6_workflows/T6_20260811T174245Z/runtime.env`。
@@ -457,20 +500,47 @@ norel_lineage_stats.json
 🔑 **新图的 `relation_counts` 与本地排练件逐项相同**（`finetune 10226 / quantized 4360 / adapter 1608 / merge 76 / unknown 115`）
 ⇒ 关系解析是确定性的、可复现的，这次拿到的就是本该在 8-10 号那次拿到的东西。
 
-**⑤ 四个 100K run 已提交**（`RUN_ID` 换了前缀 `R2rel_`，这样 8-11 号那套 run 目录原封不动、两套证据可并排复验）：
+**⑤ 四个 100K run ✅ 已在新图上跑完**（`RUN_ID` 换前缀 `R2rel_`，8-11 那套 run 目录原封不动，两套可并排复验）：
+`1510211` 冒烟 / `1510212`·`1510213`·`1510214` 三个 seed，机制门全过，
+`binding.graph_sha256` 四个都是 **`16f35214…`**（数字见 §1.9）。
 
-| run | JobID | epochs |
-|---|---|---|
-| `R2rel_100k_s0_e2` | 1510211 | 2（冒烟） |
-| `R2rel_100k_s0_e25` | 1510212 | 25 |
-| `R2rel_100k_s1_e25` | 1510213 | 25 |
-| `R2rel_100k_s2_e25` | 1510214 | 25 |
+**⑥ 与 8-11 号旧图那四个 run 的对拍**——这是我在跑之前立的检查（「差得多就要查」）：
 
-> **预期这四个 run 的 loss 与 8-11 号那四个几乎相同。** 因为 `relation_weights_applied=false`、
-> `weighted_relations=[]`，`relation_id` 目前**不进入任何一项计算**。所以重跑的真正目的有两个：
-> ① **绑定完整性**——`hgraph_100k.pt` 这个路径上现在是新图，checkpoint 必须绑新 sha，
-> 否则 T7 一加载就会撞 `IncompatibleCheckpoint`；② 让 `r_mm'` 从此有输入可用。
-> **而且「loss 应当几乎相同」本身就是一条检查**：如果差得多，说明这次重建不止改了 relation，要查。
+| run | 旧图 first → last | 新图 first → last | Δfirst | Δlast | held-out ds |
+|---|---|---|---:|---:|---|
+| smoke e2 | 19.8590 → 18.2148 | 19.3544 → 17.9450 | −0.5046 | −0.2698 | 734 = 734 |
+| s0 e25 | 19.6944 → 15.4304 | 19.3912 → 15.2559 | −0.3032 | −0.1744 | 734 = 734 |
+| s1 e25 | 19.3075 → 14.8090 | 19.2707 → 14.9203 | −0.0368 | **+0.1113** | 775 = 775 |
+| s2 e25 | 19.8016 → 14.8894 | 20.0581 → 14.9912 | +0.2564 | **+0.1018** | 936 = 936 |
+
+**结论：不是位级相同，但差异不来自这次重建。** 三条证据：
+
+1. **held-out 数据集数逐 seed 完全相同**（734 / 775 / 936）⇒ 划分没变。
+2. **逐张量比对（作业 `1510519`）**：把新图与归档的旧图整张对下来——
+   `trained_on` / `rev_trained_on` / `similar_to` / `is_base_of` / `rev_is_base_of` 五种边的
+   **`edge_index` 全部 `IDENTICAL`**（连 `is_base_of` 的边序都没动）、五种 `edge_attr` 全部 `IDENTICAL`、
+   `model.x` / `size_bucket_id` / `family_id` / `dataset.x` 全部 `IDENTICAL`——
+   **唯一 `DIFFERS` 的就是 `relation_id`**。这正是想要的那一个量，且它一个都没多改。
+3. `weighted_relations=[]`、`relation_weights_applied=false` ⇒ `relation_id` **不进入任何计算**。
+
+⇒ 图相同、划分相同、配置相同、变的那一项不参与计算，**剩下的唯一来源是 run-to-run 的非确定性**
+（本项目有前例：v4 收官记过「CUDA 位级不可复现」）。Δ 的符号两个方向都有、量级（last 差 0.10–0.27）
+也**小于 seed 之间的散布**（14.92–15.26），与噪声一致。
+已提交 `R2rel_100k_s0_e25_rep`（作业 `1510520`，同配置同图重跑一次）去**量化**这条噪声带，
+排到了 `2026-08-14T09:47`；**它不影响上面的结论，只是把"应该是噪声"变成"噪声有多大"。**
+
+---
+
+### 3.5 收尾时 `DIGEST.txt` 又暴露一个小毛病：`dirty=True` 是假阳性
+
+六个 run 的 `git_status` 都是 `?? logs/\n?? slurm-1508270.out`——**全是 untracked，没有一个 tracked 修改**，
+而 `uncommitted.patch` 被写成了 **0 字节**（因为 `git diff HEAD` 本来就是空的）。
+
+`git status --short` 会把 untracked 一起列出来，而集群上 `logs/` 永远在，所以 §4.3 那条
+「树脏就存 patch」的分支**每次都会误触发**。已改：脏不脏用
+`git status --porcelain --untracked-files=no` 判定，另加字段 `git_tracked_dirty`，
+完整 `git_status` 仍然照记（它是有信息的，只是不该拿来做判据）。新增测试
+`test_untracked_files_alone_do_not_count_as_a_dirty_tree`。**207 passed。**
 
 ---
 
@@ -503,14 +573,16 @@ T7 开工前逐条勾。前四条不过就别开 T7。
 - [x] **G-T6b-1** ✅ `hgraph_100k.pt` sha == `7fbc3c47…` 远端实测；T5 门禁 **33/33 全过**；三份报告已回收　→ §3.1
       　　（剩一件文书工作：把 `7fbc3c47…` / `d7573a02…` 回填进 [`T5.md`](T5.md) §2/§8，并改掉「只有两处不同」那句）
 - [x] **G-T6b-2** ✅ as-run 对账完成：105 文件逐字节相同，差异全部归因且无一落在训练路径上　→ §3.2
-- [ ] **G-T6b-3** 🟡 12K 三个 split seed —— seed 1/2 已提交，预约 `19:28:55` 起跑　→ §3.3
-- [ ] **G-T6b-4** 🔴 G-C2 的判据句改写为含 seed 语义的版本（**噪声带随 G-T6b-3 first 次测出**，§1.7）
+- [x] **G-T6b-3** ✅ 12K 三个 split seed 齐备，机制门全过（held-out 517 / 496 / 539）　→ §1.10
+- [ ] **G-T6b-4** 🔴 **仍开着，且只能在 T7 之后关**：G-C2 要的是 `gold@10` 的噪声带，
+      而 `gold@10` 必须由 T7 的 held-out 前向算出。本篇只把三个 checkpoint 备齐了　→ §1.10
 - [x] **G-T6b-5** `_GIT_ROOT` 修复已完成并有回归测试；**运行时验证**随 §3.3 的新 run 一起完成
 - [x] **G-T6b-6** P2-1..P2-5 五条全部完成（§2.4–§2.7），另修一条 CRLF 指纹污染
 - [x] **G-T6b-7** P3 的四条观察项已写入 §4，待抄进 T7/T8 开工清单
 - [x] **G-T6b-8** ✅ §1.8 已裁定走 **B**：图已带关系类型重建（`16f35214…`，33/33 门过，只有 relation 变）　→ §3.4
-- [ ] **G-T6b-9** 🟡 **新增**：四个 `R2rel_100k_*` run 跑完、机制门过、`binding.graph_sha256 == 16f35214…`；
-      并与 8-11 号那四个的 loss 对拍（应几乎相同，差得多就要查）　→ §3.4 ⑤
+- [x] **G-T6b-9** ✅ 四个 `R2rel_100k_*` 跑完、机制门过、`binding.graph_sha256 == 16f35214…`；
+      与旧图对拍的差异经逐张量比对归因为 run-to-run 非确定性（`relation_id` 是唯一变动的张量）　→ §3.4 ⑤⑥
+- [x] **G-T6b-10** ✅ 三条运行时验收（`git_head` 非空 / vocab 绑定 / checkpoint 字段拆分）全部实测通过　→ §1.9
 
 > **G-C2 本身不在这张表里。** 它要等 T7 导出 + T8 评测，`gold10_validated=false` 现在保持正确。
 > 本篇做的是**把 G-C2 判得动的前提条件补齐**——图可验、代码可追、seed 口径可比、噪声带有得测。
@@ -529,7 +601,25 @@ T7 开工前逐条勾。前四条不过就别开 T7。
 | `remote_code_asrun.sha256` | `e241998d8f9aa8e638205483d6c0452e34bb29900a0656e8355b1b6531850ec5` | §3.2（111 文件） |
 | `family_vocab_core_341.csv` | `d4e6b6823edcc5b76f797479ceaf27aec0ead552cac18bcc5f60012b0935ec54` | §3.3（远端产物） |
 
-### 6.2 待作业跑完后回收（预约 `19:28:55` 起跑）
+### 6.3 ✅ 已回收（2026-08-14）
+
+`t6more_delivery.tgz` sha `b9f3da331696405bbbc545dddc0df88ff8a7330e9856871058eb5a47ca725fe1`（远端复算一致），
+解包在 `D:\research\model_lake\data\runs\T6more_20260813\t6more_delivery\`，含六个 run 的
+`MANIFEST` / `metrics` / `metadata` / `train.log` / ckpt 清单、新旧两套 T5 报告、`DIGEST.txt`、`sacct_all.txt`，
+以及图与三份 vocab 的 sha 台账：
+
+```text
+16f3521482a8efd69d491b66f84624d9e0086f3cb42288d69a9c7f022492060f  hgraph_100k.pt              （现行，带 relation）
+7fbc3c47ca66227c408a78e03197602f0e405bd15a2d7da77fdd10a2f8a651a0  hgraph_100k_norel_7fbc3c47.pt（归档）
+d4e6b6823edcc5b76f797479ceaf27aec0ead552cac18bcc5f60012b0935ec54  feats/12k/family_vocab.csv
+d4e6b6823edcc5b76f797479ceaf27aec0ead552cac18bcc5f60012b0935ec54  feats/30k/family_vocab.csv
+f40af358d64d96a2a7f7f3e2ff4e323abf1b28c8372f09ddc2e257cf36d9f31d  feats/100k/family_vocab.csv
+```
+
+**尚未回收的一件**：`R2rel_100k_s0_e25_rep`（作业 `1510520`，预约 `2026-08-14T09:47`）——
+它只用来量化 §3.4⑥ 的非确定性带宽，跑完把 `MANIFEST.json` 的 loss 补进 §3.4⑥ 即可，不影响任何结论。
+
+### 6.2 回收命令（留档）
 
 **排队中的六个作业**（全部等 watgpu808 的 GPU；节点 pin 是有意保留的，见 §3.3）：
 

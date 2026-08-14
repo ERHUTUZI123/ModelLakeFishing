@@ -89,6 +89,12 @@ def capture_metadata(out, args, cfg, graph_path):
     md = os.path.join(out, "metadata")
     head = _git("rev-parse", "HEAD")
     status = _git("status", "--short")
+    # Dirtiness means "tracked files differ from HEAD", which is what
+    # uncommitted.patch can actually capture. Plain `status --short` also lists
+    # untracked paths, and on the cluster that is always non-empty (logs/ and
+    # stray slurm-*.out), so every run reported a dirty tree and wrote a
+    # zero-byte patch. -uno asks the question we mean.
+    tracked_dirty = _git("status", "--porcelain", "--untracked-files=no")
     meta = {
         "utc_time": utcnow(),
         "run_id": os.path.basename(os.path.abspath(out)),
@@ -106,13 +112,14 @@ def capture_metadata(out, args, cfg, graph_path):
         "command": " ".join(sys.argv),
         "git_head": head if head is not None else _NO_GIT,
         "git_status": status if status is not None else _NO_GIT,
+        "git_tracked_dirty": bool(tracked_dirty) if tracked_dirty is not None else None,
         "graph": os.path.abspath(graph_path),
         "graph_sha256": CK.sha256_of(graph_path),
         "args": vars(args),
         "resolved_config": CK._jsonable(cfg),
     }
     write_json_atomic(os.path.join(md, "resolved_config.json"), meta)
-    if status:
+    if tracked_dirty:
         # §4.3: a deliberately dirty tree is allowed, but it has to be recorded
         patch = _git("diff", "HEAD")
         with open(os.path.join(md, "uncommitted.patch"), "w", encoding="utf-8") as fh:

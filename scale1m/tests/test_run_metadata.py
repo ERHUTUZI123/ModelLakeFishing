@@ -40,6 +40,20 @@ def test_git_head_is_recorded_when_running_inside_the_checkout():
     assert re.fullmatch(r"[0-9a-f]{40}", head), head
 
 
+@pytest.mark.skipif(not os.path.isdir(os.path.join(TR._GIT_ROOT, ".git")),
+                    reason="not a git checkout (source tarball / export)")
+def test_untracked_files_alone_do_not_count_as_a_dirty_tree():
+    """`status --short` lists untracked paths too. On the cluster logs/ and a
+    stray slurm-*.out are always there, so every run of 2026-08-13 recorded a
+    dirty tree and wrote a zero-byte uncommitted.patch. Dirtiness has to mean
+    "tracked files differ from HEAD" -- the thing a patch can capture."""
+    short = TR._git("status", "--short")
+    tracked = TR._git("status", "--porcelain", "--untracked-files=no")
+    assert short is not None and tracked is not None
+    for line in tracked.splitlines():
+        assert not line.startswith("??"), line
+
+
 def test_git_failure_is_distinguishable_from_a_clean_result():
     """A clean `status --short` returns "". A broken git must NOT also return
     "", or an unusable repo is indistinguishable from a pristine one -- which
