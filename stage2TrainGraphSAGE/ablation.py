@@ -74,6 +74,47 @@ def participation_ratio(Z):
     return float((ev.sum() ** 2) / (ev ** 2).sum()) if ev.size else float("nan")
 
 
+def build_models(data, xm0, xd0, cfg, *, device="cpu"):
+    """Construct (model, scorer) from a resolved config.
+
+    Factored out of train_eval_one so that T7's exporter builds the architecture
+    through the SAME code path that training used. Rebuilding it independently
+    would mean a future cfg key changes the trained architecture while the
+    exporter keeps constructing the old one; load_state_dict would then either
+    raise on a good checkpoint or -- worse, with strict=False anywhere -- load
+    a subset and export embeddings from a partly random model.
+
+    Does NOT seed: seeding is the caller's business (training seeds init_seed
+    here; the exporter overwrites every parameter from the checkpoint anyway).
+    """
+    # D1 §5.3 feature-variant kwargs (one change per row; absent keys = legacy)
+    fkw = {}
+    if cfg.get("drop_desc"):
+        fkw.update(use_desc=False, name_dim=xm0["name_dim"])
+    if cfg.get("drop_family"):
+        fkw["use_family"] = False
+    if cfg.get("name_proj_dim"):
+        fkw.update(name_proj_dim=cfg["name_proj_dim"], name_dim=xm0["name_dim"])
+    if cfg.get("use_model_task"):
+        assert "num_model_tasks" in xm0 and getattr(data["model"], "task_id", None) is not None, (
+            "use_model_task needs attach_model_task_ids() run on this graph "
+            "(see d1_features.py) and xm0['num_model_tasks'] set")
+        fkw["num_model_tasks"] = xm0["num_model_tasks"]
+    if cfg.get("dataset_frozen_proj_dim"):
+        # v3 Z1: learnable projection of the frozen xd0 views inside the encoder
+        fkw["dataset_frozen_proj_dim"] = cfg["dataset_frozen_proj_dim"]
+    model = HeteroGraphSAGE(
+        metadata=data.metadata(), frozen_dim=data["model"].x.shape[1],
+        num_size_buckets=xm0["num_size_buckets"], num_families=xm0["num_families"],
+        dataset_in_dim=data["dataset"].x.shape[1], num_layers=cfg["num_layers"],
+        edge_aware=cfg.get("edge_aware", False),
+        weighted_relations=cfg.get("weighted_relations", None),
+        separate_heads=cfg.get("separate_heads", False),
+        **fkw, **_ds_kwargs(xd0)).to(device)
+    scorer = PerfScorer(dim=128, mode=cfg["scorer"]).to(device)
+    return model, scorer
+
+
 def train_eval_one(data, xm0, xd0, cfg, split, *, init_seed, epochs, device="cpu"):
     """Train one config on a FIXED split, evaluate with the shared harness.
 
@@ -101,31 +142,7 @@ def train_eval_one(data, xm0, xd0, cfg, split, *, init_seed, epochs, device="cpu
     # init_seed is separate from the split: only the model/scorer init + training
     # RNG depend on it; the test edges are already fixed by split_seed.
     torch.manual_seed(init_seed); np.random.seed(init_seed)
-    # D1 §5.3 feature-variant kwargs (one change per row; absent keys = legacy)
-    fkw = {}
-    if cfg.get("drop_desc"):
-        fkw.update(use_desc=False, name_dim=xm0["name_dim"])
-    if cfg.get("drop_family"):
-        fkw["use_family"] = False
-    if cfg.get("name_proj_dim"):
-        fkw.update(name_proj_dim=cfg["name_proj_dim"], name_dim=xm0["name_dim"])
-    if cfg.get("use_model_task"):
-        assert "num_model_tasks" in xm0 and getattr(data["model"], "task_id", None) is not None, (
-            "use_model_task needs attach_model_task_ids() run on this graph "
-            "(see d1_features.py) and xm0['num_model_tasks'] set")
-        fkw["num_model_tasks"] = xm0["num_model_tasks"]
-    if cfg.get("dataset_frozen_proj_dim"):
-        # v3 Z1: learnable projection of the frozen xd0 views inside the encoder
-        fkw["dataset_frozen_proj_dim"] = cfg["dataset_frozen_proj_dim"]
-    model = HeteroGraphSAGE(
-        metadata=data.metadata(), frozen_dim=data["model"].x.shape[1],
-        num_size_buckets=xm0["num_size_buckets"], num_families=xm0["num_families"],
-        dataset_in_dim=data["dataset"].x.shape[1], num_layers=cfg["num_layers"],
-        edge_aware=cfg.get("edge_aware", False),
-        weighted_relations=cfg.get("weighted_relations", None),
-        separate_heads=cfg.get("separate_heads", False),
-        **fkw, **_ds_kwargs(xd0)).to(device)
-    scorer = PerfScorer(dim=128, mode=cfg["scorer"]).to(device)
+    model, scorer = build_models(data, xm0, xd0, cfg, device=device)
 
     grouped = cfg.get("grouped", False)
     common = dict(epochs=epochs, lr=cfg.get("lr", 1e-2),
