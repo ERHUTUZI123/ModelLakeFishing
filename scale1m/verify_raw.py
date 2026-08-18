@@ -250,7 +250,12 @@ def main(argv=None) -> int:
     ids_norm = set()
     dupes = 0
     order_violations = 0
-    prev_dl = None
+    # The stream's own sort key, not a hardcoded one: `raw/` is downloads-desc,
+    # the RF enumeration is createdAt-desc, and checking the wrong field would
+    # report every record as a violation.
+    sort_key = prov.get("sort") or "downloads"
+    sort_dir = str(prov.get("direction") or "-1")
+    prev_sort = None
     cov = dict(safetensors=0, base_model=0, model_index=0, pipeline_tag=0,
                library_name=0, tags=0, card_datasets=0)
     zero_info = 0          # the T3 `dropped` layer, exactly as 100kplan 6.1 defines it
@@ -268,11 +273,12 @@ def main(argv=None) -> int:
             dupes += 1
         ids_norm.add(nid)
 
-        dl = rec.get("downloads")
-        if prev_dl is not None and dl is not None and dl > prev_dl:
-            order_violations += 1
-        if dl is not None:
-            prev_dl = dl
+        sv = rec.get(sort_key)
+        if prev_sort is not None and sv is not None:
+            if (sv > prev_sort) if sort_dir == "-1" else (sv < prev_sort):
+                order_violations += 1
+        if sv is not None:
+            prev_sort = sv
 
         card = rec.get("cardData") or {}
         has_size = bool((rec.get("safetensors") or {}).get("total"))
@@ -303,14 +309,16 @@ def main(argv=None) -> int:
     print("\n-- integrity --")
     print("  records read            : %d" % n)
     print("  unique normalized ids   : %d   (duplicates: %d)" % (len(ids_norm), dupes))
-    print("  downloads-desc violations: %d" % order_violations)
+    print("  %s-%s order violations : %d"
+          % (sort_key, "desc" if sort_dir == "-1" else "asc", order_violations))
     if n != n_declared:
         fail.append("read %d records but shards declare %d" % (n, n_declared))
     if dupes:
         fail.append("%d duplicate normalized ids in the crawl" % dupes)
     if order_violations:
-        fail.append("%d downloads-descending violations (ladder order is the artifact order)"
-                    % order_violations)
+        fail.append("%d %s-%s order violations (the stream order IS the artifact order)"
+                    % (order_violations, sort_key,
+                       "descending" if sort_dir == "-1" else "ascending"))
 
     print("\n-- field coverage (drives T3/T5 gates) --")
     for k, v in cov.items():

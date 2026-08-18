@@ -1,0 +1,41 @@
+{
+  "snapshot_window_utc": {
+    "crawl_started_at": "2026-08-18T18:01:49+00:00",
+    "crawl_finished_at": "2026-08-18T18:29:18+00:00",
+    "newest_model_created_at": "2026-08-18T18:01:36.000Z",
+    "oldest_model_created_at": "2022-03-02T23:29:04.000Z"
+  },
+  "crawl_unique_ids": 3003759,
+  "core_total": 30183,
+  "core_present_in_crawl": 13524,
+  "core_absent_from_crawl": 16659,
+  "r2_halo_total": 69817,
+  "r2_halo_present_in_crawl": 69401,
+  "r2_halo_absent_from_crawl": 416,
+  "r2_halo_absent_examples": [
+    "aabyaneh/lingbot-va-lift_new",
+    "aaronmat1905/malfono-lark-lora",
+    "abhiram3040/simplewords-dictation-cleanup",
+    "abhiram3040/simplewords-dictation-cleanup-v2",
+    "aciidix/llama-poro-2-8b-long-instruct-mlx-4bit",
+    "aciidix/llama-poro-2-8b-long-instruct-mlx-8bit",
+    "aeon-7/step-3.7-flash-aeon-ultimate-abliterated-gguf",
+    "aeon-7/step-3.7-flash-aeon-ultimate-abliterated-nvfp4",
+    "aguxez/snap-barbell-dfine-small-v92-v3",
+    "aguxez/snap-dumbbell-dfine-small-v86-motion",
+    "ahsanatiq98/lora_tiny_aya_saraiki",
+    "ahsanatiq98/saraiki-aya-merged",
+    "ai-userman/zacoda-lite-1.0",
+    "aidanscannell/wan-vae-minecraft-352-640",
+    "aikimi/anima-mixbit-6.44-v1.2",
+    "airshop/test_act_container",
+    "airshop/test_act_container_2",
+    "ajh2002/wipe_table_v3_act",
+    "akankshanc7/tiny-aya-global-em-code-en-code-insecure-seed_0",
+    "akankshanc7/tiny-aya-global-em-code-en-code-insecure-seed_1"
+  ],
+  "models_beyond_the_100k_prefix": 2920834,
+  "n_full_if_prefix_kept": 3020418,
+  "r2_ladder_rows": 100000,
+  "r2_ladder_ids_unique": 100000
+}

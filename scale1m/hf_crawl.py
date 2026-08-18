@@ -8,6 +8,9 @@ TWO MODES, AND WHY BOTH EXIST
                          Kept verbatim so the frozen `raw/` 150K head shard
                          stays reproducible. It is an audit artifact and a
                          candidate source -- NOT a population definition.
+                         With `--sort createdAt --limit <huge>` the same mode
+                         performs the RF full enumeration: it then ends by
+                         exhausting the cursor rather than by hitting --limit.
     --plan {pilot,full}  v2 multi-source candidate DISCOVERY (query_plan.py).
                          Over-collects from many orthogonal orderings; the
                          final population is chosen later, under quotas, by
@@ -394,10 +397,20 @@ def crawl_single(args) -> int:
             return 2
 
     expand = EXPAND_V2 if args.v2_fields else EXPAND_V1
+    sort, direction = args.sort, str(args.direction)
     start_url = build_url({"limit": str(min(args.page_size, PAGE_LIMIT_MAX)),
-                           "sort": "downloads", "direction": "-1"}, expand)
+                           "sort": sort, "direction": direction}, expand)
 
     if state:
+        # The stream order is baked into the stored cursor. Resuming a
+        # createdAt enumeration with --sort downloads would silently splice two
+        # different orderings into one shard set.
+        prev = (state.get("sort", "downloads"), str(state.get("direction", "-1")))
+        if prev != (sort, direction):
+            print("[abort] %s holds a %s/%s stream; this run asks for %s/%s. "
+                  "Use a different --out or --restart."
+                  % (out_dir, prev[0], prev[1], sort, direction), file=sys.stderr)
+            return 2
         url, n_written, n_in_shard = state["next_url"], state["n_written"], state["n_in_shard"]
         stats = state.get("stats", new_stats())
         print("[resume] %d records already written, shard %d, %d in flight"
@@ -440,8 +453,17 @@ def crawl_single(args) -> int:
                 fh.write(json.dumps(trim(rec, v2=args.v2_fields), ensure_ascii=False) + "\n")
                 n_written += 1
                 n_in_shard += 1
+                if "first_id" not in stats:
+                    # The newest record in the stream is the snapshot's upper
+                    # boundary: anything created after this instant is, by
+                    # construction, not in this crawl.
+                    stats["first_id"] = mid
+                    stats["first_created_at"] = rec.get("createdAt")
+                    stats["first_record_at"] = utcnow()
                 stats["last_id"] = mid
                 stats["last_downloads"] = rec.get("downloads")
+                stats["last_created_at"] = rec.get("createdAt")
+                stats["last_sort_value"] = rec.get(sort)
                 if n_in_shard >= args.shard_size or n_written >= args.limit:
                     fh.close()
                     finalize_shard(out_dir, shard_idx, n_in_shard, shards)
@@ -456,10 +478,12 @@ def crawl_single(args) -> int:
             os.fsync(fh.fileno())
             write_json_atomic(cursor_path, {"next_url": url, "n_written": n_written,
                                             "n_in_shard": n_in_shard, "shard_index": shard_idx,
+                                            "sort": sort, "direction": direction,
                                             "stats": stats, "updated_at": utcnow()})
-            print("[page %5d] n=%7d  shard=%d  last=%s (%s dl)  %.0f rec/s"
+            print("[page %5d] n=%7d  shard=%d  last=%s (%s=%s)  %.0f rec/s"
                   % (stats["pages"], n_written, shard_idx, stats.get("last_id"),
-                     stats.get("last_downloads"), n_written / max(time.time() - t0, 1e-9)),
+                     sort, stats.get("last_sort_value"),
+                     n_written / max(time.time() - t0, 1e-9)),
                   flush=True)
     finally:
         if not fh.closed:
@@ -475,13 +499,19 @@ def crawl_single(args) -> int:
 
     stats["wallclock_s"] = round(time.time() - t0, 1)
     stats["finished_at"] = utcnow()
+    stats["exhausted_cursor"] = not url
     write_json_atomic(cursor_path, {"next_url": url, "n_written": n_written,
                                     "n_in_shard": n_in_shard, "shard_index": shard_idx,
+                                    "sort": sort, "direction": direction,
                                     "stats": stats, "updated_at": utcnow()})
     write_provenance(args, out_dir, prov_path, shards, stats, n_written, expand,
                      mode="single-stream")
-    print("\n[ok] %d records in %d shards -> %s" % (n_written, len(shards), out_dir))
-    return 0 if n_written >= args.limit else 1
+    print("\n[ok] %d records in %d shards -> %s%s"
+          % (n_written, len(shards), out_dir,
+             "  (cursor exhausted)" if not url else ""))
+    # A full enumeration ends by running out of cursor, not by hitting --limit;
+    # both are successful terminations.
+    return 0 if (n_written >= args.limit or not url) else 1
 
 
 # =========================================================================
@@ -702,15 +732,29 @@ def write_provenance(args, out_dir, prov_path, shards, stats, n_written, expand,
         prov["raw_hits"] = sum(v["hits"] for v in queries_done.values())
     else:
         prov["requested_limit"] = args.limit
-        prov["sort"] = "downloads"
-        prov["direction"] = "-1"
+        prov["sort"] = args.sort
+        prov["direction"] = str(args.direction)
+        prov["exhausted_cursor"] = stats.get("exhausted_cursor")
+        prov["first_id"] = stats.get("first_id")
+        prov["first_created_at"] = stats.get("first_created_at")
+        prov["first_record_at"] = stats.get("first_record_at")
         prov["last_id"] = stats.get("last_id")
         prov["last_downloads"] = stats.get("last_downloads")
+        prov["last_created_at"] = stats.get("last_created_at")
+        # The snapshot is a window, not an instant: the stream is ordered by
+        # createdAt desc, so models created after `first_created_at` are absent
+        # and models deleted during the window simply vanish from it.
+        prov["snapshot_window_utc"] = {
+            "crawl_started_at": stats.get("started_at"),
+            "crawl_finished_at": stats.get("finished_at"),
+            "newest_model_created_at": stats.get("first_created_at"),
+            "oldest_model_created_at": stats.get("last_created_at"),
+        }
     write_json_atomic(prov_path, prov)
     os.chmod(prov_path, 0o444)
 
 
-def main(argv=None) -> int:
+def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(description="HF model metadata collection (T2)")
     p.add_argument("--plan", choices=("pilot", "full", "deep"), default=None,
                    help="v2 multi-source candidate discovery (see query_plan.py)")
@@ -720,6 +764,15 @@ def main(argv=None) -> int:
                    help="deficit JSON from select_balanced_halo -> targeted plan")
     p.add_argument("--limit", type=int, default=150_000,
                    help="v1 single-stream mode: total records to hold after this run")
+    p.add_argument("--sort", default="downloads",
+                   choices=("downloads", "createdAt", "likes", "lastModified",
+                            "trendingScore"),
+                   help="single-stream sort key. Default `downloads` keeps the v1 "
+                        "snapshot reproducible. Use `createdAt` for full "
+                        "enumeration: its cursor is keyed on the immutable _id, "
+                        "so nothing is skipped mid-crawl (see docs/1M/F0.md)")
+    p.add_argument("--direction", default="-1", choices=("-1", "1"),
+                   help="-1 descending (default), 1 ascending")
     p.add_argument("--out", default=None)
     p.add_argument("--v2-fields", action="store_true",
                    help="single-stream mode: use the richer v2 expand/KEEP sets")
@@ -730,7 +783,11 @@ def main(argv=None) -> int:
     p.add_argument("--max-retries", type=int, default=8)
     p.add_argument("--min-ratelimit-remaining", type=int, default=25)
     p.add_argument("--restart", action="store_true")
-    args = p.parse_args(argv)
+    return p
+
+
+def main(argv=None) -> int:
+    args = build_parser().parse_args(argv)
 
     if args.plan or args.backfill_deficits:
         if args.scale is None:

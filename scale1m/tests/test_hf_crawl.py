@@ -191,3 +191,64 @@ def test_normalize_is_the_shared_id_rule():
 @pytest.mark.parametrize("idx,stem", [(0, "hf_models_00000"), (12, "hf_models_00012")])
 def test_shard_stem_is_zero_padded_and_sorts(idx, stem):
     assert C.shard_stem(idx) == stem
+
+
+# --- stream ordering (RF full enumeration) ---------------------------------
+
+
+def _single_stream_args(out, **over):
+    """The attribute set crawl_single reads; defaults mirror the CLI."""
+    import types
+    base = dict(out=out, restart=False, v2_fields=True, sort="downloads",
+                direction="-1", page_size=C.PAGE_LIMIT_MAX, limit=10_000_000,
+                shard_size=50_000, token=None, timeout=5.0, max_retries=1,
+                min_ratelimit_remaining=25, scale=1.0)
+    base.update(over)
+    return types.SimpleNamespace(**base)
+
+
+def test_default_sort_is_the_frozen_v1_ordering():
+    """raw/ was crawled with downloads/-1; the default must not drift."""
+    args = C.build_parser().parse_args([])
+    assert (args.sort, args.direction) == ("downloads", "-1")
+
+
+def test_sort_flag_accepts_createdAt_and_rejects_junk():
+    args = C.build_parser().parse_args(["--sort", "createdAt", "--direction", "1"])
+    assert (args.sort, args.direction) == ("createdAt", "1")
+    with pytest.raises(SystemExit):
+        C.build_parser().parse_args(["--sort", "size"])
+
+
+def test_full_enumeration_ends_on_cursor_exhaustion_not_on_limit(tmp_path, monkeypatch):
+    """`--sort createdAt --limit huge` must exit 0 when the stream runs out."""
+    pages = [([{"id": "a/one", "createdAt": "2026-08-18T00:00:00.000Z"},
+               {"id": "b/two", "createdAt": "2026-08-17T00:00:00.000Z"}], "")]
+
+    def fake_fetch(session, url, timeout, max_retries, stats, min_remaining):
+        assert "sort=createdAt" in url and "direction=-1" in url
+        return pages.pop(0)
+
+    monkeypatch.setattr(C, "fetch", fake_fetch)
+    out = str(tmp_path / "candidates_full")
+    rc = C.crawl_single(_single_stream_args(out, sort="createdAt"))
+    assert rc == 0                                   # not 1, despite limit unmet
+    with open(os.path.join(out, "PROVENANCE.json"), encoding="utf-8") as fh:
+        prov = json.load(fh)
+    assert prov["sort"] == "createdAt" and prov["direction"] == "-1"
+    assert prov["exhausted_cursor"] is True
+    assert prov["total_records"] == 2
+    assert prov["last_created_at"] == "2026-08-17T00:00:00.000Z"
+
+
+def test_resume_refuses_to_splice_two_orderings(tmp_path, capsys):
+    """A downloads cursor and a createdAt cursor are different populations."""
+    out = str(tmp_path / "candidates_full")
+    os.makedirs(out)
+    C.write_json_atomic(os.path.join(out, "CURSOR.json"),
+                        {"next_url": "https://example/next", "n_written": 5,
+                         "n_in_shard": 5, "shard_index": 0,
+                         "sort": "createdAt", "direction": "-1", "stats": C.new_stats()})
+    rc = C.crawl_single(_single_stream_args(out, sort="downloads"))
+    assert rc == 2
+    assert "createdAt" in capsys.readouterr().err

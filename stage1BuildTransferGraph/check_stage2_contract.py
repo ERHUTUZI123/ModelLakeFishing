@@ -45,9 +45,18 @@ BASE_EDGES = {
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--pt", default=os.path.join(_HERE, "hgraph_zoo_xm0.pt"))
+    ap.add_argument("--sharded", default=None,
+                    help="a scale1m.graph_store directory instead of a .pt; the "
+                         "feature matrices arrive memory-mapped, so this also "
+                         "checks that a read-only x survives forward+backward")
     args = ap.parse_args()
 
-    payload = torch.load(args.pt, map_location="cpu", weights_only=False)
+    if args.sharded:
+        from ModelLakeFishing.scale1m.graph_store import load_sharded
+        payload = load_sharded(args.sharded, mmap=True, verify_sha256=True)
+        args.pt = args.sharded
+    else:
+        payload = torch.load(args.pt, map_location="cpu", weights_only=False)
     fails = []
 
     def check(cond, msg):
