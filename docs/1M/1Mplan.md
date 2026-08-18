@@ -516,7 +516,8 @@ T7.5 已排除两个近似为原因，差异归到环境与采样后端。本计
 
 ```
 $WORK/model_lake/data1m/
-├── candidates_full/   hf_models_*.jsonl.gz（只读）  PROVENANCE.json  CURSOR.json  SHARDS.json
+├── candidates_full/   hf_models_000{00..60}.jsonl.gz（3,003,759 条 / 202 MB / 只读）
+│                      PROVENANCE.json（含 snapshot_window_utc）  CURSOR.json  SHARDS.json
 │                      canon/hf_canon.parquet  CANON_REPORT.json
 │                      DISTRIBUTION_REPORT.md（描述性，非闸门）
 ├── ladder/            full_model_ids.csv  500k_model_ids.csv  LADDER_REPORT.json
@@ -539,6 +540,7 @@ codes/ModelLakeFishing/docs/1M/
 ├── 100k/          R2 的全部计划与执行记录
 ├── F0.md … F8.md  各阶段执行记录
 ├── F0_runs/       探针脚本与原始 JSON
+├── F1_runs/       PROVENANCE 副本、校验日志、血缘与分布预测、爬取日志
 └── RF_EXECUTION.md
 ```
 
@@ -565,4 +567,14 @@ codes/ModelLakeFishing/docs/1M/
 
 ## §12 与 R2 runbook 的对应
 
-| R2（[`100k/100kplan.md`
+| R2（[`100k/100kplan.md`](100k/100kplan.md)） | 本档 | 差异 |
+|---|---|---|
+| T0 代码改造七项 | F0 | 七项沿用，补做第 10 项（拆件）；第 9 项（fp16）取消，见 D-55 |
+| T1 watGPU 环境 | 沿用，不重做 | 环境已在 R2 打通；仅按 §9 重新申请资源 |
+| T2 候选发现与均衡选样 | F1 | 改为单流穷举枚举，不选样（D-46、D-47）。已完成：3,003,759 条 |
+| T3 canonical 与梯子 | F2、F3 | 规则不变，梯子增加固定前缀（D-48） |
+| T4 特征 | F4 | 前 100,000 行复制（D-49），其余新算，float32 存盘 |
+| T5 建图 | F5 | 拆件存储；血缘边数量级变化是主要观察点 |
+| T6 训练 | F6 | 配置零改动；新增 500K 中间档 |
+| T7 导出与索引 | F7 | 增加子采样索引 |
+| T8 三轴评测 | F8 | 三轴口径不变，增加两条 scaling 曲线，主指标改为 `median rank / N`（D-52） |
