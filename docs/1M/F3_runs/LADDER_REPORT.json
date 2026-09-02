@@ -1,0 +1,40 @@
+{
+  "artifact": "F3 ladder (RF)",
+  "written_at": "2026-08-20T15:44:38+00:00",
+  "models": {
+    "total": 3016439,
+    "snapshot": 3003759,
+    "historical_only": 12680,
+    "canon_parts_read": 61
+  },
+  "datasets": {
+    "nodes": 18729,
+    "gold_eligible": 7859
+  },
+  "appended_family_recovery": {
+    "history:modellens_v2": 12658,
+    "history:diverse_zoo": 14,
+    "history:d0_v1_5": 8
+  },
+  "layer_distribution": {
+    "plain": 2030287,
+    "lineage": 862666,
+    "labeled": 110806,
+    "no_snapshot_record": 12680
+  },
+  "size_b_known": 846733,
+  "checks": {
+    "rows_equal_expected": true,
+    "mappedID_is_contiguous": true,
+    "ids_unique_after_normalisation": true,
+    "snapshot_is_an_exact_prefix": true,
+    "appended_rows_are_not_in_the_snapshot": true,
+    "every_supervised_model_has_a_row": true,
+    "dataset_mappedID_is_contiguous": true,
+    "every_supervised_node_has_a_row": true
+  },
+  "sha256": {
+    "full_model_ids.parquet": "fee360d1fef9afa4c446b70af35bcbf4ead2c75387f47abc3b0d21c944ae3efa",
+    "full_dataset_ids.parquet": "31c027ff2eeb693aed6abaa5d235f4a6264bb4b3245bfd71cf1c8b85d32173cb"
+  }
+}

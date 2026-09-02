@@ -1,0 +1,41 @@
+{
+  "core_models": 30183,
+  "core_alive": 13524,
+  "core_dead": 16659,
+  "trained_on_edges": 312986,
+  "edges_surviving": 73604,
+  "edges_lost": 239382,
+  "edges_lost_pct": 76.48,
+  "per_seed": {
+    "0": {
+      "queries": 734,
+      "gold_model_alive": 251,
+      "gold_model_dead": 483,
+      "gold_dead_pct": 65.8,
+      "queries_with_no_surviving_candidate": 328,
+      "labeled_pairs": 64126,
+      "labeled_pairs_surviving": 13655,
+      "labeled_pairs_lost_pct": 78.71
+    },
+    "1": {
+      "queries": 775,
+      "gold_model_alive": 230,
+      "gold_model_dead": 545,
+      "gold_dead_pct": 70.32,
+      "queries_with_no_surviving_candidate": 434,
+      "labeled_pairs": 62089,
+      "labeled_pairs_surviving": 8152,
+      "labeled_pairs_lost_pct": 86.87
+    },
+    "2": {
+      "queries": 936,
+      "gold_model_alive": 278,
+      "gold_model_dead": 658,
+      "gold_dead_pct": 70.3,
+      "queries_with_no_surviving_candidate": 499,
+      "labeled_pairs": 60028,
+      "labeled_pairs_surviving": 17907,
+      "labeled_pairs_lost_pct": 70.17
+    }
+  }
+}

@@ -1,0 +1,71 @@
+zoarag evilpeterpan family evilpeterpan
+lie24 qwen38 mtp head q2q4 cons family qwen
+mradermacher vibeworlder 30b a3b i1 gguf family vibeworlder
+jacob rojic mirror vera6 affine 5g4yy75zuz t5 family qwen3_5_moe 35.1072B params
+hypaai hypa llama snac asr 2026 08 18 17 57 27 runpod family llama
+dt4h cardio ner nl disease cardioberta multiclass family roberta 125.39M params
+ayushmaninbox artificial stupidity asif family artificial
+0curious0 faster rcnn resnet50 family resnet
+retentionlabs haan v1 frozen family haan
+retentionlabs haan v1 full family haan
+susanhill unconstai albedo qwen3.6 35b 1787057086 0819 0257 family qwen
+24f1002802 green ai carbon audit family green
+attila115 co24 family co24
+alien10 hermes omnichannel shop family hermes
+attila115 co23 family co23
+attila115 co22 family co22
+gaparecido llama 3.1 8b financial reasoner v1 family llama
+attila115 co10 family co10
+attila115 co8 family co8
+attila115 co5 family co5
+attila115 co25 family co25
+attila115 co9 family co9
+attila115 co7 family co7
+attila115 co4 family co4
+attila115 co6 family co6
+bnewmiller distilbert base uncased finetuned imdb accelerate family distilbert 66.9855M params
+schatmodels s5.1o family other
+lfeng03 myawesomemodel testrepo family bert
+rhine river co193 family co193
+tuskyy prompt guard roberta base family mpt
+check123432 co179 family co179
+elevateecho sn120 8e3f1695e058 family qwen3_5_moe 35.1072B params
+check123432 co180 family co180
+allura forge muxodious qwen3.8 27b absolute heresy lora jlensprojected family qwen
+hoshipu pi05 b1kt87 ft nolang 25k30k family pi05
+check123432 co225 family co225
+lightseek0123 co174 family co174
+rez020406 co53 family co53
+jomanne3 myawesomemodel testrepo family bert
+lightseek0123 co168 family co168
+hoshipu pi05 b1kt98 ft nolang 25k30k family pi05
+hoshipu pi05 b1kt73 ft nolang 25k30k family pi05
+reliquaryforge qwen3 4b base dapo v4 family qwen3 4.02247B params
+ayushmaninbox artificial stupidity image family artificial
+supergpt79 co33 family gpt
+poorclaude co101 family co101
+rez020406 co68 family co68
+poorclaude co165 family co165
+chatpig pixart gguf family pixart
+ayushmaninbox artificial stupidity tiny family artificial
+... (tail of the ladder below) ...
+zwellington azahead longformer v1 0 family Other
+zwellington azahead longformer v1 1 family Other
+zwellington bert azahead v0 1 family bert
+zwellington bert azahead v1 0 family bert
+zwellington bert azahead v1 1 family bert
+zwellington microtest 2 0 family Other
+zyh llm qwen2 5 14b family qwen
+zyh llm qwen2 5 14b v2 family qwen
+zyh llm qwen2 5 14b v3 family qwen
+zyh llm qwen2 5 14b v4 family qwen
+zyj2003lj nomic embed text v1 5 q4 k m gguf family Other
+zylfws est trainer family Other
+{anna} single model family Other
+{bert base} single model family Other
+± se family Other
+µ2net+ vit l 16 family vit
+µ2net vit l 16 family vit
+δ vs gemma 3 family gemma
+δ vs smollm2 family Other
+π0 family Other

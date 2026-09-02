@@ -1,0 +1,3 @@
+[env] selected /dev/shm: available=503604004K env=3944622K
+torch 2.12.0+cu130 cuda True count 1
+device NVIDIA RTX A6000 total_gb 47.404

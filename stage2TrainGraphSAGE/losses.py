@@ -1012,12 +1012,17 @@ def global_retrieval_loss(z_dict, M, pools, *, temperature=0.1, n_neg=64,
     return loss
 
 
-def build_lake_logq(trained_on_index, num_models, *, alpha=0.75, n0=1.0):
+def build_lake_logq(trained_on_index, num_models, *, alpha=0.75, n0=1.0,
+                    gamma=0.0):
     """v3 L1: the whole-lake proposal distribution q(m) for logQ-corrected
     sampled softmax.
 
         deg(m) = train-visible trained_on label degree of model m
         q(m)  ∝ (deg(m) + n0)^alpha
+
+    When gamma > 0, mix in a component that is uniform over labeled models:
+
+        q = (1-gamma) * (deg+n0)^alpha / Z + gamma * [deg>0] / n_labeled
 
     alpha=0.75 tempers the head (word2vec convention); n0 keeps zero-degree
     models sampleable (the lake majority is unlabeled -- they ARE legitimate
@@ -1030,6 +1035,11 @@ def build_lake_logq(trained_on_index, num_models, *, alpha=0.75, n0=1.0):
     deg = torch.bincount(trained_on_index[0], minlength=num_models).float()
     w = (deg + float(n0)) ** float(alpha)
     q = w / w.sum()
+    if gamma > 0.0:
+        lab = (deg > 0).to(q.dtype)
+        n_lab = lab.sum()
+        if n_lab > 0:
+            q = (1.0 - float(gamma)) * q + float(gamma) * lab / n_lab
     return q, q.log()
 
 

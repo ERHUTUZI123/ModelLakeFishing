@@ -1,0 +1,2 @@
+[env] selected /dev/shm: available=518249164K env=3944622K
+torch 2.12.0+cu130 | cuda False | pyg_lib True | torch_sparse False

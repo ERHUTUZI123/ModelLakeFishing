@@ -57,6 +57,8 @@ RUNGS = {
     "12k": {"expect_n": None, "anchor_gold10": 0.4159},
     "30k": {"expect_n": 30_183, "anchor_gold10": None},
     "100k": {"expect_n": 100_000, "anchor_gold10": None},
+    "500k": {"expect_n": None, "anchor_gold10": None},
+    "full": {"expect_n": 3_016_439, "anchor_gold10": None},
 }
 
 
@@ -114,7 +116,7 @@ def capture_metadata(out, args, cfg, graph_path):
         "git_status": status if status is not None else _NO_GIT,
         "git_tracked_dirty": bool(tracked_dirty) if tracked_dirty is not None else None,
         "graph": os.path.abspath(graph_path),
-        "graph_sha256": CK.sha256_of(graph_path),
+        "graph_sha256": CK.graph_digest(graph_path),
         "args": vars(args),
         "resolved_config": CK._jsonable(cfg),
     }
@@ -181,6 +183,10 @@ def build_config(args):
                skip_diagnostics=args.skip_diagnostics)
     if args.batch_size:
         cfg["batch_size"] = args.batch_size
+    if args.lake_gamma is not None:
+        cfg["lake_gamma"] = args.lake_gamma
+    if args.global_n_datasets is not None:
+        cfg["global_n_datasets"] = args.global_n_datasets
     return cfg
 
 
@@ -206,6 +212,10 @@ def main(argv=None):
     p.add_argument("--contrast-max-pos-per-dataset", type=int, default=None)
     p.add_argument("--chunked-infer", type=int, default=None)
     p.add_argument("--skip-diagnostics", action="store_true")
+    p.add_argument("--lake-gamma", type=float, default=None,
+                   help="mixture weight of the uniform-over-labeled component in q")
+    p.add_argument("--global-n-datasets", type=int, default=None,
+                   help="datasets scored by the global term each step (default 16)")
     args = p.parse_args(argv)
 
     from ModelLakeFishing.stage2TrainGraphSAGE.ablation import train_eval_one
@@ -221,7 +231,11 @@ def main(argv=None):
     ckpt_dir = os.path.join(out, "ckpt")
     expect_n = args.expect_n or RUNGS[args.rung]["expect_n"]
 
-    payload = torch.load(args.graph, map_location="cpu", weights_only=False)
+    if os.path.isdir(args.graph):
+        from scale1m.graph_store import load_sharded
+        payload = load_sharded(args.graph, mmap=True, verify_sha256=False)
+    else:
+        payload = torch.load(args.graph, map_location="cpu", weights_only=False)
     data, xm0, xd0 = payload["data"], payload["xm0_meta"], payload["xd0_meta"]
     udi = payload["unique_dataset_id"].sort_values("mappedID").reset_index(drop=True)
     root_of = udi["root"].astype(str).tolist()

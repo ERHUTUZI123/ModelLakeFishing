@@ -42,6 +42,23 @@ def test_lake_logq_distribution():
     assert abs(float(q[4] / q[2]) - 11 ** 0.75) < 1e-4
 
 
+def test_lake_logq_mixture_and_zero_gamma_equivalence():
+    ti = torch.tensor([[0, 0, 0, 1, 4, 4], [0, 1, 2, 0, 0, 1]])
+    q_old, logq_old = build_lake_logq(ti, 6, alpha=0.75, n0=1.0)
+    q_zero, logq_zero = build_lake_logq(ti, 6, alpha=0.75, n0=1.0,
+                                        gamma=0.0)
+    assert torch.equal(q_zero, q_old)
+    assert torch.equal(logq_zero, logq_old)
+
+    q_mix, logq_mix = build_lake_logq(ti, 6, alpha=0.75, n0=1.0,
+                                      gamma=0.5)
+    deg = torch.bincount(ti[0], minlength=6)
+    expected_mass = 0.5 + 0.5 * q_old[deg > 0].sum()
+    assert torch.allclose(q_mix.sum(), torch.tensor(1.0))
+    assert torch.allclose(q_mix[deg > 0].sum(), expected_mass)
+    assert torch.isfinite(logq_mix).all()
+
+
 def test_lake_loss_excludes_positives_and_corrects_logq():
     torch.manual_seed(0)
     N_m, N_d, dim = 50, 4, 8

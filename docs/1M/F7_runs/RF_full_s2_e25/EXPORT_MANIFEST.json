@@ -1,0 +1,272 @@
+{
+  "stages": {
+    "embed": {
+      "run_id": "RF_full_s2_e25",
+      "checkpoint": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\F6_runs\\RF_full_s2_e25\\ckpt\\last.pt",
+      "checkpoint_epoch": 24,
+      "graph": "D:\\research\\model_lake\\data\\data1m\\graphs\\hgraph_rf",
+      "graph_digest": "0e80b8393846dcc4b9e354218fd5139a906d569125d2e8545e17ccd01612b76c",
+      "binding": {
+        "family_vocab_path": "/u801/x98liu/model_lake/data1m/feats_rf/family_vocab.csv",
+        "family_vocab_sha256": "00d304df9bd72acb2c2c1ca5b84ed0dc9d4adb0cbc9f098f32a9e62109d24005",
+        "num_families": 41056,
+        "num_size_buckets": 15,
+        "size_bucket_version": "min5.0_max12.0_w0.50_n15",
+        "name_seed": 42,
+        "name_dim": 64,
+        "desc_dim": 384,
+        "encoder_name": "all-MiniLM-L6-v2",
+        "graph_sha256": "0e80b8393846dcc4b9e354218fd5139a906d569125d2e8545e17ccd01612b76c",
+        "split_seed": 2
+      },
+      "split_seed": 2,
+      "rung": "full",
+      "n_models": 3016439,
+      "n_datasets": 18729,
+      "n_test_queries": 1595,
+      "expect_n": 3016439,
+      "device": "cuda",
+      "chunk": 50000,
+      "seconds": 72.1,
+      "gates": [
+        {
+          "gate": "G-F7a",
+          "name": "candidate pool size",
+          "ok": true,
+          "n_models": 3016439,
+          "expect_n": 3016439
+        },
+        {
+          "gate": "G-F7c",
+          "name": "row order vs ladder",
+          "ok": true,
+          "n_probed": 100,
+          "probe_mismatches": [],
+          "total_mismatches": 0
+        },
+        {
+          "gate": "G-F7d",
+          "name": "chunked == whole-graph forward",
+          "ran": true,
+          "n_models": 100000,
+          "max_abs_delta": {
+            "model": 8.940696716308594e-08,
+            "dataset": 5.960464477539063e-08
+          },
+          "ok": true
+        }
+      ]
+    },
+    "metrics": {
+      "run_id": "RF_full_s2_e25",
+      "device": "cuda",
+      "seconds": 35.4,
+      "eval_metrics": {
+        "observed_hit1": 0.1993730407523511,
+        "top3_hit1": 0.4225705329153605,
+        "regret1": 0.43083284571927427,
+        "reciprocal_rank": 0.03117912842518358,
+        "full2k_gold@1": 0.010658307210031349,
+        "full2k_gold@10": 0.06959247648902821,
+        "full2k_gold@50": 0.18808777429467086,
+        "full2k_gold@100": 0.20940438871473355,
+        "gold_gap@1": 0.0219435736677116,
+        "gold_gap@10": 0.08589341692789969,
+        "gold_gap@50": 0.1974921630094044,
+        "gold_gap@100": 0.2231974921630094,
+        "median_gold_rank": 3363.0,
+        "mean_gold_rank": 148532.15235109717,
+        "median_gold_gap_rank": 3011.0,
+        "n_datasets": 1595
+      },
+      "full_graph_metrics": {
+        "observed_hit1": 0.19686520376175548,
+        "top3_hit1": 0.4432601880877743,
+        "regret1": 0.3902606838199718,
+        "reciprocal_rank": 0.07619540460352683,
+        "full2k_gold@1": 0.026959247648902823,
+        "full2k_gold@10": 0.16739811912225705,
+        "full2k_gold@50": 0.30094043887147337,
+        "full2k_gold@100": 0.39184952978056425,
+        "gold_gap@1": 0.041379310344827586,
+        "gold_gap@10": 0.19059561128526645,
+        "gold_gap@50": 0.3322884012539185,
+        "gold_gap@100": 0.42946708463949845,
+        "median_gold_rank": 245.0,
+        "mean_gold_rank": 1545.694670846395,
+        "median_gold_gap_rank": 194.0,
+        "n_datasets": 1595
+      },
+      "global_metrics": {
+        "n_queries": 1595,
+        "gold@1": 0.010658307210031349,
+        "gold-gap@1": 0.0219435736677116,
+        "gold@10": 0.06959247648902821,
+        "gold-gap@10": 0.08589341692789969,
+        "top3@10": 0.11473354231974922,
+        "median_gold_rank": 3363.0,
+        "n_roots": 511,
+        "root_gold@1": 0.015727465154359202,
+        "root_gold@10": 0.040711157261338976,
+        "root_top3@10": 0.05174328048244738,
+        "root_gold-gap@10": 0.08625730527044477
+      },
+      "a_axis_row": {
+        "N": 3016439,
+        "gold@1": 0.010658307210031349,
+        "gold@10": 0.06959247648902821,
+        "top3@10": 0.11473354231974922,
+        "gold-gap@10": 0.08589341692789969,
+        "root_gold@10": 0.040711157261338976,
+        "median_gold_rank": 3363.0,
+        "median_rank_over_N": 0.0011148907702095087,
+        "vs_random": 20992.146018808773,
+        "n_queries": 1595,
+        "n_roots": 511
+      },
+      "a_axis_row_in_snapshot_only": {
+        "snapshot_is_an_exact_prefix": true,
+        "N": 3003759,
+        "queries_dropped_ineligible_in_pool": 959,
+        "queries_whose_best_model_left_the_pool": 1002,
+        "gold@1": 0.012578616352201259,
+        "gold@10": 0.06132075471698113,
+        "top3@10": 0.07547169811320754,
+        "gold-gap@10": 0.0880503144654088,
+        "root_gold@10": 0.09268495428096425,
+        "median_gold_rank": 2070.0,
+        "median_rank_over_N": 0.0006891365119505259,
+        "vs_random": 18419.276886792453,
+        "n_queries": 636,
+        "n_roots": 401
+      },
+      "gates": [
+        {
+          "gate": "G-F7b",
+          "name": "held-out < full-graph gold@10",
+          "ok": true,
+          "gold10_eval": 0.06959247648902821,
+          "gold10_full": 0.16739811912225705,
+          "margin": 0.09780564263322884
+        },
+        {
+          "gate": "G-F7e",
+          "name": "five_metric == global_metrics",
+          "ok": true,
+          "five_metric_gold@10": 0.06959247648902821,
+          "global_metrics_gold@10": 0.06959247648902821,
+          "match": true
+        },
+        {
+          "gate": "G-F7h",
+          "name": "A axis reported over both candidate pools",
+          "ok": true,
+          "pools": [
+            "all_candidates",
+            "in_snapshot_only"
+          ]
+        }
+      ]
+    },
+    "index": {
+      "run_id": "RF_full_s2_e25",
+      "index": "D:/research/model_lake/data/data1m/exports_rf/RF_full_s2_e25\\hnsw_full.bin",
+      "index_bytes": 2377706132,
+      "seconds": 112.0,
+      "hnsw": {
+        "build_ms": 68006.6,
+        "n_query": 300,
+        "M": 32,
+        "ef_construction": 200,
+        "build_threads": 16,
+        "index_mb": 2209.3,
+        "recall_at_50": 0.9983333333333333,
+        "ef_search": 50,
+        "iso_recall": 0.99,
+        "ef_trace": [
+          {
+            "ef": 50,
+            "recall": 0.9983333333333333
+          }
+        ],
+        "hnsw_query_ms_p50": 0.0167,
+        "hnsw_query_ms_p95": 0.026104999999999996,
+        "hnsw_query_ms_p99": 0.037403,
+        "latency_reps": 1000,
+        "latency_threads": 1
+      },
+      "gates": [
+        {
+          "gate": "G-F7f",
+          "name": "HNSW recall@50 >= 0.99",
+          "ok": true,
+          "recall_at_50": 0.9983333333333333,
+          "ef_search": 50
+        }
+      ]
+    }
+  },
+  "written_at": "2026-08-21T16:01:18+00:00",
+  "gates": [
+    {
+      "gate": "G-F7a",
+      "name": "candidate pool size",
+      "ok": true,
+      "n_models": 3016439,
+      "expect_n": 3016439
+    },
+    {
+      "gate": "G-F7c",
+      "name": "row order vs ladder",
+      "ok": true,
+      "n_probed": 100,
+      "probe_mismatches": [],
+      "total_mismatches": 0
+    },
+    {
+      "gate": "G-F7d",
+      "name": "chunked == whole-graph forward",
+      "ran": true,
+      "n_models": 100000,
+      "max_abs_delta": {
+        "model": 8.940696716308594e-08,
+        "dataset": 5.960464477539063e-08
+      },
+      "ok": true
+    },
+    {
+      "gate": "G-F7b",
+      "name": "held-out < full-graph gold@10",
+      "ok": true,
+      "gold10_eval": 0.06959247648902821,
+      "gold10_full": 0.16739811912225705,
+      "margin": 0.09780564263322884
+    },
+    {
+      "gate": "G-F7e",
+      "name": "five_metric == global_metrics",
+      "ok": true,
+      "five_metric_gold@10": 0.06959247648902821,
+      "global_metrics_gold@10": 0.06959247648902821,
+      "match": true
+    },
+    {
+      "gate": "G-F7h",
+      "name": "A axis reported over both candidate pools",
+      "ok": true,
+      "pools": [
+        "all_candidates",
+        "in_snapshot_only"
+      ]
+    },
+    {
+      "gate": "G-F7f",
+      "name": "HNSW recall@50 >= 0.99",
+      "ok": true,
+      "recall_at_50": 0.9983333333333333,
+      "ef_search": 50
+    }
+  ],
+  "gates_failed": [],
+  "gates_passed": true
+}

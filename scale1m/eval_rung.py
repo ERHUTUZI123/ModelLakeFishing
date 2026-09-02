@@ -161,8 +161,14 @@ def _recall_at(idx, qvecs, brute, K, ef):
 
 
 def bench_rung(z_m, z_d_eval, query_ids, index_path, *, target=0.99, K=50,
-               warmup=100, reps=1000, n_query=300, threads=8):
-    """§11.2's protocol, in order: fix recall, then time, single-threaded."""
+               warmup=100, reps=1000, n_query=300, threads=8, labels=None):
+    """§11.2's protocol, in order: fix recall, then time, single-threaded.
+
+    `labels` is for an index built over a SUBSET of a larger embedding matrix:
+    row i of `z_m` was added under label `labels[i]`, so the brute-force
+    reference has to be expressed in the same label space or every recall reads
+    as zero. None (the default) means row i was added under label i, which is
+    what every historical rung did."""
     import hnswlib
     zm = z_m / (np.linalg.norm(z_m, axis=1, keepdims=True) + 1e-12)
     zd = z_d_eval / (np.linalg.norm(z_d_eval, axis=1, keepdims=True) + 1e-12)
@@ -172,7 +178,8 @@ def bench_rung(z_m, z_d_eval, query_ids, index_path, *, target=0.99, K=50,
 
     qs = list(query_ids)[:min(n_query, len(query_ids))]
     qvecs = [zd[int(d)].astype(np.float32) for d in qs]
-    brute = [set(np.argsort(-(zm @ q))[:K].tolist()) for q in qvecs]
+    lb = np.arange(N) if labels is None else np.asarray(labels)
+    brute = [set(lb[np.argsort(-(zm @ q))[:K]].tolist()) for q in qvecs]
 
     ef, trace = None, []
     e = K

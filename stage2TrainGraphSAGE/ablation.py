@@ -190,11 +190,16 @@ def train_eval_one(data, xm0, xd0, cfg, split, *, init_seed, epochs, device="cpu
                 from ModelLakeFishing.stage2TrainGraphSAGE.losses import build_lake_logq
                 q, logq = build_lake_logq(
                     ti, data["model"].num_nodes,
-                    alpha=cfg.get("lake_alpha", 0.75), n0=cfg.get("lake_n0", 1.0))
+                    alpha=cfg.get("lake_alpha", 0.75), n0=cfg.get("lake_n0", 1.0),
+                    gamma=cfg.get("lake_gamma", 0.0))
                 deg = torch.bincount(ti[0], minlength=data["model"].num_nodes)
+                mass = float(q[deg > 0].sum())
                 print(f"    [lake logQ] models={q.numel()} labeled={(deg > 0).sum().item()} "
                       f"max_deg={int(deg.max())} q_head={q.max():.4f} "
-                      f"alpha={cfg.get('lake_alpha', 0.75)}")
+                      f"alpha={cfg.get('lake_alpha', 0.75)} "
+                      f"gamma={cfg.get('lake_gamma', 0.0)} "
+                      f"mass_on_labeled={mass:.4f} "
+                      f"E_labeled_in_negs={mass * cfg.get('global_n_neg', 64):.1f}")
                 gctx.update(lake=(q, logq),
                             hard_mine_epoch=cfg.get("hard_mine_epoch", 0),
                             hard_k=cfg.get("hard_k", 20),

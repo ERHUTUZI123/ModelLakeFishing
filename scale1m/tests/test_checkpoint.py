@@ -8,6 +8,7 @@ uninterrupted one parameter by parameter, rather than only checking that resume
 did not crash.
 """
 
+import json
 import os
 
 import numpy as np
@@ -77,6 +78,25 @@ def test_save_leaves_no_tmp_files_behind(tmp_path):
     CK.save(d, epoch=0, global_step=1, model=model, scorer=scorer, opt=opt,
             history=[], cfg={}, binding=binding)
     assert not [f for f in os.listdir(d) if f.endswith(".tmp")]
+
+
+def test_graph_digest_matches_sha256_for_a_single_file(tmp_path):
+    graph = tmp_path / "graph.pt"
+    graph.write_bytes(b"single-file graph")
+    assert CK.graph_digest(str(graph)) == CK.sha256_of(str(graph))
+
+
+def test_graph_digest_is_stable_and_tracks_shard_hashes(tmp_path):
+    graph = tmp_path / "graph"
+    graph.mkdir()
+    meta = graph / "meta.json"
+    meta.write_text(json.dumps({"files": {"nodes.npz": "a", "edges.npz": "b"}}),
+                    encoding="utf-8")
+    first = CK.graph_digest(str(graph))
+    assert CK.graph_digest(str(graph)) == first
+    meta.write_text(json.dumps({"files": {"nodes.npz": "changed", "edges.npz": "b"}}),
+                    encoding="utf-8")
+    assert CK.graph_digest(str(graph)) != first
 
 
 def test_prune_keeps_best_last_and_history(tmp_path):

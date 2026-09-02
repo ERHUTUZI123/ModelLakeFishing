@@ -65,6 +65,16 @@ def sha256_of(path):
     return h.hexdigest()
 
 
+def graph_digest(path):
+    """Return a stable content identity for file and sharded-directory graphs."""
+    if path and os.path.isdir(path):
+        with open(os.path.join(path, "meta.json"), encoding="utf-8") as fh:
+            files = json.load(fh)["files"]
+        blob = json.dumps(files, sort_keys=True, ensure_ascii=False)
+        return hashlib.sha256(blob.encode("utf-8")).hexdigest()
+    return sha256_of(path) if path and os.path.exists(path) else None
+
+
 def size_bucket_version():
     """A string that changes whenever the bucket boundaries change.
 
@@ -92,7 +102,7 @@ def make_binding(xm0_meta, *, graph_path, split_seed, family_vocab_path=None,
         "name_dim": int(xm0_meta.get("name_dim", 64)),
         "desc_dim": int(xm0_meta.get("desc_dim", 384)),
         "encoder_name": encoder_name,
-        "graph_sha256": sha256_of(graph_path) if os.path.exists(graph_path) else None,
+        "graph_sha256": graph_digest(graph_path),
         "split_seed": int(split_seed),
     }
 

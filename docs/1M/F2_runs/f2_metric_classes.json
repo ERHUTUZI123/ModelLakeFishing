@@ -1,0 +1,149 @@
+{
+  "records": 2170048,
+  "by_class": {
+    "higher": {
+      "n": 1539828,
+      "pct": 70.96
+    },
+    "unknown": {
+      "n": 555929,
+      "pct": 25.62
+    },
+    "reward": {
+      "n": 58456,
+      "pct": 2.69
+    },
+    "lower": {
+      "n": 15835,
+      "pct": 0.73
+    }
+  },
+  "distinct_names_by_class": {
+    "higher": 374,
+    "unknown": 2084,
+    "reward": 5,
+    "lower": 31
+  },
+  "top_unknown": [
+    [
+      "nauc_map_at_1000_diff1",
+      4639
+    ],
+    [
+      "nauc_map_at_1000_max",
+      4639
+    ],
+    [
+      "nauc_map_at_100_diff1",
+      4639
+    ],
+    [
+      "nauc_map_at_100_max",
+      4639
+    ],
+    [
+      "nauc_map_at_10_diff1",
+      4639
+    ],
+    [
+      "nauc_map_at_10_max",
+      4639
+    ],
+    [
+      "nauc_map_at_1_diff1",
+      4639
+    ],
+    [
+      "nauc_map_at_1_max",
+      4639
+    ],
+    [
+      "nauc_map_at_20_diff1",
+      4639
+    ],
+    [
+      "nauc_map_at_20_max",
+      4639
+    ],
+    [
+      "nauc_map_at_3_diff1",
+      4639
+    ],
+    [
+      "nauc_map_at_3_max",
+      4639
+    ],
+    [
+      "nauc_map_at_5_diff1",
+      4639
+    ],
+    [
+      "nauc_map_at_5_max",
+      4639
+    ],
+    [
+      "nauc_mrr_at_1000_diff1",
+      4639
+    ],
+    [
+      "nauc_mrr_at_1000_max",
+      4639
+    ],
+    [
+      "nauc_mrr_at_100_diff1",
+      4639
+    ],
+    [
+      "nauc_mrr_at_100_max",
+      4639
+    ],
+    [
+      "nauc_mrr_at_10_diff1",
+      4639
+    ],
+    [
+      "nauc_mrr_at_10_max",
+      4639
+    ],
+    [
+      "nauc_mrr_at_1_diff1",
+      4639
+    ],
+    [
+      "nauc_mrr_at_1_max",
+      4639
+    ],
+    [
+      "nauc_mrr_at_20_diff1",
+      4639
+    ],
+    [
+      "nauc_mrr_at_20_max",
+      4639
+    ],
+    [
+      "nauc_mrr_at_3_diff1",
+      4639
+    ],
+    [
+      "nauc_mrr_at_3_max",
+      4639
+    ],
+    [
+      "nauc_mrr_at_5_diff1",
+      4639
+    ],
+    [
+      "nauc_mrr_at_5_max",
+      4639
+    ],
+    [
+      "nauc_ndcg_at_1000_diff1",
+      4639
+    ],
+    [
+      "nauc_ndcg_at_1000_max",
+      4639
+    ]
+  ]
+}

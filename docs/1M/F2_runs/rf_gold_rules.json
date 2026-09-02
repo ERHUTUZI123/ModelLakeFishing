@@ -1,0 +1,81 @@
+{
+  "version": "rf-gold-2.0",
+  "written_at": "2026-08-20T15:09:32+00:00",
+  "supersedes": "rf-gold-1.1",
+  "candidate_pool": "the 2026-08-18 HF snapshot; models that appear only in historical supervision are added as candidates with in_snapshot=false",
+  "sources_in_priority_order": [
+    "modellens_v2",
+    "d0_v1_5",
+    "a_ctrl_2000m",
+    "hf_effective",
+    "diverse_zoo",
+    "hf_model_index"
+  ],
+  "sources_excluded_as_redundant": {
+    "hgraph_zoo_xm0.pt": "99.52% of its pairs are inside diverse_zoo",
+    "hgraph_hf1000d_2000m_xm0_xd0.pt": "all 7,056 distinct pairs are inside a_ctrl_2000m; it also carries 5,149 duplicate edges of its own"
+  },
+  "intra_source_dedupe": {
+    "key": [
+      "source",
+      "node",
+      "model"
+    ],
+    "statistic": "median"
+  },
+  "renormalisation": "min-max inside (node, source); constant group -> 0.5",
+  "direction": {
+    "curated": "historical weights are already oriented at build time; they may define gold",
+    "others": "see scale1m/metric_semantics.py"
+  },
+  "conflict_resolution": "highest-priority source wins; losers are written to supervision_conflicts.parquet",
+  "gold_source": "the highest-priority source present at the node",
+  "edge_cap_per_node": 200,
+  "cap_sampling": "stratified by weight, numpy default_rng(0)",
+  "query_eligibility": {
+    "min_models": 3,
+    "exclude_reinforcement_learning": true,
+    "exclude_placeholder_dataset_names": [
+      "",
+      "#",
+      "##",
+      "-",
+      "confidential",
+      "custom",
+      "dataset",
+      "in-house",
+      "in_house",
+      "internal",
+      "local",
+      "my_dataset",
+      "mydataset",
+      "n/a",
+      "na",
+      "none",
+      "null",
+      "own",
+      "private",
+      "proprietary",
+      "self",
+      "test",
+      "unknown"
+    ],
+    "require_direction_known_or_curated": true
+  },
+  "main_table_depth": 3,
+  "reported_depths": [
+    3,
+    5,
+    10,
+    20
+  ],
+  "reporting": "every A-axis number must be reported over all candidates AND over in_snapshot=true candidates only, and must be splittable by source",
+  "split": {
+    "group_by": "dataset owner and base name",
+    "seeds": [
+      0,
+      1,
+      2
+    ]
+  }
+}

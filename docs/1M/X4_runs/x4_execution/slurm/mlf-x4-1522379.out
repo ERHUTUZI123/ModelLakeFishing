@@ -1,0 +1,10 @@
+[env] selected /dev/shm: available=387250204K env=3944613K
+[env] staging /u801/x98liu/model_lake/envs/mlf -> /dev/shm/mlf-x98liu-1522379.s7ZIRw/mlf
+
+real	0m34.525s
+user	0m0.900s
+sys	0m13.065s
+[env] torch 2.12.0+cu130 cuda True pyg_lib True torch_sparse False
+srun: error: Task launch for StepId=1522379.0 failed on node watgpu608: Communication connection failure
+srun: error: Application launch failed: Communication connection failure
+srun: Job step aborted

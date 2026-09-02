@@ -1,0 +1,136 @@
+{
+  "nodes": 8793,
+  "datasets": 7700,
+  "match": {
+    "miss": 4155,
+    "basename": 659,
+    "exact": 2353,
+    "basename_ambiguous": 1626
+  },
+  "match_pct": {
+    "miss": 47.25,
+    "basename": 7.49,
+    "exact": 26.76,
+    "basename_ambiguous": 18.49
+  },
+  "matched_nodes": 3012,
+  "matched_pct": 34.25,
+  "matched_records_pct": 54.71,
+  "with_nonempty_description": 2121,
+  "with_description_pct": 24.12,
+  "description_chars_mean": 514.9,
+  "top_misses_by_models": [
+    {
+      "dataset": "taxi-v3",
+      "task": "reinforcement-learning",
+      "n_models": 7857
+    },
+    {
+      "dataset": "taxi-v3",
+      "task": "reinforcment-learning",
+      "n_models": 7857
+    },
+    {
+      "dataset": "frozenlake-v1-4x4-no_slippery",
+      "task": "reinforcement-learning",
+      "n_models": 7510
+    },
+    {
+      "dataset": "spaceinvadersnoframeskip-v4",
+      "task": "reinforcement-learning",
+      "n_models": 5393
+    },
+    {
+      "dataset": "pixelcopter-ple-v0",
+      "task": "reinforcement-learning",
+      "n_models": 3800
+    },
+    {
+      "dataset": "pandareachdense-v3",
+      "task": "reinforcement-learning",
+      "n_models": 2184
+    },
+    {
+      "dataset": "doom_health_gathering_supreme",
+      "task": "reinforcement-learning",
+      "n_models": 1802
+    },
+    {
+      "dataset": "lunarlander-v3",
+      "task": "reinforcement-learning",
+      "n_models": 1532
+    },
+    {
+      "dataset": "antbulletenv-v0",
+      "task": "reinforcement-learning",
+      "n_models": 992
+    },
+    {
+      "dataset": "pandareachdense-v2",
+      "task": "reinforcement-learning",
+      "n_models": 900
+    },
+    {
+      "dataset": "dim_768",
+      "task": "custom-triplet",
+      "n_models": 591
+    },
+    {
+      "dataset": "dim_768",
+      "task": "information-retrieval",
+      "n_models": 591
+    },
+    {
+      "dataset": "dim_768",
+      "task": "semantic-similarity",
+      "n_models": 591
+    },
+    {
+      "dataset": "dim_768",
+      "task": "triplet",
+      "n_models": 591
+    },
+    {
+      "dataset": "dim_256",
+      "task": "custom-triplet",
+      "n_models": 571
+    },
+    {
+      "dataset": "dim_256",
+      "task": "information-retrieval",
+      "n_models": 571
+    },
+    {
+      "dataset": "dim_256",
+      "task": "semantic-similarity",
+      "n_models": 571
+    },
+    {
+      "dataset": "dim_256",
+      "task": "triplet",
+      "n_models": 571
+    },
+    {
+      "dataset": "analogy-questions",
+      "task": "multiple-choice-qa",
+      "n_models": 568
+    },
+    {
+      "dataset": "relation-classification",
+      "task": "classification",
+      "n_models": 568
+    }
+  ],
+  "dataset_index_provenance": {
+    "total_records": 1008417,
+    "snapshot_window_utc": {
+      "crawl_started_at": "2026-08-18T21:32:36+00:00",
+      "crawl_finished_at": "2026-08-18T21:39:27+00:00",
+      "newest_dataset_created_at": "2026-08-18T21:31:50.000Z",
+      "oldest_dataset_created_at": "2022-03-02T23:29:22.000Z"
+    },
+    "exhausted_cursor": true,
+    "wallclock_s": 411.5,
+    "pages": 1009
+  }
+}

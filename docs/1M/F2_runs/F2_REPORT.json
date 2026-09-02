@@ -1,0 +1,276 @@
+{
+  "artifact": "F2 canonicalization (RF)",
+  "written_at": "2026-08-19T19:57:30+00:00",
+  "rules": {
+    "path": "rf_gold_rules.json",
+    "sha256": "ee3eb185d5e7243cd8668a41adaab62816b1f008f3a215615e4ba90652efaee6",
+    "version": "rf-gold-1.1"
+  },
+  "canon": {
+    "n_models": 3003759,
+    "canon_parts": 61,
+    "family_source": {
+      "name_rule|new": 1942519,
+      "config.model_type|new": 1061240
+    },
+    "lineage_source": {
+      "none": 2109670,
+      "baseModels": 837134,
+      "cardData.base_model": 56955
+    },
+    "layers": {
+      "plain": 2030287,
+      "lineage": 862666,
+      "labeled": 110806
+    },
+    "dropped": {
+      "non_finite_or_unparsable": 61294
+    },
+    "stats": {
+      "size_known": 846733,
+      "raw_metric_rows": 2158375
+    },
+    "crawl_provenance": {
+      "total_records": 3003759,
+      "snapshot_window_utc": {
+        "crawl_started_at": "2026-08-18T18:01:49+00:00",
+        "crawl_finished_at": "2026-08-18T18:29:18+00:00",
+        "newest_model_created_at": "2026-08-18T18:01:36.000Z",
+        "oldest_model_created_at": "2022-03-02T23:29:04.000Z"
+      },
+      "snapshot_date_utc": "2026-08-18"
+    }
+  },
+  "supervision": {
+    "raw_rows": 2097081,
+    "after_dedupe_rows": 1435162,
+    "duplicate_rows_collapsed": 661919,
+    "constant_groups_set_to_0.5": 38358,
+    "nodes_total": 7944,
+    "nodes_by_primary_direction": {
+      "higher": 5374,
+      "lower": 1446,
+      "unknown": 1073,
+      "reward": 51
+    },
+    "nodes_with_direction_known_metric": 6820,
+    "edges_before_cap": 143478,
+    "edges_after_cap": 74346,
+    "nodes_capped": 131,
+    "edge_cap_per_node": 200
+  },
+  "distribution": {
+    "by_task": {
+      "before_cap": {
+        "text-generation": 23485,
+        "Retrieval": 19325,
+        "Classification": 14541,
+        "Clustering": 11940,
+        "STS": 10512,
+        "text-classification": 9281,
+        "automatic-speech-recognition": 8771,
+        "image-classification": 5333,
+        "information-retrieval": 4910,
+        "Reranking": 4779,
+        "token-classification": 4765,
+        "PairClassification": 3716,
+        "text2text-generation": 1934,
+        "translation": 1927,
+        "triplet": 1853
+      },
+      "after_cap": {
+        "Retrieval": 11922,
+        "text-generation": 10061,
+        "automatic-speech-recognition": 6631,
+        "Classification": 5059,
+        "Clustering": 4267,
+        "text-classification": 4039,
+        "STS": 3732,
+        "information-retrieval": 2985,
+        "token-classification": 2734,
+        "Reranking": 1942,
+        "translation": 1672,
+        "PairClassification": 1634,
+        "text2text-generation": 1634,
+        "image-classification": 1439,
+        "semantic-similarity": 1411
+      },
+      "reinforcement_learning_pct_before": 0.12,
+      "reinforcement_learning_pct_after": 0.24,
+      "queries_by_task": {
+        "text-generation": 302,
+        "automatic-speech-recognition": 284,
+        "text-classification": 149,
+        "Retrieval": 146,
+        "token-classification": 122,
+        "information-retrieval": 110,
+        "triplet": 76,
+        "text2text-generation": 68,
+        "image-classification": 50,
+        "translation": 43,
+        "Classification": 42,
+        "question-answering": 38,
+        "sparse-information-retrieval": 36,
+        "Clustering": 35,
+        "fill-mask": 35
+      }
+    },
+    "by_dataset": {
+      "top20_after_cap": [
+        {
+          "dataset": "unknown",
+          "edges": 1085,
+          "was_capped": true
+        },
+        {
+          "dataset": "custom",
+          "edges": 579,
+          "was_capped": false
+        },
+        {
+          "dataset": "none",
+          "edges": 427,
+          "was_capped": false
+        },
+        {
+          "dataset": "samsum",
+          "edges": 336,
+          "was_capped": false
+        },
+        {
+          "dataset": "audiofolder",
+          "edges": 326,
+          "was_capped": true
+        },
+        {
+          "dataset": "winogrande",
+          "edges": 276,
+          "was_capped": true
+        },
+        {
+          "dataset": "openai_humaneval",
+          "edges": 248,
+          "was_capped": true
+        },
+        {
+          "dataset": "idavidrein/gpqa",
+          "edges": 229,
+          "was_capped": true
+        },
+        {
+          "dataset": "hellaswag",
+          "edges": 226,
+          "was_capped": true
+        },
+        {
+          "dataset": "google/fleurs",
+          "edges": 225,
+          "was_capped": true
+        },
+        {
+          "dataset": "glue",
+          "edges": 224,
+          "was_capped": true
+        },
+        {
+          "dataset": "ai2_arc",
+          "edges": 222,
+          "was_capped": true
+        },
+        {
+          "dataset": "librispeech_asr",
+          "edges": 221,
+          "was_capped": true
+        },
+        {
+          "dataset": "nanomsmarco",
+          "edges": 219,
+          "was_capped": false
+        },
+        {
+          "dataset": "cais/mmlu",
+          "edges": 218,
+          "was_capped": true
+        },
+        {
+          "dataset": "ag_news",
+          "edges": 215,
+          "was_capped": true
+        },
+        {
+          "dataset": "dim_128",
+          "edges": 214,
+          "was_capped": true
+        },
+        {
+          "dataset": "dim_256",
+          "edges": 214,
+          "was_capped": true
+        },
+        {
+          "dataset": "dim_64",
+          "edges": 214,
+          "was_capped": true
+        },
+        {
+          "dataset": "dim_512",
+          "edges": 213,
+          "was_capped": true
+        }
+      ],
+      "concentration_before_cap": {
+        "hhi_effective": 177.6,
+        "top1_pct": 2.85,
+        "top10_pct": 14.95
+      },
+      "concentration_after_cap": {
+        "hhi_effective": 520.8,
+        "top1_pct": 1.46,
+        "top10_pct": 5.32
+      }
+    },
+    "by_metric": {
+      "edges_by_primary_metric": {
+        "accuracy": 16437,
+        "ndcg_at_10": 11082,
+        "wer": 6463,
+        "v_measure": 4123,
+        "euclidean_pearson": 3412,
+        "f1": 3125,
+        "map": 2729,
+        "bleu": 2434,
+        "pass_at_1": 1812,
+        "acc": 1749,
+        "cosine_accuracy": 1593,
+        "acc_norm": 1430,
+        "pearson_cosine": 1390,
+        "cosine_accuracy_at_10": 1323,
+        "rouge": 1295,
+        "exact_match": 913,
+        "cosine_accuracy_at_1": 836,
+        "cosine_mrr_at_10": 804,
+        "dot_accuracy": 796,
+        "dot_accuracy_at_1": 773
+      },
+      "rows_by_direction_class": {
+        "higher": 986366,
+        "lower": 12115,
+        "reward": 198,
+        "unknown": 436483
+      }
+    },
+    "query_depth": {
+      "gold_eligible_nodes": 2041,
+      "nodes_ge_3": 2041,
+      "nodes_ge_5": 1304,
+      "nodes_ge_10": 772,
+      "nodes_ge_20": 513,
+      "nodes_with_edges": 7944,
+      "excluded_direction_unverified": 1124,
+      "excluded_reinforcement_learning": 56,
+      "excluded_placeholder_dataset_name": 152,
+      "excluded_fewer_than_3_models": 5467,
+      "eligible_after_all_three": 2041
+    }
+  }
+}

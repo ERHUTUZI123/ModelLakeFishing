@@ -1,0 +1,258 @@
+{
+  "modellens_v2": {
+    "file": "hgraph_ml_v2.pt",
+    "models": 30183,
+    "datasets": 9603,
+    "edges": 312986,
+    "distinct_pairs": 308180,
+    "duplicate_edges": 4806,
+    "attr_min": 0.0,
+    "attr_max": 1.0,
+    "attr_mean": 0.5001,
+    "dataset_id_samples": [
+      "##␟automatic speech recognition",
+      "##␟feature-extraction",
+      "##␟sentence-similarity"
+    ],
+    "model_id_samples": [
+      "#-shots",
+      "02shanky/finetuned-distilbert-base-uncased-emotion"
+    ]
+  },
+  "d0_v1_5": {
+    "file": "hgraph_d05_nocontent.pt",
+    "models": 10234,
+    "datasets": 1514,
+    "edges": 55140,
+    "distinct_pairs": 55140,
+    "duplicate_edges": 0,
+    "attr_min": 0.0,
+    "attr_max": 1.0,
+    "attr_mean": 0.6988,
+    "dataset_id_samples": [
+      "abusive-clauses-pl/default",
+      "acronym_identification",
+      "acronym_identification/default"
+    ],
+    "model_id_samples": [
+      "09panesara/distilbert-base-uncased-finetuned-cola",
+      "0x3/nemotron-3.5-asr-streaming-0.6b"
+    ]
+  },
+  "hf1000d": {
+    "file": "hgraph_hf1000d_2000m_xm0_xd0.pt",
+    "models": 2000,
+    "datasets": 362,
+    "edges": 12205,
+    "distinct_pairs": 7056,
+    "duplicate_edges": 5149,
+    "attr_min": 0.6,
+    "attr_max": 1.0,
+    "attr_mean": 0.8125,
+    "dataset_id_samples": [
+      "acronym_identification",
+      "adversarial_qa",
+      "ag_news"
+    ],
+    "model_id_samples": [
+      "tomaarsen/span-marker-bert-base-uncased-acronyms",
+      "tomaarsen/span-marker-bert-base-acronyms"
+    ]
+  },
+  "hf_effective": {
+    "file": "hgraph_hf_effective_2000m_v2_xm0_xd0.pt",
+    "models": 2000,
+    "datasets": 96,
+    "edges": 9403,
+    "distinct_pairs": 9403,
+    "duplicate_edges": 0,
+    "attr_min": 0.0,
+    "attr_max": 1.0,
+    "attr_mean": 0.6671,
+    "dataset_id_samples": [
+      "adversarial_qa",
+      "ag_news",
+      "ai-forever/cedr-classification"
+    ],
+    "model_id_samples": [
+      "tomaarsen/span-marker-bert-base-uncased-acronyms",
+      "tomaarsen/span-marker-bert-base-acronyms"
+    ]
+  },
+  "a_ctrl_2000m": {
+    "file": "hgraph_A_ctrl_2000m_xm0_xd0.pt",
+    "models": 2000,
+    "datasets": 102,
+    "edges": 9305,
+    "distinct_pairs": 9305,
+    "duplicate_edges": 0,
+    "attr_min": 0.0,
+    "attr_max": 1.0,
+    "attr_mean": 0.627,
+    "dataset_id_samples": [
+      "acronym_identification",
+      "adversarial_qa",
+      "ag_news"
+    ],
+    "model_id_samples": [
+      "tomaarsen/span-marker-bert-base-uncased-acronyms",
+      "tomaarsen/span-marker-bert-base-acronyms"
+    ]
+  },
+  "diverse_zoo": {
+    "file": "hgraph_diverse_xd0.pt",
+    "models": 306,
+    "datasets": 24,
+    "edges": 1646,
+    "distinct_pairs": 1350,
+    "duplicate_edges": 296,
+    "attr_min": 0.602,
+    "attr_max": 1.0,
+    "attr_mean": 0.8571,
+    "dataset_id_samples": [
+      "glue/qqp",
+      "glue/sst2",
+      "dair-ai/emotion"
+    ],
+    "model_id_samples": [
+      "jeevesh8/init_bert_ft_qqp-33",
+      "ali2066/finetuned_sentence_itr1_2e-05_all_26_02_2022-04_03_26"
+    ]
+  },
+  "zoo": {
+    "file": "hgraph_zoo_xm0.pt",
+    "models": 177,
+    "datasets": 23,
+    "edges": 1558,
+    "distinct_pairs": 1262,
+    "duplicate_edges": 296,
+    "attr_min": 0.602,
+    "attr_max": 1.0,
+    "attr_mean": 0.8558,
+    "dataset_id_samples": [
+      "glue/qqp",
+      "glue/sst2",
+      "dair-ai/emotion"
+    ],
+    "model_id_samples": [
+      "jeevesh8/init_bert_ft_qqp-33",
+      "ali2066/finetuned_sentence_itr1_2e-05_all_26_02_2022-04_03_26"
+    ]
+  },
+  "_union": {
+    "distinct_pairs_all_sources": 382181,
+    "sum_if_no_overlap": 391696,
+    "distinct_models": 38271,
+    "models_in_crawl": 21558,
+    "models_not_in_crawl": 16713
+  },
+  "_overlap": {
+    "d0_v1_5|hf1000d": {
+      "shared_pairs": 339,
+      "pct_of_d0_v1_5": 0.61,
+      "pct_of_hf1000d": 4.8
+    },
+    "d0_v1_5|hf_effective": {
+      "shared_pairs": 19,
+      "pct_of_d0_v1_5": 0.03,
+      "pct_of_hf_effective": 0.2
+    },
+    "d0_v1_5|a_ctrl_2000m": {
+      "shared_pairs": 379,
+      "pct_of_d0_v1_5": 0.69,
+      "pct_of_a_ctrl_2000m": 4.07
+    },
+    "d0_v1_5|diverse_zoo": {
+      "shared_pairs": 16,
+      "pct_of_d0_v1_5": 0.03,
+      "pct_of_diverse_zoo": 1.19
+    },
+    "d0_v1_5|zoo": {
+      "shared_pairs": 3,
+      "pct_of_d0_v1_5": 0.01,
+      "pct_of_zoo": 0.24
+    },
+    "hf1000d|hf_effective": {
+      "shared_pairs": 206,
+      "pct_of_hf1000d": 2.92,
+      "pct_of_hf_effective": 2.19
+    },
+    "hf1000d|a_ctrl_2000m": {
+      "shared_pairs": 7056,
+      "pct_of_hf1000d": 100.0,
+      "pct_of_a_ctrl_2000m": 75.83
+    },
+    "hf1000d|diverse_zoo": {
+      "shared_pairs": 16,
+      "pct_of_hf1000d": 0.23,
+      "pct_of_diverse_zoo": 1.19
+    },
+    "hf1000d|zoo": {
+      "shared_pairs": 5,
+      "pct_of_hf1000d": 0.07,
+      "pct_of_zoo": 0.4
+    },
+    "hf_effective|a_ctrl_2000m": {
+      "shared_pairs": 805,
+      "pct_of_hf_effective": 8.56,
+      "pct_of_a_ctrl_2000m": 8.65
+    },
+    "hf_effective|zoo": {
+      "shared_pairs": 2,
+      "pct_of_hf_effective": 0.02,
+      "pct_of_zoo": 0.16
+    },
+    "a_ctrl_2000m|diverse_zoo": {
+      "shared_pairs": 16,
+      "pct_of_a_ctrl_2000m": 0.17,
+      "pct_of_diverse_zoo": 1.19
+    },
+    "a_ctrl_2000m|zoo": {
+      "shared_pairs": 5,
+      "pct_of_a_ctrl_2000m": 0.05,
+      "pct_of_zoo": 0.4
+    },
+    "diverse_zoo|zoo": {
+      "shared_pairs": 1256,
+      "pct_of_diverse_zoo": 93.04,
+      "pct_of_zoo": 99.52
+    }
+  },
+  "_per_source_survival": {
+    "modellens_v2": {
+      "models": 30183,
+      "in_crawl": 13524,
+      "pct": 44.81
+    },
+    "d0_v1_5": {
+      "models": 10234,
+      "in_crawl": 10191,
+      "pct": 99.58
+    },
+    "hf1000d": {
+      "models": 2000,
+      "in_crawl": 1999,
+      "pct": 99.95
+    },
+    "hf_effective": {
+      "models": 2000,
+      "in_crawl": 1999,
+      "pct": 99.95
+    },
+    "a_ctrl_2000m": {
+      "models": 2000,
+      "in_crawl": 1999,
+      "pct": 99.95
+    },
+    "diverse_zoo": {
+      "models": 306,
+      "in_crawl": 290,
+      "pct": 94.77
+    },
+    "zoo": {
+      "models": 177,
+      "in_crawl": 161,
+      "pct": 90.96
+    }
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "appended_rows": 12680,
+  "appended_family_in_lake_vocab": 6648,
+  "appended_family_in_lake_pct": 52.43,
+  "appended_family_top10": {
+    "Other": 5942,
+    "bert": 1215,
+    "llama": 1155,
+    "qwen": 780,
+    "gemma": 274,
+    "vit": 273,
+    "mistral": 264,
+    "gpt": 196,
+    "phi": 145,
+    "opt": 128
+  },
+  "appended_family_distinct": 210,
+  "lake_family_distinct": 414457,
+  "appended_families_with_ge3_lake_models": 6618,
+  "size_b_known_pct_snapshot": 28.19
+}

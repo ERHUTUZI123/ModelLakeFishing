@@ -1,0 +1,68 @@
+{
+  "models": 3016439,
+  "distinct_families": 414478,
+  "FAMILY_MIN_COUNT_3": {
+    "families_kept": 40925,
+    "models_in_a_kept_family": 2613321,
+    "models_folded_to_Other_pct": 13.36
+  },
+  "FAMILY_MIN_COUNT_5": {
+    "families_kept": 23556,
+    "models_in_a_kept_family": 2554963,
+    "models_folded_to_Other_pct": 15.3
+  },
+  "FAMILY_MIN_COUNT_10": {
+    "families_kept": 11936,
+    "models_in_a_kept_family": 2479806,
+    "models_folded_to_Other_pct": 17.79
+  },
+  "FAMILY_MIN_COUNT_50": {
+    "families_kept": 2410,
+    "models_in_a_kept_family": 2292382,
+    "models_folded_to_Other_pct": 24.0
+  },
+  "top15_families": {
+    "llama": 301004,
+    "qwen": 186091,
+    "bert": 113380,
+    "qwen2": 96941,
+    "blockassist": 87544,
+    "gemma": 82557,
+    "mistral": 72310,
+    "qwen3": 57337,
+    "other": 52533,
+    "distilbert": 46380,
+    "t5": 45341,
+    "gpt2": 42112,
+    "roberta": 40534,
+    "whisper": 37287,
+    "vit": 26649
+  },
+  "by_family_source": {
+    "config.model_type|new": {
+      "models": 1061240,
+      "distinct_families": 8447,
+      "median_family_size": 46380.0
+    },
+    "history:d0_v1_5": {
+      "models": 8,
+      "distinct_families": 4,
+      "median_family_size": 3.0
+    },
+    "history:diverse_zoo": {
+      "models": 14,
+      "distinct_families": 5,
+      "median_family_size": 4.0
+    },
+    "history:modellens_v2": {
+      "models": 12658,
+      "distinct_families": 204,
+      "median_family_size": 5942.0
+    },
+    "name_rule|new": {
+      "models": 1942519,
+      "distinct_families": 407561,
+      "median_family_size": 904.0
+    }
+  }
+}
