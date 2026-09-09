@@ -64,7 +64,8 @@ class _SAGEBackbone(nn.Module):
     Homogeneous shallow GraphSAGE — the body `to_hetero` clones per relation.
 
     `num_layers` is 1 or 2 (depth is the most direct over-smoothing knob; we do
-    not go deeper). Kept at a fixed hidden width (non-lazy) on purpose: lazy
+    not go deeper). The enclosing model handles the explicit 0-layer X6
+    baseline without constructing this backbone. Kept at a fixed hidden width (non-lazy) on purpose: lazy
     SAGEConv((-1,-1)) has no parameters until the first forward, which would
     silently exclude the conv weights from the optimizer / first checkpoint if
     either is created before a warm-up pass. Both node types are already
@@ -190,14 +191,19 @@ class HeteroGraphSAGE(nn.Module):
             self.dataset_encoder = None
             self.dataset_proj = nn.Linear(dataset_in_dim, hidden_channels)
 
-        # ── segment 2: heterogeneous 2-layer GraphSAGE ───────────────────────
+        # ── segment 2: heterogeneous GraphSAGE ──────────────────────────────
         # to_hetero duplicates the backbone's convs per relation in `metadata`,
         # so each edge type carries independent weights (aggr='sum' across the
         # relations meeting at a destination node).
         # Keep `metadata` so a checkpoint can rebuild an identical hetero module
         # (same relations => same state_dict keys) — see learnable.save_checkpoint.
         self.graph_metadata = metadata
-        if edge_aware:
+        if num_layers == 0:
+            # X6 no-graph control: retain the node encoders, projection/head and
+            # training objective unchanged while removing message passing.
+            # ``None`` is asserted by the training driver and serialized in cfg.
+            self.gnn = None
+        elif edge_aware:
             from ModelLakeFishing.stage2TrainGraphSAGE.edge_aware import EdgeAwareHetero
             # resolve weighted_relations (middle names) to full edge_types
             rels = None
@@ -248,7 +254,9 @@ class HeteroGraphSAGE(nn.Module):
         matches the node order in `data` (full graph => mappedID order).
         """
         x_dict = self.encode_nodes(data)
-        if self.edge_aware:
+        if self.gnn is None:
+            h_dict = x_dict
+        elif self.edge_aware:
             edge_attr_dict = {
                 et: data[et].edge_attr for et in data.edge_types
                 if getattr(data[et], "edge_attr", None) is not None

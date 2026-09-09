@@ -131,8 +131,8 @@ def _report(argv=None):
     import os
     from scale1m.verify_raw import iter_records
 
-    c = os.path.join(os.environ.get("MLF_DATA_DIR", r"D:\research\model_lake\data"),
-                     "data1m", "candidates_full")
+    from scale1m.paths import data_root
+    c = os.path.join(data_root(), "data1m", "candidates_full")
     prov = json.load(open(os.path.join(c, "PROVENANCE.json"), encoding="utf-8"))
     by_class = collections.Counter()
     names_by_class = collections.defaultdict(collections.Counter)

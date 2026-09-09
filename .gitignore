@@ -10,6 +10,8 @@ plan.md
 **/backup_before_family_pack/
 *.log
 release_assets/
+tmp/
+stage1BuildTransferGraph/d0_lake_cache/
 
 # Stage-1 release-managed inputs
 stage1BuildTransferGraph/dataset_embed/data/records.csv

@@ -187,6 +187,8 @@ def build_config(args):
         cfg["lake_gamma"] = args.lake_gamma
     if args.global_n_datasets is not None:
         cfg["global_n_datasets"] = args.global_n_datasets
+    if getattr(args, "num_layers", None) is not None:
+        cfg["num_layers"] = args.num_layers
     return cfg
 
 
@@ -216,6 +218,8 @@ def main(argv=None):
                    help="mixture weight of the uniform-over-labeled component in q")
     p.add_argument("--global-n-datasets", type=int, default=None,
                    help="datasets scored by the global term each step (default 16)")
+    p.add_argument("--num-layers", type=int, choices=(0, 1, 2), default=None,
+                   help="message-passing depth; 0 is the X6 no-graph control")
     args = p.parse_args(argv)
 
     from ModelLakeFishing.stage2TrainGraphSAGE.ablation import train_eval_one

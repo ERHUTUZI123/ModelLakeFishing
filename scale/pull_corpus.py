@@ -26,6 +26,8 @@ import sys
 
 from huggingface_hub import HfApi, hf_hub_download
 
+from scale1m.paths import data_root as _portable_data_root
+
 # --- PINNED REVISIONS ------------------------------------------------------
 # Resolved 2026-07-22. NEVER replace these with "main": main drifts, SHAs do
 # not. If a re-pull yields a different SHA the upstream repo changed and the
@@ -59,8 +61,8 @@ TEXT_LINE_COUNT = {".csv", ".json", ".md"}
 
 
 def data_root() -> str:
-    """MLF_DATA_DIR convention, with the repo's established default."""
-    return os.environ.get("MLF_DATA_DIR", r"D:\research\model_lake\data")
+    """Return ``MLF_DATA_DIR`` or the repository-local ``data`` directory."""
+    return _portable_data_root()
 
 
 def sha256_and_lines(path: str, count_lines: bool):

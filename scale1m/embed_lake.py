@@ -59,6 +59,10 @@ DESC_DIM = 384
 X_DIM = NAME_DIM + DESC_DIM
 NAME_SEED = 42
 ENCODER = "all-MiniLM-L6-v2"
+# Resolved for the frozen 2026-08 feature build.  A mutable model alias is not
+# a reproduction credential; every fresh encoding therefore requests this
+# exact Hugging Face commit.
+ENCODER_REVISION = "1110a243fdf4706b3f48f1d95db1a4f5529b4d41"
 # CORE went through scale.modellens_build_graph._minilm, i.e. batch_size=256,
 # fp32, normalize_embeddings=False. HALO uses the same call shape by default;
 # --batch-size only exists so a big-GPU rung can trade it for wall clock.
@@ -129,7 +133,7 @@ def minilm(texts, batch_size=DEFAULT_BATCH, device=None, tag="halo.desc"):
     import torch
     from sentence_transformers import SentenceTransformer
     dev = device or ("cuda" if torch.cuda.is_available() else "cpu")
-    enc = SentenceTransformer(ENCODER, device=dev)
+    enc = SentenceTransformer(ENCODER, device=dev, revision=ENCODER_REVISION)
     emb = enc.encode(texts, batch_size=batch_size, show_progress_bar=False,
                      convert_to_numpy=True, normalize_embeddings=False)
     print("[%s] MiniLM(%s) %d texts -> %s" % (tag, dev, len(texts), emb.shape),

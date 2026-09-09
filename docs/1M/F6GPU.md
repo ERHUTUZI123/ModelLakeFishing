@@ -114,7 +114,7 @@ def graph_digest(path):
 
 ### 3.4 作业脚本的路径是 100K 档的
 
-[`scripts/watgpu/train_rung.sbatch`](../../scripts/watgpu/train_rung.sbatch) 找的是
+当时使用的脚本现已归档为 [`legacy/100k_rung/scripts/watgpu/train_rung.sbatch`](../../legacy/100k_rung/scripts/watgpu/train_rung.sbatch)，它找的是
 `$DATA_ROOT/data1m/graphs/hgraph_${RUNG}.pt` 和 `$DATA_ROOT/data1m/feats/${RUNG}/family_vocab.csv`，
 两个路径本档都不存在。新写一个 `scripts/watgpu/train_rung_rf.sbatch`，不要改原来那个——
 它还是复现 100K 三个 seed 的那份脚本。

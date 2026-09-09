@@ -1,0 +1,20 @@
+# Canonical Linux x86_64 full-rebuild environment.
+# The CUDA runtime is supplied by the PyTorch wheel; a compatible NVIDIA
+# driver is still required. The pyg-lib wheel selects the as-run sampler.
+--extra-index-url https://download.pytorch.org/whl/cu130
+--find-links https://data.pyg.org/whl/torch-2.12.0+cu130.html
+
+numpy==2.4.6
+pandas==3.0.3
+pyarrow==24.0.0
+scipy==1.17.1
+scikit-learn==1.9.0
+torch==2.12.0+cu130
+torch-geometric==2.7.0
+pyg_lib==0.8.0+pt212cu130
+hnswlib==0.8.0
+sentence-transformers==5.5.1
+transformers==5.9.0
+huggingface-hub==1.16.1
+requests==2.34.2
+matplotlib==3.11.0

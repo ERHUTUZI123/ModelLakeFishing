@@ -52,6 +52,7 @@ import urllib.parse
 import requests
 
 from scale1m.query_plan import build_plan
+from scale1m.paths import data_root as _portable_data_root
 
 API = "https://huggingface.co/api/models"
 
@@ -91,8 +92,8 @@ USER_AGENT = "model-lake-fishing/scale1m.hf_crawl (research crawl; contact via r
 
 
 def data_root() -> str:
-    """Same MLF_DATA_DIR convention as scale/pull_corpus.py."""
-    return os.environ.get("MLF_DATA_DIR", r"D:\research\model_lake\data")
+    """Return ``MLF_DATA_DIR`` or the repository-local ``data`` directory."""
+    return _portable_data_root()
 
 
 def default_out() -> str:

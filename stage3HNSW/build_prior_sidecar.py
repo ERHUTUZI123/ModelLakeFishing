@@ -1,33 +1,31 @@
-"""
-build_prior_sidecar.py -- v6 serving: emit the sibling/task prior sidecar next to
-a Stage-3 export, so the serving re-ranker (serving_rerank.py) can compute the
-S2 sibling-prior and P2b task-prior at query time WITHOUT the training graph.
+"""Build the split-safe task-prior sidecar used by the 3M retrieval path.
 
-The sidecar carries exactly what the two adopted serving fusions need:
+The current consumer is ``scale1m.eval_y2``. It retrieves a dense HNSW
+top-1,000 pool and looks up task-level historical evidence without loading the
+training graph. The sidecar carries:
+
   trained_on : (model_mappedID, dataset_mappedID, norm_acc) lake supervision
   root_id    : per dataset mappedID -> integer root code
   task_id    : per dataset mappedID -> task group code
-All keyed by the SAME mappedID row order as z_m / z_d in the export (the iron
-rule), verified against the export's id snapshots.
+All arrays use the exact mappedID row order of z_m / z_d and are checked against
+the export's ID snapshots.
 
-TWO GRAPH SOURCES
-  --graph        a single-file .pt checkpoint (D0 / 12K / 30K). Unchanged.
-  --graph-store  a scale1m.graph_store directory (100K / full lake). The id
-                 tables are parquet, not csv, and `x` never has to be read.
+CURRENT FULL-LAKE SOURCE
+  --graph-store  a scale1m.graph_store directory. ID tables are parquet and
+                 node features do not need to be loaded.
+
+HISTORICAL COMPATIBILITY
+  --graph        a single-file .pt graph used by pre-3M experiments. The old
+                 consumer is archived under legacy/pre_3m/stage3HNSW.
 
 WHY --split-seed IS NOT OPTIONAL AT SCALE
-  The D0 sidecar was built from the WHOLE graph and the legality boundary was
-  enforced at query time by serving_rerank._prior's `dd == d` skip: never use
-  D's own labels. That is sound for the sibling prior, where the excluded set is
-  exactly {D}. It is NOT sufficient for measuring the task prior on a held-out
-  split: the same-task group of D contains other TEST datasets, whose labels are
-  held out too, and a sidecar built from the whole graph would hand them over.
-  With --split-seed the sidecar carries train+val edges only, recomputed with
-  the same make_root_aware_splits the export used, and asserts that not one
+  Excluding only the query node is insufficient: its same-task group may contain
+  other test datasets. With --split-seed, the sidecar contains train+validation
+  edges only, recomputes the export's root-aware split, and asserts that no
   surviving edge touches a test-side dataset.
 
 WHY task_id MAY NOT COME FROM THE GRAPH
-  The v6 sidecar read `data["dataset"].task_type_id`. On the full-lake rung that
+  Earlier code read `data["dataset"].task_type_id`. On the full-lake graph that
   column is identically 0 -- build_graph_rf.py writes `np.zeros(n_d)` and
   declares `num_task_types: 1`, because the RF dataset features are
   [e_name || e_card || e_stats] with no probe views and no task vocabulary. A
@@ -37,13 +35,7 @@ WHY task_id MAY NOT COME FROM THE GRAPH
   canonical dataset table's `task` column instead, and prior_sidecar_meta.json
   records which source was used.
 
-Run (repo root):
-  # D0, unchanged
-  ModelLakeFishing/.venv/Scripts/python.exe -m ModelLakeFishing.stage3HNSW.build_prior_sidecar \
-      --graph ModelLakeFishing/stage1BuildTransferGraph/hgraph_d0_v1.pt \
-      --export ModelLakeFishing/stage3HNSW/artifacts/exports/d0_L1L3b
-
-  # full lake, per split seed
+Run from the parent of the repository, once per split seed:
   ModelLakeFishing/.venv/Scripts/python.exe -m ModelLakeFishing.stage3HNSW.build_prior_sidecar \
       --graph-store <DATA>/data1m/graphs/hgraph_rf \
       --export <DATA>/data1m/exports_rf/RF_full_s0_e25 --split-seed 0 \

@@ -48,7 +48,8 @@ if _S1 not in sys.path:
     sys.path.insert(0, _S1)
 
 from scale1m.canonicalize_rf import NODE_SEP, sha256_of
-from scale1m.embed_lake import DEFAULT_BATCH, ENCODER, minilm
+from scale1m.dataset_descriptor import dataset_descriptor
+from scale1m.embed_lake import DEFAULT_BATCH, ENCODER, ENCODER_REVISION, minilm
 from scale1m.hf_crawl import data_root, utcnow, write_json_atomic
 from scale1m.verify_raw import normalize
 
@@ -65,7 +66,6 @@ def _text(v):
 
 def dataset_texts(nodes, cards):
     """dataset_descriptor() over the F1.5 cards, name-only where none matched."""
-    from d0_build_graph import dataset_descriptor
     c = cards.set_index(["dataset", "task"])
     out, with_card = [], 0
     for r in nodes.itertuples():
@@ -285,7 +285,9 @@ def build(ladder_dir, feats_dir, rf_dir, cards_path, out_dir,
                      "arity_vocab": {"unknown": 0},
                      "view_dims": {"e_name": NAME_DIM_D, "e_card": CARD_DIM,
                                    "e_stats": STAT_DIM},
-                     "encoder_name": ENCODER, "has_content_view": False,
+                     "encoder_name": ENCODER,
+                     "encoder_revision": ENCODER_REVISION,
+                     "has_content_view": False,
                      "probe_views": "not used (RF)"},
         "provenance": {"rung": "full", "ladder_dir": os.path.abspath(ladder_dir),
                        "feats_dir": os.path.abspath(feats_dir),

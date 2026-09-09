@@ -111,6 +111,8 @@ def build_models(data, xm0, xd0, cfg, *, device="cpu"):
         weighted_relations=cfg.get("weighted_relations", None),
         separate_heads=cfg.get("separate_heads", False),
         **fkw, **_ds_kwargs(xd0)).to(device)
+    if cfg["num_layers"] == 0:
+        assert model.gnn is None, "X6 no-graph control unexpectedly built a GNN"
     scorer = PerfScorer(dim=128, mode=cfg["scorer"]).to(device)
     return model, scorer
 

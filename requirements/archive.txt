@@ -1,0 +1,2 @@
+# Archive verification intentionally has no third-party dependencies.
+# Use CPython 3.11 (the archived X4 run used 3.11.4).

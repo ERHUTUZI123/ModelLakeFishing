@@ -88,7 +88,7 @@ A 轴要同时报「全体」与「仅存活模型」两套数字（§3.7）。
 数据集节点特征沿用自 D0 起就没变过的三视图拼接
 `x_d (458) = [e_name 64 (哈希, seed 43) ‖ e_card 384 (MiniLM) ‖ e_stats 10]`，
 `similar_to` 仍是 `e_card` 上 k=20 的余弦 KNN。`e_card` 的文本由
-`d0_build_graph.py::dataset_descriptor()` 生成（名字 + task_categories + tags + description），
+`scale1m/dataset_descriptor.py::dataset_descriptor()` 生成（名字 + task_categories + tags + description），
 本档的输入改为 F1.5 补爬的 HF 数据集卡片，缺卡片时退到该函数已有的名字兜底。
 方法与历史各档相同，变的只是卡片文本的来源；`e_stats` 只依赖监督边，照常可算。
 

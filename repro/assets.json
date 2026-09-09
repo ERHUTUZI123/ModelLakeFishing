@@ -1,0 +1,95 @@
+{
+  "bundles": {
+    "eval-3m-v1": {
+      "description": "Frozen X4-GD evaluation embeddings, row maps, gold candidates, split-safe priors, and HNSW indexes for exact Y2/Y4 replay.",
+      "id": "eval-3m-v1",
+      "installed_bytes": 12250466660,
+      "manifest": "repro/manifests/eval-3m-v1.json",
+      "parts": [
+        {
+          "bytes": 1800000000,
+          "name": "eval-3m-v1.tar.part001",
+          "sha256": "e0a144f1615d8e53b83eb9e70dde38515424506107fd99453d889154a90d6f4e"
+        },
+        {
+          "bytes": 1800000000,
+          "name": "eval-3m-v1.tar.part002",
+          "sha256": "378e86c59b96bf085c9b45337b6c8597dfa31c80410fd3bcbb346070dd3902e5"
+        },
+        {
+          "bytes": 1800000000,
+          "name": "eval-3m-v1.tar.part003",
+          "sha256": "0db8af5f2b1f2fc67b7b1086a201acf8438646c6bd6c8cd4e7843ae6faa6d423"
+        },
+        {
+          "bytes": 1800000000,
+          "name": "eval-3m-v1.tar.part004",
+          "sha256": "a69363e0c85af6cec59088c0cefc0ac9621377b1e529391bd2c27578de508c25"
+        },
+        {
+          "bytes": 1800000000,
+          "name": "eval-3m-v1.tar.part005",
+          "sha256": "2fdab96a138c12b5919fe409eb960c52d4db8d172c8bf17e0044b21542e841d3"
+        },
+        {
+          "bytes": 1800000000,
+          "name": "eval-3m-v1.tar.part006",
+          "sha256": "224fe6cd277d4aad6b924895ebd7443f716920f7315dabed807d306ff43a9c31"
+        },
+        {
+          "bytes": 1450501120,
+          "name": "eval-3m-v1.tar.part007",
+          "sha256": "4fc204290ce0cedb11a37f58fbe9a2ad006a2816bdd9ac95a413e3a97bc06af4"
+        }
+      ],
+      "tree_sha256": "fdd1976701b11341c9440fb6e368c812e1d563edf885dc974feca4564e894a0a"
+    },
+    "graph-3m-v1": {
+      "description": "Frozen 3M graph store and metadata sidecars required for graph verification and all X6 training-free baselines.",
+      "id": "graph-3m-v1",
+      "installed_bytes": 5874794065,
+      "manifest": "repro/manifests/graph-3m-v1.json",
+      "parts": [
+        {
+          "bytes": 1800000000,
+          "name": "graph-3m-v1.tar.part001",
+          "sha256": "d6e3b246f1665f81376f9b5ce0a77a9ffc6fb708b6d72140eb983cb3b91bcfd7"
+        },
+        {
+          "bytes": 1800000000,
+          "name": "graph-3m-v1.tar.part002",
+          "sha256": "394e0899d6fe002f5f5304690ec786cb3ac20e67387289a31a346f4bf0ec9531"
+        },
+        {
+          "bytes": 1800000000,
+          "name": "graph-3m-v1.tar.part003",
+          "sha256": "ea9a7d4224252e81bf9dfc970c8acf53c6d6cd147eac16ea1bbd1ca30cd6f0cf"
+        },
+        {
+          "bytes": 474810880,
+          "name": "graph-3m-v1.tar.part004",
+          "sha256": "77b3b27f483797376f6921ba90778bbd4a1650a0b8a064619f1c0116302dbe67"
+        }
+      ],
+      "tree_sha256": "f87155581d4b644324943fb393fb7e0420438d34c72b7201a660680b1a92f384"
+    },
+    "inputs-3m-v1": {
+      "description": "Frozen 2026-08-18 Hub snapshots and five historical evidence graphs required for a full rebuild.",
+      "id": "inputs-3m-v1",
+      "installed_bytes": 425659374,
+      "manifest": "repro/manifests/inputs-3m-v1.json",
+      "parts": [
+        {
+          "bytes": 425748480,
+          "name": "inputs-3m-v1.tar.part001",
+          "sha256": "103999c70057889de437678e40f2c987b5ff7e543fdbd9cab28a252ffb1ad2b9"
+        }
+      ],
+      "tree_sha256": "3306b1100a7ef6b308a574c4917dd24dcaaea7e2195fb2da2dbb44107e6f717f"
+    }
+  },
+  "release_state": "ASSETS_BUILT_NOT_YET_CONFIRMED_UPLOADED",
+  "release_tag": "3m-evidence-v1",
+  "repository": "ERHUTUZI123/ModelLakeFishing",
+  "schema_version": 1
+}

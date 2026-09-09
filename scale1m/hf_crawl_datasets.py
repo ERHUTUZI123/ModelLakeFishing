@@ -5,7 +5,7 @@ WHY THIS EXISTS
     `x_d` has been `[e_name 64 || e_card 384 || e_stats 10]` since D0, and
     `e_card` is MiniLM over a dataset descriptor built from the HF dataset
     card -- name, task_categories, tags, description (see
-    stage1BuildTransferGraph/d0_build_graph.py::dataset_descriptor). The
+    scale1m/dataset_descriptor.py). The
     ModelLens rungs took that text from the corpus's own `desc` column. With
     the corpus gone (D-56), the same text has to come from where D0 originally
     took it: the HF datasets API.

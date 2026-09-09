@@ -1,0 +1,11 @@
+# Direct dependencies for the frozen-artifact replay profile.
+# Canonical interpreter: CPython 3.11.x.
+# hnswlib 0.8.0 may compile from source when no wheel is available; see README.
+numpy==2.4.6
+pandas==3.0.3
+pyarrow==24.0.0
+scipy==1.17.1
+scikit-learn==1.9.0
+torch==2.12.0
+hnswlib==0.8.0
+requests==2.34.2

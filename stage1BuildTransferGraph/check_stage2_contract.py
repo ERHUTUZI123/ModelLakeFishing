@@ -1,7 +1,8 @@
 """
-check_stage2_contract.py -- verify the Stage-1 -> Stage-2 interface contract on a
-built HGraph (.pt). Re-creation of the checker described in CLAUDE.md; works on
-ANY graph via --pt (default: the original hgraph_zoo_xm0.pt).
+check_stage2_contract.py -- verify the graph -> training interface contract.
+
+The current full-lake path uses ``--sharded <graph_store>``. ``--pt`` remains
+available for historical single-file graphs.
 
 Checks (all hard):
   1. payload carries data + unique_model_id + unique_dataset_id + xm0_meta

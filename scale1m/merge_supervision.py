@@ -75,8 +75,9 @@ def split_node(name, task_by_id, idx):
     return normalize(s), (task_by_id.get(idx) or "")
 
 
-def load_source(key, fname):
-    ck = torch.load(os.path.join(G, fname), map_location="cpu", weights_only=False)
+def load_source(key, fname, source_dir=G):
+    ck = torch.load(os.path.join(source_dir, fname), map_location="cpu",
+                    weights_only=False)
     d = ck["data"]
     umi = ck["unique_model_id"].sort_values("mappedID")
     udi = ck["unique_dataset_id"].sort_values("mappedID")
@@ -120,11 +121,11 @@ def load_rf(rf_dir):
     return out
 
 
-def merge(rf_dir, cap=EDGE_CAP_PER_NODE):
+def merge(rf_dir, cap=EDGE_CAP_PER_NODE, source_dir=G):
     rep = {"sources": {}}
     frames = []
     for key, fname, _prio in SOURCES:
-        df, meta = load_source(key, fname)
+        df, meta = load_source(key, fname, source_dir=source_dir)
         rep["sources"][key] = meta
         frames.append(df)
     hist = pd.concat(frames, ignore_index=True)
@@ -276,11 +277,25 @@ def main(argv=None) -> int:
     p.add_argument("--rf", required=True, help="the F2 phase-1 output dir")
     p.add_argument("--candidates", default=None)
     p.add_argument("--cap", type=int, default=EDGE_CAP_PER_NODE)
+    p.add_argument(
+        "--source-dir",
+        default=os.path.join(data_root(), "data1m", "historical_graphs"),
+        help=("directory containing the five frozen historical .pt inputs; "
+              "defaults to <MLF_DATA_DIR>/data1m/historical_graphs"),
+    )
     args = p.parse_args(argv)
     crawl_dir = args.candidates or os.path.join(data_root(), "data1m", "candidates_full")
 
     print("[merge] loading six sources ...", flush=True)
-    edges, nodes, conflicts, rep = merge(args.rf, cap=args.cap)
+    missing = [fname for _key, fname, _priority in SOURCES
+               if not os.path.isfile(os.path.join(args.source_dir, fname))]
+    if missing:
+        raise FileNotFoundError(
+            "missing frozen historical graph inputs in %s: %s" %
+            (args.source_dir, ", ".join(missing)))
+    edges, nodes, conflicts, rep = merge(
+        args.rf, cap=args.cap, source_dir=args.source_dir)
+    rep["historical_source_dir"] = os.path.abspath(args.source_dir)
 
     print("[merge] model table ...", flush=True)
     crawl, extra = model_table(edges, crawl_dir)

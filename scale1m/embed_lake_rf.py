@@ -50,8 +50,9 @@ _S1 = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
 if _S1 not in sys.path:
     sys.path.insert(0, _S1)
 
-from scale1m.embed_lake import (DEFAULT_BATCH, ENCODER, NAME_DIM, NAME_SEED,
-                                X_DIM, minilm, name_embeddings, sha256_of)
+from scale1m.embed_lake import (DEFAULT_BATCH, ENCODER, ENCODER_REVISION,
+                                NAME_DIM, NAME_SEED, X_DIM, minilm,
+                                name_embeddings, sha256_of)
 from scale1m.hf_crawl import utcnow, write_json_atomic
 
 SHARD_ROWS = 1_000_000        # one .npy part per million rows, resumable
@@ -253,7 +254,8 @@ def build(ladder_path, out_dir, batch_size=DEFAULT_BATCH, device=None,
         "artifact": "F4 feature matrix (RF)", "written_at": utcnow(),
         "ladder": {"path": os.path.abspath(ladder_path), "rows": n,
                    "snapshot_rows": n_snapshot, "appended_rows": n - n_snapshot},
-        "encoder": ENCODER, "batch_size": batch_size, "device": dev,
+        "encoder": ENCODER, "encoder_revision": ENCODER_REVISION,
+        "batch_size": batch_size, "device": dev,
         "name_seed": NAME_SEED, "name_dim": NAME_DIM, "x_dim": X_DIM,
         "descriptor_fn": "scale.modellens_build_graph.model_descriptor",
         "x_m_shape": list(x.shape), "x_m_dtype": str(x.dtype),

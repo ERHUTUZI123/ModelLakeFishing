@@ -35,21 +35,41 @@ KS = (1, 10)
 
 
 def query_ranks(s_all: np.ndarray, cand: np.ndarray, acc: np.ndarray,
-                gap_delta: float = GAP_DELTA) -> dict:
+                gap_delta: float = GAP_DELTA,
+                tie_break: np.ndarray | None = None) -> dict:
     """Full-lake ranks for one query. s_all: [M] scores over the candidate
     universe; cand: [n] indices into that universe; acc: [n] labeled accuracy.
-    Ranks are 1-indexed and tie-safe (rank = #strictly-better + 1)."""
+    Ranks are 1-indexed. By default ties use competition ranking
+    (rank = #strictly-better + 1), preserving the historical metric exactly.
+    ``tie_break`` optionally supplies a unique, label-independent secondary key
+    (smaller is better). X6 uses it for coarse scorers whose large tie blocks
+    would otherwise receive the unrealistically optimistic first rank."""
+    s_all = np.asarray(s_all)
     cand = np.asarray(cand)
     acc = np.asarray(acc, dtype=float)
+    if tie_break is not None:
+        tie_break = np.asarray(tie_break)
+        if tie_break.shape != s_all.shape:
+            raise ValueError("tie_break shape %r != scores shape %r"
+                             % (tie_break.shape, s_all.shape))
+
+    def rank_of(m):
+        m = int(m)
+        score = s_all[m]
+        rank = int((s_all > score).sum()) + 1
+        if tie_break is not None:
+            rank += int(((s_all == score) & (tie_break < tie_break[m])).sum())
+        return rank
+
     gold = int(cand[int(np.argmax(acc))])
-    gold_rank = int((s_all > s_all[gold]).sum()) + 1
+    gold_rank = rank_of(gold)
 
     order = np.argsort(-acc)[: min(3, len(acc))]
     top3 = cand[order]
-    top3_rank = int(min((s_all > s_all[int(m)]).sum() + 1 for m in top3))
+    top3_rank = int(min(rank_of(m) for m in top3))
 
     near = cand[acc >= acc.max() - gap_delta]
-    gap_rank = int(min((s_all > s_all[int(m)]).sum() + 1 for m in near))
+    gap_rank = int(min(rank_of(m) for m in near))
     return {"gold_rank": gold_rank, "top3_rank": top3_rank,
             "gap_rank": gap_rank, "n_candidates": int(cand.size)}
 

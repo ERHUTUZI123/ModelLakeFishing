@@ -64,7 +64,7 @@ from ModelLakeFishing.scale import global_metrics as GM              # noqa: E40
 
 SEEDS = (0, 1, 2)
 RUN_FMT = "RF_full_s%d_e25"
-SHRINK_K = 5.0                 # stage3HNSW.serving_rerank.SHRINK_K
+SHRINK_K = 5.0                 # frozen task-prior shrinkage used by Y2
 BATCH_SIZE = 1024              # scale.export_ours.l1l3b_config(batch=1024)
 EPOCHS = 25
 N_DATASETS_PER_STEP = 16       # ablation.py: cfg.get("global_n_datasets", 16)

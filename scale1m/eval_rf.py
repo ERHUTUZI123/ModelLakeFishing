@@ -452,7 +452,8 @@ def incremental_onboarding(d0, args):
 #     the same pass as a control: if that control does not reproduce F8's
 #     gold@10 exactly, nothing else on the axis can be trusted.
 #
-# THE SCORE (stage3HNSW/serving_rerank.py, alpha = beta = 1 adopted in v6)
+# HISTORICAL FULL-POOL SCORE (the source implementation is archived under
+#     legacy/pre_3m/stage3HNSW/serving_rerank.py)
 #     fused(D, m) = minmax(z_d[D]·z_m)[m] + alpha·sibling_boost(m) + beta·task_boost(m)
 #     minmax is over the WHOLE lake, as in serving_rerank, so the fused score is
 #     the reference implementation's, not a pool-local rescaling.
@@ -463,7 +464,7 @@ def incremental_onboarding(d0, args):
 #     gold@512 (X1 §6); measuring the full lake separates "does the prior help"
 #     from "how deep must the first stage retrieve".
 
-SHRINK_K = 5.0          # stage3HNSW.serving_rerank.SHRINK_K
+SHRINK_K = 5.0          # frozen by the current Y2 task-prior protocol
 TOPK = 10
 
 

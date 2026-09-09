@@ -1,651 +1,799 @@
-# HuggingFace Full-Lake Retrieval: End-to-End Evidence Source Technical Report
+# ModelLakeFishing: 3M-Scale Two-Stage Retrieval Evidence Report
 
-Evidence cutoff: **2026-09-01**. Project status: **the project is now at X5. F0–F9 are the completed full-lake construction and baseline-evaluation chain; they are not the current final method.**
+**Evidence cutoff:** through the final Y4 rerun and system decision, 2026-09-06 (America/Toronto)
 
-The Chinese companion is [`EVIDENCE_SOURCE_LIBRARY_zh.md`](EVIDENCE_SOURCE_LIBRARY_zh.md). Exact input hashes, the inspected code snapshot, and the verification boundary are in [`EVIDENCE_SOURCE_MANIFEST.md`](EVIDENCE_SOURCE_MANIFEST.md). This report follows the requested evidence-writing discipline: Conclusion → Evidence → Impact and Problem → Evidence → Decision → Verification.
+**Repository:** `D:\research\model_lake\codes\ModelLakeFishing`
+**Evidence manifest:** [`EVIDENCE_SOURCE_MANIFEST.md`](EVIDENCE_SOURCE_MANIFEST.md)
 
-## 1. Scope, evidence levels, and the current result
+This report describes the final system as a method, not as a chronology of experiments. The core path is: **collect and canonicalize metadata, construct a model--dataset evidence graph, train a dense retriever, retrieve 1,000 candidates with HNSW, and deterministically rerank that pool with task-level historical evidence**. Internal run names are retained only where needed to locate immutable evidence; they are not method names.
 
-### 1.1 What “current” means
+The evaluated system first retrieves 1,000 candidates with an inner-product HNSW index over the final graph-trained embeddings, then reranks that pool with a deterministic prior estimated from performance records on other training/validation datasets sharing the query task. The frozen fusion uses raw `beta=1` and shrink `k=5`, with no query-wise min--max normalization. Across 3,016,439 candidates and 1,476 / 1,101 / 1,545 eligible held-out queries, it obtains `gold@10` of **0.3279 / 0.3388 / 0.2427** (mean **0.3031**), while exact full-lake fusion reaches 0.3216. The actual system retains 94.25% of the full-lake fused score; HNSW reranking retains 99.93% of exact top-1,000 reranked `gold@10`. In the latest repeated timing, the retrieval-stage HNSW-plus-reranking path has p50 / p95 of 0.694 / 1.223 ms.
 
-The defensible current headline is neither the F8 baseline `gold@10=0.0598` nor a product of the X2/X3 prior gains and the X4 gain. It is:
+## 1. System formulation
 
-- representation: X4 combined arm GD, trained with `lake_gamma=0.5` and `global_n_datasets=128`;
-- primary protocol: root-aware held-out message passing;
-- query policy: X5 `gold_eligible=True`;
-- candidate universe: all **3,016,439** models;
-- three split-seed `gold@10`: 0.1355 / 0.1417 / 0.1508, mean **0.1427**;
-- matched F6 baseline: 0.0738 / 0.0418 / 0.0718, mean **0.0625**; X4 GD is therefore **2.28×** the eligible-query baseline.[M: [`X5_runs/X5_GD_ELIGIBILITY.json`](X5_runs/X5_GD_ELIGIBILITY.json), [`X5_runs/X5_F6_ELIGIBILITY.json`](X5_runs/X5_F6_ELIGIBILITY.json); D: `0.14266660/0.06249103=2.283`]
+Let
 
-The X2 5.03× task-prior result and the X3 sibling-prior increment were measured on the **frozen F6 representation**. P and S have not been rerun on the nine X4 exports. They are separate serving-side evidence branches and must not be combined with X4 GD into an unmeasured “final-system” score.[M: [`X2.md`](X2.md), [`X3.md`](X3.md), [`X4.md`](X4.md) §8]
+$$
+\mathcal{M}=\{m_1,\ldots,m_N\},\qquad
+\mathcal{D}=\{d_1,\ldots,d_Q\}
+$$
 
-### 1.2 Evidence notation
+denote the model lake and the set of dataset--task query nodes. In the frozen full-lake artifact,
 
-| Tag | Meaning | Permitted use |
+$$
+N=3{,}016{,}439,\qquad Q=18{,}729.
+$$
+
+The offline pipeline is the composition
+
+$$
+\text{hub records}
+\xrightarrow{\text{canonicalize}}
+(X_M,X_D,E)
+\xrightarrow{\text{evidence graph}}
+G
+\xrightarrow{f_\theta}
+(Z_M,Z_D)
+\xrightarrow{\text{HNSW}}
+\mathcal{I}(Z_M).
+$$
+
+Here, $X_M$ and $X_D$ are model and dataset metadata features, $E$ is typed relational evidence, $f_\theta$ is a heterogeneous GraphSAGE encoder, and every row of $Z_M,Z_D\in\mathbb{R}^{128}$ is L2-normalized. A query is a materialized dataset--task node $d=(\text{dataset},t)$. Its first-stage dense score is
+
+$$
+s_\theta(d,m)=z_d^\top z_m=\cos(z_d,z_m),
+$$
+
+and HNSW produces the candidate pool
+
+$$
+\mathcal P_{1000}(d)=
+\operatorname*{ANN\text{-}Top1000}_{m\in\mathcal{M}}\;s_\theta(d,m).
+$$
+
+For model $m$ and normalized task $t$, let $n_{tm}$ and $A_{tm}$ be the count and sum of oriented performance values among the split-specific train+validation edges from roots other than the test-query root. The fixed task prior and second-stage score are
+
+$$
+p_t(m)=\frac{A_{tm}+0.5\times5}{n_{tm}+5},\qquad
+r(d,m)=\frac{s_\theta(d,m)+1}{2}+p_t(m),
+$$
+
+with $p_t(m)=0$ when no visible record exists. The system returns the ten highest-scoring members of $\mathcal P_{1000}(d)$, using a fixed label-free permutation of model row IDs to break exact ties. The reranker is deterministic and non-learned; it is a real serving stage, but not an additional claimed representation-learning contribution.
+
+| Pipeline stage | Concrete output | Main implementation |
 |---|---|---|
-| `[M]` | Direct archived measurement or execution record | Report with its protocol, population, pool, and hardware conditions |
-| `[D]` | Derived ratio, difference, or aggregate | Report with the source measurements and computation |
-| `[I]` | Implemented in inspected code/configuration | Method description only; not proof of effect |
-| `[P]` | Plan or preregistration written before execution | Establishes prior commitment, not a measurement |
-| `[U]` | Unexecuted, unarchived, conflicting, or not independently verified | Limitation or open work only |
+| Collect metadata | Immutable model/dataset snapshots and canonical records | [`hf_crawl.py`](../../scale1m/hf_crawl.py), [`hf_crawl_datasets.py`](../../scale1m/hf_crawl_datasets.py), [`canonicalize_rf.py`](../../scale1m/canonicalize_rf.py) |
+| Construct the evidence graph | Frozen row maps, node features, and five typed edge relations | [`build_ladder_rf.py`](../../scale1m/build_ladder_rf.py), [`embed_lake_rf.py`](../../scale1m/embed_lake_rf.py), [`build_graph_rf.py`](../../scale1m/build_graph_rf.py) |
+| Train graph representations | Unit-normalized 128-dimensional model and dataset embeddings | [`model.py`](../../stage2TrainGraphSAGE/model.py), [`losses.py`](../../stage2TrainGraphSAGE/losses.py), [`train.py`](../../stage2TrainGraphSAGE/train.py), [`train_rung.py`](../../scale1m/train_rung.py) |
+| Retrieve with HNSW | Inner-product ANN index bound to the model-embedding row map | [`eval_y2.py`](../../scale1m/eval_y2.py), [`export_ours.py`](../../scale/export_ours.py) |
+| Rerank 1,000 candidates | Split-safe task prior, fixed fusion, and label-free tie-break | [`eval_rf.py`](../../scale1m/eval_rf.py), [`eval_y2.py`](../../scale1m/eval_y2.py) |
 
-Evidence precedence is: **raw JSON/MANIFEST/resolved config/log > as-run code hash > execution report > plan/guide**. For example, an early `1Mplan.md` sentence says two-layer GraphSAGE, while every F6 and X4 resolved configuration records `num_layers=1`. This report uses the **one-layer as-run model** and records the conflict explicitly.
+## 2. Offline stage 1: metadata collection and canonicalization
 
-### 1.3 Executive conclusion
+### 2.1 Immutable hub snapshots
 
-The project constructed a traceable 3.016M-model retrieval experiment from a 2026-08-18 HuggingFace snapshot plus six-source supervision. F0–F9 establish full-lake construction, training, held-out export, ANN retrieval, four-axis measurement, and a utility scorecard. X1–X5 then identify and intervene on supervision sparsity. The strongest supported mechanism statement is: **the mixed proposal distribution is the primary effective change; increasing per-step dataset coverage is unstable alone but adds value when combined with the proposal fix. Under the current X5 policy, GD moves `gold@10` from 0.0625 to 0.1427.** `gold@10` is historical-record recovery, not true accuracy on previously unmeasured models.
+The model collector enumerates the Hugging Face `/api/models` endpoint in descending `createdAt` order. Pagination follows the server-provided `Link: ... rel="next"` cursor rather than synthesizing page offsets. Each completed shard is compressed as JSONL-GZIP, hashed with SHA-256, and entered into a provenance record; the cursor file stores the next URL and committed record count so an interrupted crawl can resume without rewriting completed shards. The collector retains repository identity, timestamps, task/library tags, author, downloads, likes, safetensors metadata, structured base-model relations, and the model-card fields needed for lineage and evaluation extraction. The implementation is [`scale1m/hf_crawl.py`](../../scale1m/hf_crawl.py).
 
-## 2. End-to-end flow and stage status
+The frozen model crawl used
+
+```powershell
+python -m scale1m.hf_crawl `
+  --sort createdAt --direction -1 --limit 100000000 --v2-fields `
+  --out <DATA>/data1m/candidates_full
+```
+
+and terminated by cursor exhaustion, not by the numerical limit. It contains **3,003,759 unique model records**, written in 61 shards after 3,004 API pages. The archived run reports zero skipped duplicates and binds every shard by hash in [`F1_runs/PROVENANCE.json`](F1_runs/PROVENANCE.json).
+
+Dataset metadata is collected independently from `/api/datasets` with the same cursor, resume, sharding, and hash discipline. The retained fields include repository identity, task categories, tags, description, language, size category, license, and source-dataset metadata. The frozen dataset crawl contains **1,008,417 repositories** in 11 shards and is recorded in [`F15_runs/PROVENANCE.json`](F15_runs/PROVENANCE.json). Its implementation is [`scale1m/hf_crawl_datasets.py`](../../scale1m/hf_crawl_datasets.py).
+
+Both snapshots use 2026-08-18 as the snapshot date. The API `createdAt` endpoints observed during enumeration are fields of the returned records, not claims about the historical launch date of Hugging Face.
+
+### 2.2 Canonical model identity and structural attributes
+
+Every join uses one model-key rule:
+
+$$
+\operatorname{id}_{\mathrm{norm}}(m)
+=\operatorname{lower}(\operatorname{strip}(\operatorname{id}(m))).
+$$
+
+Duplicate normalized identifiers are rejected rather than silently merged. Parameter count is accepted only from `safetensors.total`:
+
+$$
+\operatorname{sizeB}(m)=
+\begin{cases}
+\texttt{safetensors.total}/10^9, & \text{if present},\\
+\mathrm{NA}, & \text{otherwise}.
+\end{cases}
+$$
+
+The canonical family is `config.model_type` when present; otherwise a lowercased name rule supplies the family, with `other` as the final fallback. A declared parent first uses Hugging Face's structured `baseModels.ids[0]`; free-text `cardData.base_model` is used only when the structured relation is absent. These choices are implemented by `size_b_of`, `family_of`, and `lineage_base_of` in [`scale1m/hf_canonicalize.py`](../../scale1m/hf_canonicalize.py) and consumed by [`scale1m/canonicalize_rf.py`](../../scale1m/canonicalize_rf.py).
+
+### 2.3 Dataset--task node identity and card matching
+
+A query node is not a bare dataset name. Its primary key is
+
+$$
+u_d=(\operatorname{normalize}(\text{dataset}),\operatorname{task}),
+$$
+
+serialized internally as `dataset + "\t" + task`. This prevents evaluations of the same repository under different tasks from being pooled into one ranking problem.
+
+Dataset-card matching is deliberately conservative. A canonical node receives a card when its normalized identifier is an exact repository identifier. An owner-free basename is accepted only when that basename is unique in the dataset snapshot. A name containing `/` is never cross-owner matched by basename. For dataset/config names such as `ag_news/default`, the matcher may use the unambiguous parent card and records this separately as `hf_card_via_parent`. All unresolved or ambiguous nodes fall back to their cleaned node name. The algorithm and its audit labels are in [`scale1m/match_dataset_cards.py`](../../scale1m/match_dataset_cards.py).
+
+In the final node set, 3,928 of 18,729 nodes have an exact or parent Hugging Face card. Missing cards therefore remain a first-class condition rather than being filled by a popularity-based guess. Coverage measurements are archived in [`F15_runs/f15b_coverage.json`](F15_runs/f15b_coverage.json).
+
+### 2.4 Evaluation-record parsing and metric semantics
+
+For each model-card `model-index` entry, the parser extracts
+
+$$
+(m,\;\text{dataset},\;\text{task},\;\text{metric},\;v).
+$$
+
+Boolean, malformed, and non-finite values are discarded. Metric names are lowercased, separators are normalized, `@k` is rewritten as `_at_k`, and similarity prefixes and cut-off suffixes are removed only for direction classification. The full normalized metric name remains the grouping key, so, for example, `ndcg_at_1` and `ndcg_at_10` are not merged.
+
+Each metric belongs to one of four direction classes:
+
+$$
+c(r)\in\{\text{higher},\text{lower},\text{reward},\text{unknown}\}.
+$$
+
+Known accuracy, F1, NDCG, correlation, overlap, and generation-quality families are `higher`; WER, loss, perplexity, and error families are `lower`. Reward and unknown metrics remain usable as graph evidence but cannot define a gold model. The explicit classifier is [`scale1m/metric_semantics.py`](../../scale1m/metric_semantics.py); unmatched names are never assigned a guessed direction.
+
+## 3. Offline stage 2: constructing the model--dataset evidence graph
+
+### 3.1 Canonical supervision values
+
+Within the native Hugging Face source, repeated measurements are collapsed by the median over
+
+$$
+(m,d,t,r).
+$$
+
+For each group $g=(d,t,r)$, let $v_g^{\min}$ and $v_g^{\max}$ be the group extrema. The normalized value is
+
+$$
+\bar v_i=
+\begin{cases}
+\dfrac{v_i-v_g^{\min}}{v_g^{\max}-v_g^{\min}}, & v_g^{\max}>v_g^{\min},\\[6pt]
+0.5, & v_g^{\max}=v_g^{\min},
+\end{cases}
+$$
+
+and its oriented value is
+
+$$
+y_i=
+\begin{cases}
+1-\bar v_i, & c(r)=\text{lower},\\
+\bar v_i, & \text{otherwise}.
+\end{cases}
+$$
+
+For each dataset--task node, a direction-known metric is preferred and the metric with the greatest number of records is selected, with deterministic lexical tie-breaking. The `trained_on` edge weight is the median oriented value for the resulting model--node pair. Of 2,158,375 parsed raw metric rows, 2,097,081 are finite and parseable; median deduplication produces 1,435,162 rows. Native primary-metric selection yields 143,478 edges before the per-node cap and 74,346 afterward. The exact construction is `build_supervision` in [`scale1m/canonicalize_rf.py`](../../scale1m/canonicalize_rf.py), with counts in [`F2_runs/F2_REPORT.json`](F2_runs/F2_REPORT.json).
+
+### 3.2 Six-source evidence merge
+
+The native observations are merged with five historical evaluation graphs. The fixed conflict priority is
+
+$$
+\text{modellens\_v2}
+\succ \text{d0\_v1\_5}
+\succ \text{a\_ctrl\_2000m}
+\succ \text{hf\_effective}
+\succ \text{diverse\_zoo}
+\succ \text{hf\_model\_index}.
+$$
+
+For historical sources, the stored weights were already direction-oriented. The merge first takes the median within `(source, node, model)`, then applies min--max normalization within `(node, source)`, using 0.5 for constant groups. If multiple sources provide the same `(node, model)` pair, the highest-priority source supplies the retained edge and the losing rows are written to a conflict table. Finally, each node is capped at 200 edges by deterministic, weight-stratified sampling with NumPy seed 0. This procedure is implemented in [`scale1m/merge_supervision.py`](../../scale1m/merge_supervision.py).
+
+The merge starts from 531,958 rows, removes 5,102 within-source duplicates, records 1,502 cross-source conflicts, and retains 525,354 distinct pairs before capping. The final model--dataset evidence graph contains **247,803 directed supervision edges**. Their retained source counts are:
+
+| Source | Retained edges |
+|---|---:|
+| `modellens_v2` | 117,898 |
+| `hf_model_index` | 73,670 |
+| `d0_v1_5` | 45,992 |
+| `hf_effective` | 5,223 |
+| `a_ctrl_2000m` | 3,670 |
+| `diverse_zoo` | 1,350 |
+| **Total** | **247,803** |
+
+The frozen rule file is `rf-gold-2.0`, SHA-256 `be3fb05ecf92ea0112ba4de10b8191d71dfe096b8667a86911c2ebaeadb9cdb1`; the merge counts and source table are in [`F2_runs/F2_MERGE_REPORT.json`](F2_runs/F2_MERGE_REPORT.json), and the rule artifact is [`F2_runs/rf_gold_rules.json`](F2_runs/rf_gold_rules.json).
+
+### 3.3 Candidate closure and row-order contract
+
+Supervision refers to 12,680 models that are absent from the 2026-08-18 hub snapshot. They are appended to the candidate universe rather than dropping their observations:
+
+$$
+3{,}003{,}759+12{,}680=3{,}016{,}439.
+$$
+
+The row map is frozen as
+
+$$
+\operatorname{mappedID}(m_i)=i,
+$$
+
+with the hub snapshot as an exact prefix and the normalized historical-only identifiers appended in sorted order. Historical-only rows have unknown size, take family identity from the first available historical source, and receive newly computed features under the same encoder as every other model. No old feature vector is copied. Dataset--task nodes are sorted deterministically and assigned the same contiguous `mappedID` contract.
+
+The model and dataset ladders have SHA-256 values `fee360d1fef9afa4c446b70af35bcbf4ead2c75387f47abc3b0d21c944ae3efa` and `31c027ff2eeb693aed6abaa5d235f4a6264bb4b3245bfd71cf1c8b85d32173cb`. All eight identity and endpoint checks pass in [`F3_runs/LADDER_REPORT.json`](F3_runs/LADDER_REPORT.json). The implementation is [`scale1m/build_ladder_rf.py`](../../scale1m/build_ladder_rf.py).
+
+### 3.4 Model-node features
+
+For a repository name $n$, let $T(n)$ contain the lowercased full name, its repository basename, and tokens obtained by splitting on `/`, `_`, `-`, and whitespace, with order-preserving deduplication. Let $R\in\mathbb{R}^{10000\times64}$ be a row-normalized Gaussian table generated with seed 42 and let
+
+$$
+h(t)=\operatorname{MD5}(t)\bmod 10000.
+$$
+
+The frozen name representation is
+
+$$
+e_{\mathrm{name}}(n)=\frac{1}{|T(n)|}\sum_{t\in T(n)}R_{h(t)}\in\mathbb{R}^{64}.
+$$
+
+The textual model descriptor contains the cleaned repository identifier, the canonical family, and a parameter-size phrase when the safetensors count is known. It is encoded with `all-MiniLM-L6-v2` without output normalization:
+
+$$
+e_{\mathrm{desc}}(m)=\operatorname{MiniLM}(\operatorname{descriptor}(m))
+\in\mathbb{R}^{384}.
+$$
+
+The frozen model matrix is therefore
+
+$$
+x_m^{\mathrm{frozen}}=
+[e_{\mathrm{name}}(m)\;\Vert\;e_{\mathrm{desc}}(m)]
+\in\mathbb{R}^{448}.
+$$
+
+Parameter size and family are not embedded inside these 448 dimensions. They are stored as integer columns and select learnable 16-dimensional tables during graph training. Size bucket 0 means unknown; buckets 1--14 partition $\log_{10}$ parameter count from $10^5$ to $10^{12}$ in half-decade intervals. Family ID 0 is `Other`, and a dynamically observed family receives its own row only after at least three occurrences.
+
+The final `x_m` matrix has shape `[3,016,439, 448]`, dtype `float32`, file size 5.41 GB, and SHA-256 `ba1020872ddb6e90726c755f9f08f236f4c73e506013c91d8a0075fc0c0361e6`. The append-only family vocabulary has 41,056 rows and SHA-256 `00d304df9bd72acb2c2c1ca5b84ed0dc9d4adb0cbc9f098f32a9e62109d24005`. Unknown size accounts for 71.929% of models and `Other` for 13.561%. Feature construction and row-order checks are in [`scale1m/embed_lake_rf.py`](../../scale1m/embed_lake_rf.py) and [`F4_runs/FEATS_REPORT.json`](F4_runs/FEATS_REPORT.json).
+
+### 3.5 Dataset-node features
+
+The dataset descriptor concatenates a cleaned dataset--task name, card task categories, up to ten non-colon tags, and at most 400 description characters. If no trustworthy card match exists, only the cleaned name and task are used. With a name-hash table generated using seed 43, the frozen dataset vector is
+
+$$
+x_d^{\mathrm{frozen}}=
+[e_{\mathrm{name}}^{64}(d)\;\Vert\;
+ e_{\mathrm{card}}^{384}(d)\;\Vert\;
+ e_{\mathrm{stats}}^{10}(d)]
+\in\mathbb{R}^{458}.
+$$
+
+Let $n_d$ be the number of retained observations at node $d$, let $\mu_d,\sigma_d,a_d^{\min},a_d^{\max}$ summarize its oriented edge values, and let $r_d$ be the number of dataset nodes sharing its root. The implemented statistics are
+
+$$
+e_{\mathrm{stats}}(d)=
+[\log(1+n_d),\log(1+n_d),\mu_d,\sigma_d,
+a_d^{\min},a_d^{\max},\log(1+r_d),
+\mathbb{1}_{\mathrm{eligible}}(d),0,0].
+$$
+
+The first two coordinates are identical in the frozen implementation because duplicate model--node pairs have already been removed. The last two positions reserve disabled content views. During training, dataset task type, class-count bucket, and arity IDs additionally select learnable tables of dimensions 16, 8, and 4. In this full-lake artifact each of these tables has only one row, so they preserve the encoder schema but do not distinguish nodes; the task string still affects node identity and the text descriptor. The feature builder is `build_xd` in [`scale1m/build_graph_rf.py`](../../scale1m/build_graph_rf.py).
+
+### 3.6 Typed graph relations
+
+The model--dataset evidence graph is
+
+$$
+G=(V_M\cup V_D,E_{MD}\cup E_{DM}\cup E_{DD}\cup E_{MM}\cup E_{MM}^{-1}),
+$$
+
+with the following relations:
+
+1. `model --trained_on--> dataset` carries the normalized performance value $y_{md}$.
+2. `dataset --rev_trained_on--> model` mirrors each supervision edge for bidirectional message flow.
+3. `dataset --similar_to--> dataset` connects each dataset to its 20 nearest neighbors by cosine similarity of the 384-dimensional card block.
+4. `model --is_base_of--> model` points from a resolved parent to its derivative.
+5. `model --rev_is_base_of--> model` mirrors the lineage relation.
+
+For dataset similarity,
+
+$$
+w_{ij}^{DD}=\frac{e_{\mathrm{card}}(d_i)^\top e_{\mathrm{card}}(d_j)}
+{\|e_{\mathrm{card}}(d_i)\|_2\|e_{\mathrm{card}}(d_j)\|_2},
+$$
+
+and the self edge is excluded before selecting the 20 largest values. The stored graph contains:
+
+| Relation | Directed edges in the stored graph |
+|---|---:|
+| `trained_on` | 247,803 |
+| `rev_trained_on` | 247,803 |
+| `similar_to` | 374,580 |
+| `is_base_of` | 859,065 |
+| `rev_is_base_of` | 859,065 |
+| **Total** | **2,588,316** |
+
+Lineage resolution succeeds for 96.083% of declared base-model relations. Before training, dataset similarity is deterministically reduced to the top 10 neighbors per source and its retained edge attributes are set to one, yielding 187,290 topology-only similarity edges. This training-time transformation is `apply_similar_to_mode(..., mode="topk_unweighted", k=10)` in [`stage2TrainGraphSAGE/graph_surgery.py`](../../stage2TrainGraphSAGE/graph_surgery.py).
+
+The graph is stored as memory-mapped `.npy` feature arrays, NPZ node/edge structures, Parquet row maps, and hashed JSON metadata. This avoids materializing the 5.41 GB model matrix during loading. The sharded format is implemented in [`scale1m/graph_store.py`](../../scale1m/graph_store.py); construction counts and gates are in [`F5_runs/GRAPH_REPORT.json`](F5_runs/GRAPH_REPORT.json). The frozen graph digest used by all final training runs is `0e80b8393846dcc4b9e354218fd5139a906d569125d2e8545e17ccd01612b76c`.
+
+## 4. Offline stage 3: structure-aware graph training
+
+### 4.1 Root-aware supervision split
+
+The split unit is a dataset root, not an edge or a dataset configuration. All nodes sharing a root are assigned to the same side. With split seed $s\in\{0,1,2\}$, roots are shuffled once and greedily assigned until approximately 20% of supervision edges are in test, 10% in validation, and the remainder in training.
+
+Let $E_{\mathrm{tr}},E_{\mathrm{val}},E_{\mathrm{te}}$ denote the positive edges induced by these root partitions. Thirty percent of $E_{\mathrm{tr}}$ becomes disjoint supervision $E_{\mathrm{sup}}$ and is removed from the training message graph. Consequently,
+
+$$
+\begin{aligned}
+G_{\mathrm{train}} &: E_{\mathrm{tr}}\setminus E_{\mathrm{sup}},\\
+G_{\mathrm{val}} &: E_{\mathrm{tr}},\\
+G_{\mathrm{test}} &: E_{\mathrm{tr}}\cup E_{\mathrm{val}}.
+\end{aligned}
+$$
+
+Every removed forward edge is removed from `rev_trained_on` as well. Binary negative examples are sampled at a 1:1 ratio from model--dataset pairs absent from the complete positive edge set, although the performance-ranking targets themselves use only positive edges and read their oriented values from the full graph. The split implementation and leakage assertions are in [`stage2TrainGraphSAGE/d0_splits.py`](../../stage2TrainGraphSAGE/d0_splits.py).
+
+### 4.2 Node encoders
+
+The model-side input to message passing is
+
+$$
+h_m^{(0)}=W_M
+[x_m^{\mathrm{frozen}}\;\Vert\;
+ E_{\mathrm{size}}[b_m]\;\Vert\;
+ E_{\mathrm{family}}[f_m]]+b_M,
+$$
+
+where $x_m^{\mathrm{frozen}}\in\mathbb{R}^{448}$, both learned lookup vectors have dimension 16, and $W_M:\mathbb{R}^{480}\rightarrow\mathbb{R}^{128}$. There is no model-ID embedding.
+
+The dataset-side input is
+
+$$
+h_d^{(0)}=W_D
+[x_d^{\mathrm{frozen}}\;\Vert\;
+E_{\mathrm{task}}[t_d]\;\Vert\;
+E_{\mathrm{class}}[c_d]\;\Vert\;
+E_{\mathrm{arity}}[a_d]]+b_D,
+$$
+
+where $W_D:\mathbb{R}^{486}\rightarrow\mathbb{R}^{128}$. The frozen feature matrices do not receive gradients; the semantic lookup tables, projections, graph layers, relation gates, and output head are learned. Encoder assembly is implemented in [`stage1BuildTransferGraph/dataset_embed/model_node_encoder.py`](../../stage1BuildTransferGraph/dataset_embed/model_node_encoder.py) and instantiated by `HeteroGraphSAGE` in [`stage2TrainGraphSAGE/model.py`](../../stage2TrainGraphSAGE/model.py).
+
+### 4.3 Relation-specific GraphSAGE
+
+The final network uses one heterogeneous message-passing layer. For relation $r$ and destination node $v$, let $\mathcal{N}_r(v)$ be the incoming neighbors. The relation block computes
+
+$$
+\tilde h_{v,r}=
+W_{\mathrm{self},r}h_v^{(0)}+
+W_{\mathrm{nbr},r}
+\left(
+\frac{1}{|\mathcal{N}_r(v)|}
+\sum_{u\in\mathcal{N}_r(v)}h_u^{(0)}
+\right).
+$$
+
+Incoming relation blocks are combined with learned scalar gates initialized to one:
+
+$$
+h_v^{(1)}=
+\sum_{r:\operatorname{dst}(r)=\operatorname{type}(v)}g_r\tilde h_{v,r}.
+$$
+
+Every relation has its own self and neighbor projections. Because the frozen configuration sets `weighted_relations=[]`, continuous `edge_attr` values are **not** used inside message aggregation. Performance values still supervise the ranking and positive-set objectives, and card cosine still determines which dataset-neighbor topology is retained, but the message operator itself is an unweighted per-relation mean. This exact operator is `WeightedSAGEConv` plus `EdgeAwareHetero` in [`stage2TrainGraphSAGE/edge_aware.py`](../../stage2TrainGraphSAGE/edge_aware.py).
+
+A shared linear head maps both node types to the retrieval space:
+
+$$
+z_v=\frac{W_Oh_v^{(1)}+b_O}
+{\|W_Oh_v^{(1)}+b_O\|_2},\qquad z_v\in\mathbb{R}^{128}.
+$$
+
+Sharing $W_O$ and normalizing every row places model and dataset nodes in the same inner-product space. The frozen configuration does not use separate heads.
+
+### 4.4 Rank-consistent local objective
+
+For query node $d$, let $y_{dm}$ be the oriented supervision value and define the preference pairs
+
+$$
+\mathcal{P}_d=
+\{(m_i,m_j):y_{di}-y_{dj}>0.02\}.
+$$
+
+The local RankNet term is
+
+$$
+\mathcal{L}_{\mathrm{rank}}=
+\frac{1}{|\mathcal{D}_B|}
+\sum_{d\in\mathcal{D}_B}
+\frac{1}{|\mathcal{P}_d|}
+\sum_{(i,j)\in\mathcal{P}_d}
+\operatorname{softplus}
+\left(-\frac{s_\theta(d,m_i)-s_\theta(d,m_j)}{0.1}\right).
+$$
+
+The averaging is first within a dataset and then across datasets, so dense query nodes do not dominate merely by producing more pairs. At most 256 pairs are retained per dataset; when a node has more, half are the most inverted current pairs and the other half are sampled from the remainder. The objective operates directly on the raw unit-vector dot product used by retrieval. Its implementation is `raw_dot_ranknet_loss` in [`stage2TrainGraphSAGE/losses.py`](../../stage2TrainGraphSAGE/losses.py).
+
+### 4.5 Model--model contrastive objective
+
+Training-visible observations define a sparse high-performer membership matrix
+
+$$
+A_{md}=\mathbb{1}
+\left[m\in\operatorname{Top}_{\max(1,\operatorname{round}(0.1n_d))}
+\{y_{dm'}\}_{m'}\right].
+$$
+
+Models $i$ and $j$ form a positive pair when they are both selected for at least one common dataset:
+
+$$
+(i,j)\in\mathcal{P}^{MM}
+\iff i\ne j\;\land\;\sum_d A_{id}A_{jd}>0.
+$$
+
+The matrix is stored as CSR/CSC membership lists rather than a dense $N\times Q$ block. In a sampled graph batch, positive pairs are materialized sparsely and deduplicated. For each anchor, 256 batch models are sampled as negatives. If a negative shares the anchor's lineage component but is not a positive, its denominator weight is two; otherwise the weight is one. With $\phi(i,j)=z_i^\top z_j/0.2$, the implemented sampled objective is
+
+$$
+\mathcal{L}_{\mathrm{contrast}}=
+\frac{1}{|\mathcal A|}\sum_{i\in\mathcal A}
+\left[
+\log\left(
+\sum_{p\in\mathcal P_i}e^{\phi(i,p)}+
+\sum_{n\in\mathcal N_i}w_{in}e^{\phi(i,n)}
+\right)
+-\frac{1}{|\mathcal P_i|}\sum_{p\in\mathcal P_i}\phi(i,p)
+\right].
+$$
+
+The membership construction is `topk_membership`, sparse pair generation is `batch_positive_pairs`, and the loss is `contrastive_loss_sampled` in [`losses.py`](../../stage2TrainGraphSAGE/losses.py) and [`sampling.py`](../../stage2TrainGraphSAGE/sampling.py).
+
+### 4.6 Whole-lake sampled-softmax objective
+
+The global term exposes each query direction to negatives drawn from the complete candidate lake. Let
+
+$$
+\deg(m)=|\{d:(m,d)\in E_{\mathrm{tr}}\}|
+$$
+
+be the train-visible supervision degree. The tempered degree proposal and the uniform-over-labeled proposal are
+
+$$
+q_{\deg}(m)=
+\frac{(\deg(m)+1)^{0.75}}
+{\sum_{m'}(\deg(m')+1)^{0.75}},
+\qquad
+q_{\mathrm{lab}}(m)=
+\frac{\mathbb{1}[\deg(m)>0]}
+{|\{m':\deg(m')>0\}|}.
+$$
+
+The final proposal is the fixed mixture
+
+$$
+q(m)=0.5q_{\deg}(m)+0.5q_{\mathrm{lab}}(m).
+$$
+
+For each training step, 128 positive-bearing dataset nodes are sampled. For each selected node $d$, the positive set $P_d$ is the top-10% membership set above, and 256 negatives are sampled with replacement from $q$; sampled positives are removed. With $T_g=0.1$, the implemented logQ-corrected term is
+
+$$
+\mathcal{L}_{\mathrm{global}}(d)=
+\frac{1}{|P_d|}\sum_{p\in P_d}
+\left[
+\log\left(
+\sum_{p'\in P_d}e^{s(d,p')/T_g}
++\sum_{n\in S_d}e^{s(d,n)/T_g-\log q(n)}
+\right)
+-\frac{s(d,p)}{T_g}
+\right],
+$$
+
+followed by a mean across sampled dataset nodes. This term performs a full training-message-graph forward, with fresh edge dropout, because batch subgraphs do not contain the complete negative universe. `build_lake_logq` and `global_lake_loss` in [`stage2TrainGraphSAGE/losses.py`](../../stage2TrainGraphSAGE/losses.py) implement the proposal and objective.
+
+### 4.7 Final optimization problem and frozen configuration
+
+The final objective is
+
+$$
+\boxed{
+\mathcal{L}=\mathcal{L}_{\mathrm{rank}}
++\mathcal{L}_{\mathrm{contrast}}
++\mathcal{L}_{\mathrm{global}}
+}
+$$
+
+with unit coefficient on every term. MSE, embedding-uniformity regularization, dataset-to-model contrastive loss, hard-negative mining, positive inverse-propensity weighting, separate projection heads, and early stopping are disabled.
+
+| Component | Frozen value |
+|---|---:|
+| GraphSAGE depth / hidden width / output width | 1 / 128 / 128 |
+| Optimizer / learning rate | Adam / 0.01 |
+| Epochs | 25 |
+| Supervision batch size | 1,024 |
+| Neighbor expansion | two fan-out hops, 10 per ordinary relation and 20 per lineage relation in the fallback loader |
+| Ordinary / lineage message-edge dropout | 0.30 / 0.05 |
+| Rank temperature / minimum target gap | 0.10 / 0.02 |
+| Contrastive temperature / sampled negatives | 0.20 / 256 |
+| Global temperature / sampled negatives | 0.10 / 256 |
+| Proposal exponent / smoothing / mixture | 0.75 / 1.0 / 0.50 |
+| Dataset nodes per global step | 128 |
+| Similar-dataset topology | top 10, unweighted |
+| Split seeds / initialization seed | 0, 1, 2 / 0 |
+| Export inference chunk | 50,000 nodes |
+
+Mini-batches are rooted at disjoint training supervision edges. The fallback sampler expands the current frontier without replacement and imposes a hard per-node fan-out bound. Edge dropout changes only message edges; supervision labels are stored separately and are never dropped. The full training loop is [`stage2TrainGraphSAGE/train.py`](../../stage2TrainGraphSAGE/train.py), while the scale-safe sampler is [`stage2TrainGraphSAGE/sampling.py`](../../stage2TrainGraphSAGE/sampling.py).
+
+The three archived final configurations are [`seed 0`](X4_runs/X4GD_full_s0_e25/metadata/resolved_config.json), [`seed 1`](X4_runs/X4GD_full_s1_e25/metadata/resolved_config.json), and [`seed 2`](X4_runs/X4GD_full_s2_e25/metadata/resolved_config.json). Each records the exact command line, runtime versions, graph digest, configuration, split seed, and initialization seed. All three contain 25 epoch records, finite losses, descending total loss, and a passing mechanism gate.
+
+### 4.8 Held-out inference and evaluation
+
+Evaluation embeddings are generated from $G_{\mathrm{test}}$, which contains training and validation message edges but excludes all test `trained_on` edges and their reverse copies. The exporter separately writes full-message embeddings for serving and held-out-message embeddings for evaluation:
 
 ```text
-HF /api/models ─F0 probe─F1 full snapshot────────────┐
-                                                     ├─F2 canonicalize/merge─F3 ladders─F4 model features─┐
-HF /api/datasets ─F1.5 full cards + conservative join┘                                                   │
-five historical measured sources──────────────────────────────────────────────────────────────────────────┤
-                                                                                                            ▼
-                                            F5 heterograph─F6 baseline─F7 held-out export/HNSW─F8 A/B/C/D
-                                                                                              ├─F9 utility
-                                                                                              └─X1 diagnosis
-                                                                                                 ├─X2 task prior
-                                                                                                 ├─X3 node-level sibling protocol
-                                                                                                 └─X4 G/D/GD retraining─X5 query correction
+z_m.npy,      z_d.npy       # serving graph
+z_m_eval.npy, z_d_eval.npy  # leakage-controlled evaluation graph
 ```
 
-| Stage | Status | Principal output | Role now |
-|---|---|---|---|
-| F0 | Complete | Enumeration probe, capacity estimate, sharded graph store | Feasibility evidence |
-| F1 | Complete | 3,003,759-model immutable snapshot | Exact snapshot prefix |
-| F1.5 | Complete | 1,008,417 dataset repositories and conservative card mapping | Dataset text view |
-| F2 | Complete | 247,803 supervision edges, 18,729 nodes, frozen gold rules | Label/query contract |
-| F3 | Complete | Fixed rows for 3,016,439 models and 18,729 datasets | Cross-stage primary key |
-| F4 | Complete | `[3,016,439,448]` float32 model matrix plus discrete ids | Model inputs |
-| F5 | Complete | Five-edge-type sharded heterograph | Training input |
-| F6 | Complete | Three H200 baseline checkpoints | Historical F baseline |
-| F7 | Complete | Held-out embeddings and full/subsample HNSW indexes | Frozen evaluation inputs |
-| F8 | Complete | A/B/C/D baseline measurements | Full-lake baseline |
-| F9 | Partly complete | Utility layers 1–2 and frozen `t0` | Metric interpretation; blind/temporal layers pending |
-| X1 | Complete | Three-seed diagnosis | Identifies proposal and coverage shrinkage |
-| X2 | Complete | Task-prior P axis | Strong F6 serving prior |
-| X3 | Complete | Node-level sibling S axis | Second-protocol signal |
-| X4 | Complete | G, D, and GD × three seeds | Current representation evidence |
-| X5 | Complete | Eligible/excluded query evaluation | Current primary query policy |
+Only `z_m_eval` and `z_d_eval` are used for the reported result. Model embeddings are exported in `mappedID` order, and checkpoint loading is strict. Chunked inference reproduces whole-graph inference within the archived numerical tolerance. This path is `stage_embed` in [`scale1m/export_rf.py`](../../scale1m/export_rf.py).
 
-## 3. Experimental objects and metric contract
+For an eligible held-out query $d$, let $C_d$ be its held-out observed model set and let
 
-### 3.1 Candidate snapshot, supervision, and lake
+$$
+g_d=\operatorname*{arg\,max}_{m\in C_d}y_{dm}.
+$$
 
-The HF snapshot contains **3,003,759** models. Six-source supervision introduces **12,680** historical models absent from that snapshot. Actual training, export, and primary evaluation therefore use **3,016,439** candidates.[M: [`F1_runs/PROVENANCE.json`](F1_runs/PROVENANCE.json), [`F2_runs/F2_MERGE_REPORT.json`](F2_runs/F2_MERGE_REPORT.json)]
+The exact full-lake rank uses all $N$ model embeddings and is tie-safe:
 
-The snapshot remains an exact row prefix; historical-only models are appended. The required “all candidates” and `in_snapshot=true` evaluations answer different questions, and restricting the latter changes query eligibility. They are not the same queries with 0.42% of candidates removed.[M: [`F7.md`](F7.md) §3]
+$$
+\operatorname{rank}_d(m)
+=1+\sum_{j=1}^{N}\mathbb{1}[s(d,m_j)>s(d,m)].
+$$
 
-### 3.2 Supervision and gold construction
+Therefore,
 
-Native model-index values are grouped by `(dataset, task, full_metric_name)`. Nonfinite/unparseable values are removed; duplicate quadruples take their median; lower-is-better metrics are reversed after within-group normalization; unknown-direction rows remain edges but cannot define gold; constant groups receive 0.5.[I: [`canonicalize_rf.py`](../../scale1m/canonicalize_rf.py), [`metric_semantics.py`](../../scale1m/metric_semantics.py)]
+$$
+\operatorname{gold@10}
+=\frac{1}{|\mathcal Q_{\mathrm{test}}|}
+\sum_{d\in\mathcal Q_{\mathrm{test}}}
+\mathbb{1}[\operatorname{rank}_d(g_d)\le 10].
+$$
 
-Historical curated weights are already oriented but lack original metric semantics. They receive a fifth `curated` direction class and are min-max normalized within `(dataset node, source)`. Cross-source conflicts retain one edge by the fixed priority `modellens_v2 > d0_v1_5 > a_ctrl_2000m > hf_effective > diverse_zoo > hf_model_index`; displaced records go to the conflict table. A stratified 200-edge cap is applied per dataset node after conflict resolution.[I/M: [`merge_supervision.py`](../../scale1m/merge_supervision.py), [`F2.md`](F2.md)]
+The eligible query policy requires: (i) a known metric direction or curated oriented source, (ii) a non-reinforcement-learning task, (iii) a non-placeholder dataset name, and (iv) at least three observed candidates. A query must also have nonconstant held-out values for a rank to be evaluated. Because roots rather than individual nodes are split, the number of evaluable queries differs across seeds.
 
-The frozen rule set is `rf-gold-2.0`, SHA-256 `be3fb05e…`. Its `gold_eligible` condition requires known direction, non-RL, non-placeholder name, and at least three candidates. F8 used only the weaker “computable with ≥3 nonconstant candidates” condition; X5 finally applies `gold_eligible` to primary evaluation.[M]
+The metric harness also reports `gold@1`; `top3@10`, which accepts any of the three best observed models; `gold-gap@10`, which accepts any observed model within 0.01 of the best value; and a root-macro `gold@10`. Definitions and streaming exact-rank computation are in [`scale/global_metrics.py`](../../scale/global_metrics.py); the final eligibility filter is in [`scale1m/eval_rf.py`](../../scale1m/eval_rf.py).
 
-### 3.3 Root-aware split and leakage control
+## 5. Online retrieval: HNSW top-1,000 and task-evidence reranking
 
-The primary split unit is a dataset root, not an individual edge or configuration. `make_root_aware_splits()` shuffles roots by `split_seed`, greedily assigns about 20% of edges to test and 10% to validation, then uses the rest for training. Thirty percent of training edges form disjoint supervision and are removed from the train message graph. Validation sees train messages; test sees train+validation messages; reverse edges are cropped consistently; negative labels are sampled 1:1 from absent model–dataset pairs.[I: [`d0_splits.py`](../../stage2TrainGraphSAGE/d0_splits.py#L38)]
+### 5.1 Index geometry
 
-`split_seed∈{0,1,2}` and `init_seed=0`. The reported intervals therefore measure **split variation**, not initialization variation.[M: F6/X4 MANIFESTs]
+Because every embedding is unit normalized,
 
-### 3.4 Exact metric semantics
+$$
+\operatorname*{arg\,max}_{m}\;z_d^\top z_m
+=\operatorname*{arg\,min}_{m}\;(1-z_d^\top z_m)
+=\operatorname*{arg\,min}_{m}\;\frac{1}{2}\|z_d-z_m\|_2^2.
+$$
 
-For query `d`, `g_d` is the highest normalized recorded candidate and scores are `z_d·z_m`:
+Thus inner-product HNSW searches exactly the geometry optimized by training. The full-lake builder creates `hnswlib.Index(space="ip", dim=128)`, inserts row $i$ with label `mappedID=i`, and persists the binary index. Its fixed construction parameters are
 
-- `gold@K = 1[rank(g_d)≤K]`;
-- `top3@10`: at least one of the recorded top three appears in the returned ten;
-- `gold-gap@10`: at least one model within 0.01 of recorded best appears in ten;
-- `root_gold@10`: root-macro gold rate;
-- `median rank/N`: median absolute gold rank divided by pool size;
-- `vs random = gold@10/(10/N)`.
+$$
+M_{\mathrm{HNSW}}=32,\qquad ef_{\mathrm{construction}}=200.
+$$
 
-Ranks are `# strictly better + 1`; the streaming scorer explicitly masks a probe's comparison with itself.[I: [`global_metrics.py`](../../scale/global_metrics.py)]
+The implementation is `build_hnsw` in [`scale/export_ours.py`](../../scale/export_ours.py), called by `stage_index` in [`scale1m/export_rf.py`](../../scale1m/export_rf.py).
 
-`gold@10` is a gold-survival/record-recovery metric. It is not an error rate on unknown candidates. F9 measured that 95.24% of F6 seed-0 top-ten slots had no record on the target query.[M: [`F9.md`](F9.md)]
+### 5.2 Label-free recall calibration
 
-## 4. F0–F1.5: acquisition and storage
+For the final depth $K=1000$, index fidelity is measured against the exact dense top-1,000 IDs:
 
-### 4.1 F0 probe
+$$
+\operatorname{Recall@1000}(ef)=
+\frac{1}{|\mathcal Q_H|}
+\sum_{d\in\mathcal Q_H}
+\frac{|\operatorname{ANN}_{1000}(d;ef)
+\cap\operatorname{Exact}_{1000}(d)|}{1000}.
+$$
 
-The `createdAt` descending probe fetched 200 full pages × 1,000 records: 200,000 unique models, zero duplicates, zero ordering violations, a live next cursor after page 200, 21.7 s, and 74,491,136 bytes. Cursor decoding showed only an immutable `_id < ObjectId` boundary.[M: [`F0_runs/f0_probe.json`](F0_runs/f0_probe.json)]
+For each split, `ef_search` is selected from 1,000, 1,500, 2,000, 3,000, and 5,000 as the first value reaching `recall@1000 >= 0.99`. Selection uses only dense-neighbor ID agreement, never test gold labels. The chosen values and measured recalls are:
 
-F0's 54 monthly probes estimated 2.89M models with a declared ±15% range, roughly 13.8 GB downloaded and 480 MB gzip in 30–40 minutes. F1 later measured 3.003759M, about 3.9% above the estimate.[D/P]
+| Split seed | `ef_search` | `recall@1000` |
+|---:|---:|---:|
+| 0 | 1,000 | 0.9923 |
+| 1 | 1,500 | 0.9941 |
+| 2 | 1,500 | 0.9932 |
 
-A 100K graph round-trip through `.npy` mmap, NPZ structures, parquet ids, and hashed metadata was tensor-identical. Initial load memory fell from 243.3 MB for `torch.load` to 50.3 MB with mmap; touching all data rose to 237.8 MB. The decision was float32 storage with sharding/mmap, not fp16.[M/I: [`graph_store.py`](../../scale1m/graph_store.py)]
+All latency measurements begin from a precomputed query embedding and use one HNSW query thread after warm-up. Query encoding, index loading, and index construction are excluded.[`Y2_REPORT.json`](Y2_runs/Y2_REPORT.json)
 
-### 4.2 F1 model snapshot
+### 5.3 Split-safe reranking and artifact contract
 
-```bash
-python -m scale1m.hf_crawl --sort createdAt --direction -1 \
-  --limit 4000000 --shard-size 50000 --v2-fields --out <DATA>/data1m/candidates_full
-```
-
-The crawl ran from 18:01:49 to 18:29:18 UTC on 2026-08-18: **3,003,759** records, 3,004 pages, 61 shards, 1,648.6 s, one retry, six rate-limit sleeps totaling 996 s, zero duplicates, and normal cursor exhaustion.[M: [`F1_runs/PROVENANCE.json`](F1_runs/PROVENANCE.json)] The last `createdAt` field is 2022-03-02, but it is an API field/backfill boundary, not evidence of the first-ever HF release.[U]
-
-Native snapshot inventory: 107,210 models with parseable model-index data; 208,035 model–dataset pairs; 2,158,375 model–dataset–metric triples; 7,700 datasets and 8,793 dataset-task nodes. Declared lineage is 894,089, of which 859,056 resolve inside the lake (96.08%); the largest parent has 43,346 children. Initial layers are 110,806 labeled (3.69%), 862,666 lineage (28.72%), and 2,030,287 plain (67.59%). Safetensors size coverage is 28.19%.[M: [`F1.md`](F1.md)]
-
-### 4.3 F1.5 dataset cards
-
-```bash
-python -m scale1m.hf_crawl_datasets --out <DATA>/data1m/datasets_full
-```
-
-The dataset crawl enumerated **1,008,417** repositories, 1,009 pages, 11 shards, 411.5 s, no duplicates/retries, two rate-limit sleeps totaling 200 s, and cursor exhaustion.[M: [`F15_runs/PROVENANCE.json`](F15_runs/PROVENANCE.json)]
-
-Matching accepts exact normalized ids and a basename only when the model-index name has no owner and the basename is unique. It rejects 85 cross-owner and 1,626 ambiguous basenames. Picking the most-downloaded ambiguous result would raise apparent coverage from 33.29% to 52.75% but would create false ownership mappings.[M: [`F15_runs/f15_policy.json`](F15_runs/f15_policy.json)]
-
-Before six-source expansion, 2,927/8,793 nodes (33.29%) had an HF card and 54.18% of records were covered. In the non-RL, ≥3-model view, node/record coverage was 35.50%/59.26%. After merge, 3,928/18,729 nodes (20.97%) had a real card; eligible-query coverage was 1,437/7,859 (18.28%) and 27.87% by edges. ModelLens query coverage was only 5.19% by nodes and 2.83% by edges.[M: [`F15_runs/f15b_coverage.json`](F15_runs/f15b_coverage.json)]
-
-Unmatched nodes fall back to a cleaned name plus task. The card descriptor includes name, task categories, up to ten non-colon tags, and 400 description characters.[I: [`match_dataset_cards.py`](../../scale1m/match_dataset_cards.py), [`d0_build_graph.py`](../../stage1BuildTransferGraph/d0_build_graph.py#L138)]
-
-## 5. F2–F5: canonical supervision, rows, features, and graph
-
-### 5.1 F2 native canonicalization and six-source merge
-
-Of 2,158,375 raw metric rows, 61,294 are unparseable/nonfinite; 2,097,081 remain. Median deduplication yields 1,435,162; 38,358 constant groups receive 0.5. Native output has 7,944 dataset-task nodes and 143,478 primary edges, capped to 74,346 over 131 affected nodes.[M: [`F2_runs/F2_REPORT.json`](F2_runs/F2_REPORT.json)]
-
-Raw direction counts are higher 1,539,828 (70.96%), lower 15,835 (0.73%), reward 58,456 (2.69%), and unknown 555,929 (25.62%). The deduplicated denominator has different counts and must not be mixed with these percentages. Most `mean_reward` values are strings such as `11.05 +/- 5.90`; no special parser was added, so low final RL share is primarily a parse outcome, not a successful balancing intervention.[M]
-
-The edge cap improves effective-dataset count `1/HHI` from 177.6 to 520.8 and lowers top-ten dataset share from 14.95% to 5.32%.[M]
-
-Six-source merge starts with 531,958 rows, collapses 5,102 intra-source duplicates, records 1,502 cross-source conflicts, retains 525,354 before cap, and ends with **247,803** edges over **18,729** nodes; 339 nodes are capped. Eligible query depths are 7,859 at ≥3, 5,526 at ≥5, 3,450 at ≥10, and 1,909 at ≥20.[M: [`F2_runs/F2_MERGE_REPORT.json`](F2_runs/F2_MERGE_REPORT.json)]
-
-| Source | Edges after cap | Gold queries |
-|---|---:|---:|
-| ModelLens v2 | 117,898 | 4,681 |
-| D0 v1.5 | 45,992 | 1,143 |
-| A-control 2000m | 3,670 | 65 |
-| HF-effective | 5,223 | 75 |
-| Diverse zoo | 1,350 | 17 |
-| HF model-index | 73,670 | 1,878 |
-
-The final historical-only model count is 12,680. The earlier 16,713 figure was a pre-merge estimate and is superseded.[M]
-
-### 5.2 F3 frozen ladders
-
-F3 keeps the 3,003,759 snapshot rows in crawl order and appends 12,680 normalized historical ids. Historical size is unknown; family is recovered for all appended models; no historical feature vector is copied. Eight integrity assertions pass. Model and dataset ladder hashes are `fee360d1…` and `31c027ff…`.[M/I: [`F3_runs/LADDER_REPORT.json`](F3_runs/LADDER_REPORT.json), [`build_ladder_rf.py`](../../scale1m/build_ladder_rf.py)]
-
-### 5.3 F4 model features
-
-The frozen matrix is `x_m=[e_name64||e_desc384]`, not size/family inside 448 dimensions. Size and family ids are separate and select learnable 16-dimensional embeddings during training. Name uses seed 42; MiniLM encodes a descriptor consisting of cleaned model id, family, and parameter size when known.[I]
-
-On local RTX 4060, four mmap-written parts complete in 712.7 s. `x_m` is `[3,016,439,448]` float32, 5.41 GB, SHA `ba102087…`; family vocabulary has 41,056 rows, 13.561% `Other`, SHA `00d304df…`; 71.929% have unknown size. Shape, finite/nonzero, id-range, and 200-row head/tail recomputation gates all pass.[M: [`F4_runs/FEATS_REPORT.json`](F4_runs/FEATS_REPORT.json)]
-
-### 5.4 F5 heterograph
-
-Dataset features are `[name hash 64 || card MiniLM 384 || statistics 10]=458`. `similar_to` is k=20 cosine KNN on the card block. Graph construction takes 47.6 s and yields:
-
-| Relation | Forward | Reverse |
-|---|---:|---:|
-| `trained_on` | 247,803 | 247,803 |
-| `similar_to` | 374,580 | — |
-| `is_base_of` | 859,065 | 859,065 |
-| Total across five edge types |  | **2,588,316** |
-
-Lineage resolution is 96.083%, with 76,672 distinct parents, child-count p50/p90/p99 1/6/118, 119 parents above 1,000 children, and maximum 43,346.[M: [`F5_runs/GRAPH_REPORT.json`](F5_runs/GRAPH_REPORT.json)]
-
-RF graph task/class/arity ids each collapse to a single category. Training succeeds, but the three dataset discrete tables act as shared biases. X2 later repairs task grouping only for the serving sidecar by reading the real parquet task column; F6/X4 training features remain degenerate.[M/U]
-
-The graph contract caught a real parsing bug: literal family names `nan` and `null` were interpreted as pandas NA and collapsed. `keep_default_na=False` fixed the row mismatch.[M]
-
-## 6. F6: full-lake baseline training
-
-### 6.1 As-run architecture and objective
-
-The authoritative configuration is the archived `resolved_config.json`:
-
-- **one-layer** relation-specific, edge-aware heterogeneous GraphSAGE; hidden/output 128; L2-normalized outputs;
-- model input: frozen 448 + learned size 16 + learned family 16;
-- dataset input: frozen 458 + learned task/class/arity 16/8/4, although each table has one row in RF;
-- shared head, dot scorer, RankNet with `rank_min_gap=0.02`;
-- `top_frac=0.1`, `lambda_rank=lambda_contrast=lambda_global=1`, `lambda_dm_contrast=0`;
-- full-lake logQ sampled softmax `q(m)∝(deg_train(m)+1)^0.75`, 256 global negatives, 16 datasets per step;
-- batch 1,024, fanout loader, sparse membership, 256 sampled contrastive negatives, inference chunk 50,000; AMP off; expensive diagnostics skipped in training and recomputed in F8.[M/I: [`F6_runs/RF_full_s0_e25/metadata/resolved_config.json`](F6_runs/RF_full_s0_e25/metadata/resolved_config.json), [`losses.py`](../../stage2TrainGraphSAGE/losses.py), [`train_rung.py`](../../scale1m/train_rung.py)]
-
-The objective combines RankNet performance ranking, model-side supervised contrast, and a global lake logQ term. Absolute loss is comparable between F6 and X4 D because the global term averages across datasets; changing gamma changes the correction distribution, so G/GD loss must not be compared numerically with F6/D.[I/M]
-
-### 6.2 Execution
-
-All three runs used H200 NVL on `watgpu508`, Python 3.11.4, PyTorch 2.12.0+cu130, CUDA 13.0, and pyg_lib 0.8.0+pt212cu130.
-
-| Split seed | Slurm | Wall time | Peak GPU | Loss epoch 0→24 | Gate |
-|---:|---:|---:|---:|---:|---|
-| 0 | 1515431 | 426.4 s | 38.001 GB | 22.2925→16.6288 | PASS |
-| 1 | 1515432 | 498.8 s | 38.015 GB | 22.5152→16.4704 | PASS |
-| 2 | 1515433 | 379.4 s | 37.976 GB | 22.2175→16.2624 | PASS |
-
-The gates require loss descent, no NaN, and movement of the learned size/family tables while frozen `x` remains gradient-free. All runs bind graph digest `0e80b839…`, family vocabulary `00d304df…`, and N=3,016,439.[M: F6 MANIFESTs]
-
-Only 37,755 / 39,930 / 35,991 models are train-visible labeled—about 1.25% of the lake. This is the sparsity later quantified by X1.[M]
-
-F6 is not reproducible from one clean Git commit: run metadata points to an older head, the patch captures tracked changes only, and key files were untracked. Checkpoint bindings and file hashes provide partial recovery, but the limitation must remain explicit.[U: [`F6.md`](F6.md)] The planned 500K retrained scaling point was never built; the existing scaling curve changes retrieval N under a fixed representation only.[U]
-
-## 7. F7: held-out export and HNSW
-
-`export_rf.py` separates `embed`, `metrics`, `index`, and `curve` into processes because the 5.41 GB graph features, 1.54 GB embedding, and 2.2 GB index cannot safely co-reside.[I]
-
-Each seed exports full-message `z_m/z_d` for serving and held-out-message `z_m_eval/z_d_eval` for evaluation, plus candidate records, id tables, a full HNSW, and—under seed 0—12 subsample indexes. Only `z_*_eval` is valid for A-axis claims.
-
-Embedding takes 55.8–72.1 s; metrics 26–33 s; index 110–113 s. HNSW uses M=32, construction ef=200, and chooses the minimum search ef attaining `recall@50≥0.99`.[M/I]
-
-Eight gates pass: exact N; held-out score below full-message score; row-order checks; chunked/full forward agreement on a 100K subgraph at 7.5e-8/1.0e-7/8.9e-8; independent metric-harness agreement; ANN recall; all 46,146 supervised/gold rows in every subset; and both candidate-pool reports.[M]
-
-Full-message versus held-out `gold@10` is 0.1046 vs 0.0700, 0.0555 vs 0.0399, and 0.1674 vs 0.0696. Using the wrong embedding can inflate the score by as much as 2.4×.[M]
-
-The full index is 2,209.3 MB, `ef=50`, recall 0.9983–0.9988. Subsets at 100K/250K/500K/1M each have three random seeds, always retaining the 46,146 supervised/gold rows before sampling the unlabeled tail.[M]
-
-F7 ran on the local RTX 4060 laptop. Deterministic embeddings, recall, and disk size remain valid; absolute latency is machine-specific, so F8 compares HNSW and brute force within that machine only.[U]
-
-## 8. F8: four-axis F baseline
-
-### 8.1 A: record recovery
-
-| Metric | Seed 0 | Seed 1 | Seed 2 | Mean |
-|---|---:|---:|---:|---:|
-| `gold@1` | 0.0019 | 0.0078 | 0.0107 | 0.0068 |
-| `gold@10` | 0.0700 | 0.0399 | 0.0696 | **0.0598** |
-| `top3@10` | 0.1232 | 0.1570 | 0.1147 | 0.1317 |
-| `gold-gap@10` | 0.0924 | 0.0703 | 0.0859 | 0.0829 |
-| `root_gold@10` | 0.0226 | 0.0328 | 0.0407 | 0.0320 |
-| Median gold rank | 1,908 | 881 | 3,363 | 2,051 |
-| Median rank/N | 6.33e-4 | 2.92e-4 | 1.11e-3 | 6.80e-4 |
-| Queries | 1,558 | 1,153 | 1,595 | 1,435.3 |
-
-[M: [`F8_runs/F8_REPORT.json`](F8_runs/F8_REPORT.json)] The preregistered rank/N and gold ranges were met.[P/M]
-
-Under fixed seed-0 embeddings, raising N from 100K to 3.016M changes `gold@10` only 0.0706→0.0700 and median absolute rank about 1,736→1,908. The unlabeled tail is not the dominant cause; ordering among the fixed supervised population is.[M/D]
-
-The snapshot-only row is 0.0229/0.0532/0.0613 over 1,003/752/636 queries. It is a different eligible-query population and cannot be differenced directly from the all-candidate row.[M]
-
-### 8.2 B: iso-recall latency
-
-| N | ef | HNSW p50 | Brute p50 | Speedup |
-|---:|---:|---:|---:|---:|
-| 100K | 50 | 0.0175–0.0187 ms | 1.094–1.262 ms | 59–67× |
-| 250K | 50 | 0.0199–0.0208 ms | 4.527–5.216 ms | 227–251× |
-| 500K | 50 | 0.0185–0.0214 ms | 9.439–10.655 ms | 493–512× |
-| 1M | 50 | 0.0195–0.0210 ms | 18.388–20.016 ms | 925–991× |
-| 3.016M | 50 | 0.0211 ms | 57.261 ms | **2,714×** |
-
-All recalls exceed 0.998. HNSW p50 has fitted exponent 0.036 versus about 1 for full scan. Batched throughput is 52,655 QPS at one thread and 296,417 at 24 logical threads. An earlier per-query “multithread QPS” varied by 65× because hnswlib parallelizes across query batches; it is discarded, not hidden.[M]
-
-### 8.3 C: cold-start geometry
-
-| Layer | Count | Share | Within-layer cosine | Effective dimension |
-|---|---:|---:|---:|---:|
-| warm | 2,949 | 0.10% | 0.394–0.409 | 3.3–3.9 |
-| cool | 43,197 | 1.43% | 0.293–0.426 | 3.8–4.0 |
-| cold | 875,314 | 29.02% | 0.882–0.931 | 3.0–3.3 |
-| frozen | 2,094,979 | 69.45% | 0.879–0.927 | 2.7–3.4 |
-
-Cold+frozen account for 98.47%. The preregistered expectation that cold would be more collapsed than frozen did not reproduce; their means are about 0.908 and 0.907. Sibling–random separation falls to 0.028–0.049. Examples include 32,534 Qwen1.5-0.5B children at cosine 0.9863 and 24,040 Gemma-2B children at 0.9877. ANN recall is already high, so this is representation collapse, not index tuning.[M/D]
-
-### 8.4 D: system cost
-
-The measured chain is: model crawl 27.5 min; dataset crawl 6.9 min; model features 712.7 s; graph 47.6 s; training 379–499 s/seed at 38.0 GB; export 55.8–72.1 s/seed; full index 109.9–113.1 s/seed. Disk is approximately 5.27 GiB graph, 1.44 GiB `z_m`, 2.21 GiB full index, and 4.07 GiB for 12 subset indexes. HNSW insertion is p50 0.160 ms and p95 0.255 ms.[M]
-
-The insertion number is index-only. Descriptor generation, MiniLM encoding, discrete ids, and inductive GNN forwarding were not timed as one end-to-end onboarding transaction.[U] `displacement_quality` remains unimplemented under a non-label-overlapping definition.[U]
-
-## 9. F9: recommendation-utility scorecard
-
-F9 runs no candidate model. It completes historical-record recovery and metadata feasibility, freezes the temporal `t0` list, and leaves human blind review and future temporal validation undone.[M/U]
-
-On the same 1,558 seed-0 queries, graph training versus pure MiniLM text gives:
-
-| Metric | F6 graph | Text-only |
-|---|---:|---:|
-| recorded `gold@10` | 0.0700 | 0.0392 |
-| recorded `top3@10` | 0.1232 | 0.0591 |
-| median historical-best rank | 1,908 | 160,270 |
-| same-task evidence@10 | 0.2963 | 0.0503 |
-| record coverage@10 | 0.0476 | 0.0166 |
-
-[M: [`F9_runs/F9_SCORECARD.json`](F9_runs/F9_SCORECARD.json)] `random_task_pool` obtains 0.2349 because it is told the task and samples ten from a frequently tiny already-evaluated pool; its expected value from the measured pool-size distribution is about 0.235. It is an oracle-like reference, not a superior full-lake retriever.[D]
-
-F6 seed-0 metadata metrics are available 0.7099, licensed 0.5978, endpoint-compatible 0.5161, library-tag 0.6006, family diversity 0.4989, at least one feasible 0.9724, and median top-ten size 1.77B. X2 later measures availability over all splits as 0.7099/0.6273/0.5729, so 0.7099 must be labeled a seed-0 point.[M]
-
-The frozen `t0_recommendations.parquet` has 15,580 rows (1,558×10), dated 2026-08-21. No temporal outcome exists yet.[M/U] Full dense re-evaluation of unknown candidates was estimated at 73.5 TB and roughly 5,300 GPU-hours; this is a resource estimate, not consumed compute.[D/P]
-
-## 10. X1: diagnosis that begins the current X series
-
-X1 freezes six diagnostics into `fast_lever_audit.py` and reruns all three split seeds without retraining or modifying exports. Total time is about 84 minutes; the full-lake rank scan takes 4,981.3 s.[M/I]
-
-Removing all 2,970,293 unlabeled models changes `gold@10` from 0.0700/0.0399/0.0696 to 0.0706/0.0408/0.0696. Dark matter is not the main displacement source.[M]
-
-Training-side shrinkage is much larger:
-
-| Quantity | 100K mean | 3M mean | Reduction |
-|---|---:|---:|---:|
-| Proposal mass on train-visible labeled models | 0.6138 | 0.0352 | 17.4× |
-| Expected labeled models among 256 negatives | 157.1 | 9.0 | 17.4× |
-| Global-term touches per visible dataset over 25 epochs | 4.06 | 1.47 | 2.77× |
-| Combined discriminative exposure | — | — | about **48×** |
-
-[M/D: [`X1_runs/X1_FAST_LEVERS.json`](X1_runs/X1_FAST_LEVERS.json)] The earlier audit counted negative labels as loader steps and used full-graph degree; X1 corrects both to the as-trained positive loader and train-visible degree.
-
-For `q=(1−γ)q_degree+γUniform(labeled)`, seed-0 gamma 0/.25/.5/.75 gives labeled mass .0355/.2766/.5177/.7589 and 9.1/70.8/**132.5**/194.3 labeled negatives. Gamma 0.5 becomes the X4 intervention.[M]
-
-Zero-training measurements give all-task random 0.1857, task-filtered MIPS 0.2206, shrunk task prior 0.3014, and task-pool ceiling 0.5905. CSLS is a negative result: the three-seed mean falls 41%, from 0.0598 to 0.0353 with test-side density and 0.0357 with deployable train-side density. It is removed from the candidate set.[M]
-
-The F6 top ten is 96.72%–99.35% supervised models; the hottest 100 models occupy 31.3%–51.4% of slots; snapshot-resident share is only 73.2%/63.8%/57.9%; average distinct families are 4.99/4.79/4.39.[M]
-
-Although 66.0%/67.5%/77.7% of queries lie in multi-node roots, root-aware splitting leaves exactly zero queries with a train-visible sibling. X1 also counts 82/52/50 `gold_eligible=False` queries, mostly unknown direction, motivating X5.[M]
-
-## 11. X2: task-prior P axis
-
-X2 adapts the prior sidecar to the sharded graph, parquet ids, and split-specific visibility. RF's graph task id is constant zero, so correct groups come from the real parquet task column, normalized into 2,198 groups.[I]
-
-Split sidecars contain only train+validation visible edges—198,216 / 196,912 / 196,124—and assert no test-dataset edge survives. The old D0 invocation reproduces all five historical arrays exactly.[M]
-
-The current post-X5 `eval_rf.py` closes two path hazards. `--full-sidecar` is no longer fixed at module load to `exports_rf/RF_full_s0_e25`; it is derived after parsing `args.run_fmt`. Training MANIFEST paths are resolved separately through `--f6-runs/--f6-run-fmt`, and a missing seed raises an error instead of silently leaving `train_per_seed` empty. This is reproduction hardening in the present code, not evidence that X4 P/S has run.[I: [`eval_rf.py`](../../scale1m/eval_rf.py), [`X4GPU.md`](X4GPU.md) §4.5]
-
-The full-lake fusion is `minmax(MIPS)+alpha*sibling+beta*task`; sibling is asserted zero under root-aware. Task boost is a k=5 shrunk mean of a model's performance on other datasets in the same task. Evaluation scans all 3,016,439 models instead of a 512 retrieval pool.[I]
-
-| Ranking | Seed 0 | Seed 1 | Seed 2 | Mean |
-|---|---:|---:|---:|---:|
-| MIPS | 0.0700 | 0.0399 | 0.0696 | 0.0598 |
-| Degenerate one-group prior | 0.1232 | 0.1127 | 0.0940 | 0.1100 |
-| Task β=.5 | 0.2914 | 0.3174 | 0.2464 | 0.2851 |
-| Task β=1 | 0.3132 | 0.3356 | 0.2539 | **0.3009** |
-| Task β=2 | 0.3087 | 0.3400 | 0.2558 | 0.3015 |
-| β→∞ lower bound | 0.3338 | 0.3322 | 0.2301 | 0.2987 |
-
-[M: [`X2_runs/X2_PRIOR_FUSION.json`](X2_runs/X2_PRIOR_FUSION.json)] Saturation near beta 1 and the almost identical prior-only result show that the 5.03× gain is primarily the task prior, not synergy with embeddings.[D]
-
-The same top-ten lists worsen availability 0.6367→0.6017, feasibility 0.9118→0.8973, family diversity 0.4722→0.4320, and median parameter count **2.42B→7.57B**, while record coverage rises 0.0498→0.1764 and same-task evidence 0.2763→0.7574.[M]
-
-## 12. X3: second protocol and sibling prior
-
-The X3 preregistration SHA `4ee14720…` is embedded in the result JSON, establishing ordering.[M]
-
-Protocol A holds out whole roots and represents an unseen benchmark family. Protocol B permits other configurations in the query's known root. X3 does not retrain node-level embeddings: queries and embeddings remain root-aware held out; only which prior edges are readable changes.[I]
-
-This makes the retrieval side a lower bound—embeddings never trained on siblings—and full-sidecar task(B) an upper bound because it includes labels that a true node-level split would reserve. The defensible second-protocol line is `sibling + task(A)`, not `sibling + task(B)`.[U]
-
-| Ranking | All queries | Sibling stratum | No-sibling stratum |
-|---|---:|---:|---:|
-| MIPS | 0.0598 | 0.0678 | 0.0418 |
-| A: task | 0.3009 | 0.3251 | 0.2551 |
-| B: sibling | 0.2145 | 0.2866 | 0.0418 |
-| B: sibling, dissimilar names only | 0.1209 | 0.1532 | 0.0418 |
-| **B: sibling + task(A)** | **0.3536** | **0.3975** | 0.2551 |
-| B: task(B) | 0.3744 | 0.4163 | 0.2622 |
-| B: sibling + task(B) | 0.4314 | 0.4961 | 0.2622 |
-
-[M: [`X3_runs/X3_PROTOCOL_B.json`](X3_runs/X3_PROTOCOL_B.json)] Sibling alone is 4.2× MIPS in its active stratum; adding sibling to task(A) is +22.3% there and +17.5% overall. Removing name-near siblings lowers 0.2866 to 0.1532, showing high sensitivity to closely related configurations.[M]
-
-`sibling+task(A)` lowers availability to 0.5549, feasibility to 0.7615, family diversity to 0.4091, and raises median parameter count to **12.11B**.[M]
-
-## 13. X4: G/D/GD retraining
-
-### 13.1 Preregistered interventions and execution evidence
-
-Before submission, X4 fixed G as `lake_gamma=.5`, D as `global_n_datasets=128`, GD as both, three split seeds, 25 epochs, all else fixed. The primary pass condition was GD mean `gold@10≥.09` and every seed above its own F6 baseline.[P]
-
-Formal remote hashes match the present local files: `losses.py c9b351…`, `ablation.py e0fa47…`, `train_rung.py 08904b…`, and `train_rung_x4.sbatch f1237a…`. The sbatch's earlier `a0b2ab…` version was superseded when `X4_DIRECT=1` bypassed a broken `srun` job-step layer; `f1237a…` is the as-run version.[M]
-
-All nine runs contain 25 epoch records, no NaN, PASS mechanism gates, N=3,016,439, graph digest `0e80b839…`, and vocabulary `00d304df…`. Preemption/timeouts used same-RUN_ID `last.pt` continuation. No-op resumes at epoch 25 write final gates but do not represent full training cost.[M]
-
-### 13.2 Results
-
-Old query policy, all candidates:
-
-| Metric | F6 | G | D | GD |
-|---|---:|---:|---:|---:|
-| `gold@1` | .0068 | .0177 | .0071 | **.0228** |
-| `gold@10` | .0598 | .1160 | .0745 | **.1429** |
-| `top3@10` | .1317 | .2082 | .1521 | **.2508** |
-| `gold-gap@10` | .0829 | .1448 | .1110 | **.1866** |
-| `root_gold@10` | .0320 | .0511 | .0593 | **.0947** |
-| Median rank | 2,051 | 1,326 | **1,178** | 1,590 |
-
-[M: [`X4_runs/reports/`](X4_runs/reports/)] GD is .1341/.1440/.1505, with +.0642/+.1041/+.0809 over matched F6 seeds, satisfying preregistration. G is .1194/.1075/.1210 and consistently positive. D is .0546/.1023/.0665, changes −.0154/+.0624/−.0031, and is not independently stable. G captures 67.6% of the combined mean gain; GD is 23.2% above G and positive by seed, supporting a conditional coverage contribution.[D]
-
-Median rank and top-ten hit can move differently: GD seed 2 raises `gold@10` .0696→.1505 while median rank worsens 3,363→3,858. The gain concentrates in the head.[M]
-
-### 13.3 Geometry
-
-| Layer | F6 cosine | GD cosine | F6 effective dim | GD effective dim |
-|---|---:|---:|---:|---:|
-| warm | .402 | .218 | 3.6 | 6.6 |
-| cool | .350 | .198 | 3.9 | 7.4 |
-| cold | .908 | .783 | 3.2 | 7.9 |
-| frozen | .908 | .778 | 3.0 | 8.0 |
-
-Sibling–random separation rises .0359→.0796. This unpreregistered result suggests training sampling contributes to collapse, but the mechanism is post hoc and effective dimension remains only about 8/128.[M/U]
-
-### 13.4 Hardware and continuation disclosure
-
-F6 used H200. Final X4 MANIFESTs report GD on L40S; G on RTX 6000 Ada; D seeds 0/2 on RTX 6000 Ada and D seed 1 on L40S. Early GD seeds 1/2 epochs 0–9 ran under `watgpu308 schoolgpu` allocations that timed out without MANIFESTs or GPU-name logs. A probe once received RTX A6000, but another allocation under the same GRES (`1522415`) records L40S. The early segment type is therefore **unarchived**, not inferred as A6000.[M/U]
-
-X4D seed 1 records Python 3.11.9; the other eight record 3.11.4; all use PyTorch 2.12.0+cu130. The comparisons share graph, code, config, and split, but are not same-hardware/same-Python replications.[M]
-
-Job `1522429` performed GD seed-1 epochs 10–24. `1522415` started after epoch 25 and performed a no-op gate only. The observed 43,030 MiB for D seed 2 was never archived in nvidia-smi output and is not independently reproducible. No-op MANIFEST values 35.6 s/5.252 GB and 15.5 s/5.251 GB are not full-run costs; the pre-overwrite GD seed-1 record was 2,329.9 s/37.964 GB.[M/U]
-
-`global_n_datasets=128` overshoots X1's approximate 100K alignment point of 44 and gives about 11.7 touches versus 4.06. Gamma .5, at 132.5 labeled negatives versus 157.1, is the closer same-order alignment.[D]
-
-## 14. X5: current query policy
-
-X5's E axis recomputes old-all, eligible-only, and excluded-only rows without changing training, embeddings, or indexes.[I]
-
-| Seed | Before | Eligible | Excluded | Unknown direction | Placeholder | RL |
-|---:|---:|---:|---:|---:|---:|---:|
-| 0 | 1,558 | 1,476 | 82 | 61 | 20 | 1 |
-| 1 | 1,153 | 1,101 | 52 | 48 | 4 | 1 |
-| 2 | 1,595 | 1,545 | 50 | 45 | 4 | 2 |
-
-One query in each of seeds 1 and 2 has two exclusion reasons.[M]
-
-| Representation | Old `gold@10` | Eligible `gold@10` | Relative change | Excluded-only |
-|---|---:|---:|---:|---:|
-| F6 | .0598 | **.0625** | +4.5% | .0000 |
-| X4 G | .1160 | **.1197** | +3.2% | .0291 |
-| X4 D | .0745 | **.0724** | −2.8% | .1117 |
-| X4 GD | .1429 | **.1427** | −0.1% | .1474 |
-
-[M: [`X5_runs/`](X5_runs/)] The correction is small and inconsistent in direction, leaving the X4 conclusion intact. Unknown-direction argmax labels remain untrustworthy even when X4 ranks them well.[D]
-
-The eligible row should now be primary while the old row remains for historical alignment. Existing EXPORT_MANIFEST and F8_REPORT files still contain the old policy; X5 is separate. Snapshot-only was not recomputed, and training still samples ineligible datasets.[U]
-
-## 15. Current result table: what may and may not be combined
-
-### 15.1 Primary protocol, all candidates, X5-eligible queries
-
-| Representation | Seed 0 | Seed 1 | Seed 2 | Mean | Relative to F6 | Evidence status |
-|---|---:|---:|---:|---:|---:|---|
-| F6 | 0.0738 | 0.0418 | 0.0718 | 0.0625 | 1.00× | Historical representation baseline |
-| X4 G | 0.1233 | 0.1108 | 0.1249 | 0.1197 | 1.92× | Same direction in all three seeds |
-| X4 D | 0.0508 | 0.0990 | 0.0673 | 0.0724 | 1.16× | Directionally unstable |
-| **X4 GD** | **0.1355** | **0.1417** | **0.1508** | **0.1427** | **2.28×** | **Current primary representation** |
-
-[M: [`X5_F6_ELIGIBILITY.json`](X5_runs/X5_F6_ELIGIBILITY.json), [`X5_GD_ELIGIBILITY.json`](X5_runs/X5_GD_ELIGIBILITY.json), [`X5_G_ELIGIBILITY.json`](X5_runs/X5_G_ELIGIBILITY.json), [`X5_D_ELIGIBILITY.json`](X5_runs/X5_D_ELIGIBILITY.json)] This is the safest headline table for the paper. The exact unrounded means are 0.06249103 for F6 and 0.14266660 for GD; the ratio is 2.283.[D]
-
-### 15.2 Separate service-side evidence branches, all on F6 representations
-
-| Branch | Protocol | `gold@10` | Supported conclusion | Unsupported conclusion |
-|---|---|---:|---|---|
-| X2 task, beta=1 | Root-aware, F6 representations | 0.3009 | Same-task historical performance is a strong prior | The final value of X4+task |
-| X3 sibling+task(A) | Second service protocol, F6 representations | 0.3536 | A known benchmark's new configuration can exploit sibling evidence | Main root-aware performance or a fully retrained node-level result |
-| X3 sibling+task(B) | Prior-side upper bound | 0.4314 | An upper bound and signal-existence result | A deployable, leakage-free primary result |
-
-The X2/X3 and X4 numbers must not be added, multiplied, or maximized into a purported “current system” score. A unified service result requires split-specific and full sidecars for the nine X4 export directories, rerunning P/S/E, and rerunning the second-layer utility table.[U]
-
-### 15.3 F-series system measurements remain valid but are not X4 measurements
-
-HNSW `recall@50≈0.999`, full-lake p50 0.0211 ms, the 2,714× speedup over exhaustive search, and the 2.21 GiB index are measurements of the F6 embeddings. X4 did not rerun the `index/curve` stages or the B/D axes. The algorithm and candidate count are unchanged, but the vector geometry changed; these values therefore cannot be labeled “measured on X4.”[U]
-
-## 16. Artifacts, paths, and reproduction entry points
-
-### 16.1 Large-data root
-
-`<DATA>` in the documentation denotes `$MLF_DATA_DIR/data1m` in the executed environment. The principal directory contract is:
+For a materialized dataset--task node, the measured online path is:
 
 ```text
-data1m/
-├── candidates_full/                    F1: 61 model shards + PROVENANCE/CURSOR/SHARDS
-├── datasets_full/                      F1.5: 11 dataset shards + cards
-├── rf/canon/                           F2: canonical models, supervision, conflicts, nodes
-├── ladder_rf/                          F3: model and dataset parquet ladders
-├── feats_rf/                           F4: x_m, ids, family vocabulary, reports
-├── graphs/hgraph_rf/                   F5: sharded heterogeneous graph store
-├── exports_rf/RF_full_s{0,1,2}_e25/   F7: F6 embeddings and HNSW indexes
-├── metrics_rf/                         F8/X1/X2/X3 baseline reports
-├── utility_rf/                         F9 model metadata, scorecard, and t0 list
-├── exports_x4/X4{GD,G,D}_full_s*_e25/ X4 embeddings and metric sidecars
-├── metrics_x4/{GD,G,D}/               X4 A/C reports
-└── metrics_x5/{F6,GD,G,D}/            X5 eligibility reports
+dense_pool = hnsw.knn_query(z_q, k=1000)
+prior = task_prior[query_task, dense_pool.model_ids]
+score = (dense_pool.cosine + 1) / 2 + prior
+top10 = stable_topk(score, fixed_label_free_tie_break)
 ```
 
-Repository-portable evidence is stored under `docs/1M/*_runs/`; large matrices and indexes are deliberately excluded from Git. Hash bindings for the large embedding objects are recorded in [`EVIDENCE_SOURCE_MANIFEST.md`](EVIDENCE_SOURCE_MANIFEST.md).
+The split-specific sidecars contain only train+validation edges: 198,216 / 196,912 / 196,124 visible edges for seeds 0 / 1 / 2. The evaluator asserts exact equality of the X4 and sidecar model and dataset row mappings, verifies the root mapping, and asserts that no visible prior edge shares a root with any scored test query. The query itself and every same-root sibling are therefore absent from the prior. All mapping and leakage gates pass in the archived report.[`eval_y2.py`](../../scale1m/eval_y2.py) [`Y2_REPORT.json`](Y2_runs/Y2_REPORT.json)
 
-### 16.2 Training artifacts
+An HNSW label is meaningful only under the model row map used to construct the index. The three measured evaluation indexes bind the 3,016,439-row X4-GD held-out embeddings and live at `data1m/exports_x4/X4GD_full_s{0,1,2}_e25/hnsw_y2_eval.bin`. A truly new dataset that is absent from the frozen node table still requires a validated query-only inductive encoding path; the present measurements concern materialized dataset--task nodes with held-out performance edges.
 
-The recovered F6 runs are under [`F6_runs/RF_full_s{0,1,2}_e25/`](F6_runs/); the nine X4 runs are under [`X4_runs/X4{GD,G,D}_full_s{0,1,2}_e25/`](X4_runs/). A standard run contains at least:
+### 5.4 Final two-stage result and cost mechanism
 
-```text
-MANIFEST.json
-metadata/resolved_config.json
-metadata/uncommitted.patch
-metrics/train_history.json
-stdout/train.log
-ckpt/last.pt, best.pt, retained checkpoints, family_vocab.csv
+All rows below use the same eligible queries, candidate universe, representation, and frozen reranker. They compare the actual bounded-candidate path with two exact reference paths; they are not intermediate system stages.
+
+| Retrieval path | Work required per query | seed 0 | seed 1 | seed 2 | Mean `gold@10` |
+|---|---|---:|---:|---:|---:|
+| Dense + task prior, exact full lake | Compute a dense score, read the task prior, and fuse the two scores for all 3,016,439 models | 0.3408 | 0.3651 | 0.2589 | 0.3216 |
+| Dense exact top-1,000 + task prior | Compute a dense score for all 3,016,439 models, select 1,000, then read and fuse 1,000 priors | 0.3286 | 0.3388 | 0.2427 | 0.3034 |
+| **Dense HNSW top-1,000 + task prior** | **Use the ANN index to find 1,000 candidates, then read and fuse only 1,000 priors** | **0.3279** | **0.3388** | **0.2427** | **0.3031** |
+
+The exact top-1,000 reference is costly because it must still compare the query with every model embedding before truncation; it therefore preserves a linear full-lake scan and loses HNSW's sublinear search path. Exact full-pool fusion performs that same all-model dense scoring and additionally reads, combines, and ranks task evidence for every model rather than for 1,000 candidates. Its second-stage candidate count is therefore about 3,016 times larger than that of the actual system, and both exact paths grow directly with lake size. By contrast, the actual path confines task-prior lookup and fusion to the bounded HNSW pool.
+
+The unrounded final values are 0.3279132791, 0.3387829246, and 0.2427184466; their arithmetic mean is **0.3031382168**. The final path beats the 3M-scale BM25 baseline on every seed and by 2.98 times on the three-seed mean. Exact top-1,000 reranking retains 94.32% of the full-pool fused result on average, and HNSW retains 99.93% of exact top-1,000 reranking, for 94.25% overall two-stage retention relative to full-pool fusion. Dense top-1,000 contains the held-out gold for 51.88% of queries on average, and 89.91% of the exact full-pool fused top-ten members already occur in that pool. The remaining quality loss is therefore dominated by pool truncation rather than ANN approximation.[`Y2_REPORT.json`](Y2_runs/Y2_REPORT.json)
+
+| Split seed | Queries | `gold@1` | `gold@10` | `top3@10` | `gold-gap@10` | root-macro `gold@10` | Median reranked gold position when retrieved |
+|---:|---:|---:|---:|---:|---:|---:|---:|
+| 0 | 1,476 | 0.1599 | 0.3279 | 0.3984 | 0.3814 | 0.2515 | 6 |
+| 1 | 1,101 | 0.1117 | 0.3388 | 0.4269 | 0.3860 | 0.2591 | 7 |
+| 2 | 1,545 | 0.1107 | 0.2427 | 0.2958 | 0.2777 | 0.1903 | 5 |
+| Three-seed mean | — | 0.1274 | **0.3031** | 0.3737 | 0.3484 | 0.2336 | — |
+
+The latest Y4 timing repeat on Windows 11, an Intel Family 6 Model 183 CPU with 24 logical processors, single-query/single-thread HNSW, and warm-up gives the following retrieval-stage latency:
+
+| Split seed | HNSW + rerank p50 | HNSW + rerank p95 |
+|---:|---:|---:|
+| 0 | 0.536 ms | 0.905 ms |
+| 1 | 0.847 ms | 1.435 ms |
+| 2 | 0.699 ms | 1.329 ms |
+| Mean | **0.694 ms** | **1.223 ms** |
+
+Mean HNSW and reranking p50 components are 0.566 and 0.123 ms. This path starts from a precomputed $z_q$ and excludes query encoding, index loading, and index construction. Each index occupies about 2.214 GiB; the three total 6.643 GiB and were built in 184.6 / 191.3 / 181.6 seconds.[`Y2_REPORT.json`](Y2_runs/Y2_REPORT.json) [`Y4_REPORT.json`](Y4_runs/Y4_REPORT.json)
+
+The absolute final `gold@10` remains 0.3031, so full-lake model retrieval is far from complete historical-gold recovery. It is a reproducible operating point, not evidence that unobserved recommendations achieve 30.31% downstream accuracy.
+
+## 6. Implementation entry points and archived-result verification
+
+The following commands expose the concrete implementation order and keep the X4-GD embeddings and split-specific task sidecars on the same row mappings used by the archived evaluation. Angle-bracket paths are deployment-specific; the exact as-run training command for each seed is stored in that run's `metadata/resolved_config.json`.
+
+```powershell
+# 1. Collect immutable model and dataset metadata.
+python -m scale1m.hf_crawl `
+  --sort createdAt --direction -1 --limit 100000000 --v2-fields `
+  --out <DATA>/data1m/candidates_full
+python -m scale1m.hf_crawl_datasets `
+  --out <DATA>/data1m/datasets_full
+
+# 2. Canonicalize evidence and construct the model--dataset evidence graph.
+python -m scale1m.canonicalize_rf `
+  --candidates <DATA>/data1m/candidates_full `
+  --out <DATA>/data1m/rf
+python -m scale1m.merge_supervision `
+  --rf <DATA>/data1m/rf
+python -m scale1m.build_ladder_rf `
+  --rf <DATA>/data1m/rf --out <DATA>/data1m/ladder_rf
+python -m scale1m.match_dataset_cards `
+  --nodes <DATA>/data1m/rf/canon/dataset_nodes_merged.parquet `
+  --datasets <DATA>/data1m/datasets_full `
+  --out <DATA>/data1m/datasets_full/dataset_cards_merged.parquet
+python -m scale1m.embed_lake_rf `
+  --ladder <DATA>/data1m/ladder_rf/full_model_ids.parquet `
+  --out <DATA>/data1m/feats_rf
+python -m scale1m.build_graph_rf `
+  --ladder <DATA>/data1m/ladder_rf `
+  --feats <DATA>/data1m/feats_rf `
+  --rf <DATA>/data1m/rf `
+  --cards <DATA>/data1m/datasets_full/dataset_cards_merged.parquet `
+  --out <DATA>/data1m/graphs/hgraph_rf
+
+# 3. Train and export X4-GD; repeat with seed 0, 1, and 2.
+python -m scale1m.train_rung `
+  --rung full --graph <DATA>/data1m/graphs/hgraph_rf `
+  --out <RUNS>/X4GD_full_s<SEED>_e25 --seed <SEED> --epochs 25 `
+  --family-vocab <DATA>/data1m/feats_rf/family_vocab.csv `
+  --fanout --sparse-M --contrast-n-neg 256 `
+  --chunked-infer 50000 --skip-diagnostics `
+  --lake-gamma 0.5 --global-n-datasets 128
+
+python -m scale1m.export_rf `
+  --run <RUNS>/X4GD_full_s<SEED>_e25 --stage embed `
+  --graph <DATA>/data1m/graphs/hgraph_rf `
+  --ladder <DATA>/data1m/ladder_rf/full_model_ids.parquet `
+  --out <DATA>/data1m/exports_x4/X4GD_full_s<SEED>_e25
+python -m scale1m.export_rf `
+  --run <RUNS>/X4GD_full_s<SEED>_e25 --stage metrics `
+  --out <DATA>/data1m/exports_x4/X4GD_full_s<SEED>_e25
+
+# 4. Build an equivalent split-safe task sidecar directly beside each X4-GD export.
+python -m stage3HNSW.build_prior_sidecar `
+  --graph-store <DATA>/data1m/graphs/hgraph_rf `
+  --export <DATA>/data1m/exports_x4/X4GD_full_s<SEED>_e25 `
+  --split-seed <SEED> `
+  --task-nodes <DATA>/data1m/rf/canon/dataset_nodes_merged.parquet
+
+# 5. Reproduce the exact pool, HNSW indexes, and final K=1000 report.
+python -m scale1m.eval_y2 --stage exact `
+  --exports <DATA>/data1m/exports_x4 --run-fmt "X4GD_full_s%d_e25" `
+  --sidecar-exports <DATA>/data1m/exports_x4 --sidecar-run-fmt "X4GD_full_s%d_e25" `
+  --dataset-nodes <DATA>/data1m/rf/canon/dataset_nodes_merged.parquet `
+  --out <DATA>/data1m/metrics_y2 `
+  --device cuda --query-chunk 16 --model-chunk 50000
+python -m scale1m.eval_y2 --stage hnsw `
+  --exports <DATA>/data1m/exports_x4 --run-fmt "X4GD_full_s%d_e25" `
+  --sidecar-exports <DATA>/data1m/exports_x4 --sidecar-run-fmt "X4GD_full_s%d_e25" `
+  --dataset-nodes <DATA>/data1m/rf/canon/dataset_nodes_merged.parquet `
+  --out <DATA>/data1m/metrics_y2 `
+  --device cuda --hnsw-threads 8 `
+  --ef-search 1000 1500 2000 3000 5000
+python -m scale1m.eval_y2 --stage finalize `
+  --exports <DATA>/data1m/exports_x4 --run-fmt "X4GD_full_s%d_e25" `
+  --sidecar-exports <DATA>/data1m/exports_x4 --sidecar-run-fmt "X4GD_full_s%d_e25" `
+  --dataset-nodes <DATA>/data1m/rf/canon/dataset_nodes_merged.parquet `
+  --out <DATA>/data1m/metrics_y2 `
+  --hnsw-threads 8 --ef-search 1000 1500 2000 3000 5000
+
+# Optional: reproduce the frozen-retriever K sensitivity curve through Y4.
+python -m scale1m.eval_y4 --stage exact --device cuda `
+  --exports <DATA>/data1m/exports_x4 --run-fmt "X4GD_full_s%d_e25" `
+  --sidecar-exports <DATA>/data1m/exports_x4 --sidecar-run-fmt "X4GD_full_s%d_e25" `
+  --dataset-nodes <DATA>/data1m/rf/canon/dataset_nodes_merged.parquet `
+  --y2-out <DATA>/data1m/metrics_y2 `
+  --y2-report <DATA>/data1m/metrics_y2/Y2_REPORT.json `
+  --out <DATA>/data1m/metrics_y4
+python -m scale1m.eval_y4 --stage hnsw --hnsw-threads 8 `
+  --exports <DATA>/data1m/exports_x4 --run-fmt "X4GD_full_s%d_e25" `
+  --sidecar-exports <DATA>/data1m/exports_x4 --sidecar-run-fmt "X4GD_full_s%d_e25" `
+  --dataset-nodes <DATA>/data1m/rf/canon/dataset_nodes_merged.parquet `
+  --y2-out <DATA>/data1m/metrics_y2 `
+  --y2-report <DATA>/data1m/metrics_y2/Y2_REPORT.json `
+  --out <DATA>/data1m/metrics_y4
+python -m scale1m.eval_y4 --stage finalize `
+  --y2-out <DATA>/data1m/metrics_y2 `
+  --y2-report <DATA>/data1m/metrics_y2/Y2_REPORT.json `
+  --out <DATA>/data1m/metrics_y4
 ```
 
-The original X4 remote paths were `/u801/x98liu/model_lake/runs/<RUN_ID>/`; delivery archives were `/u801/x98liu/x4_<RUN_ID>.tgz`; downloaded scheduler and execution evidence is in [`X4_runs/x4_execution/`](X4_runs/x4_execution/).[M: [`X4GPU.md`](X4GPU.md)]
+The acquisition and graph-construction commands are the current executable CLI contracts. The archived final training commands are stronger evidence for as-run configuration because they record absolute cluster paths, job metadata, and all resolved defaults.
 
-### 16.3 Reproduction order
+## 7. Reproducibility map
 
-The following order is reconstructed from the current command-line interfaces. Before execution, freeze the data root, HuggingFace credential if required, Python/PyTorch/PyG versions, and hardware:
+| Method element | Code path | Primary evidence |
+|---|---|---|
+| Cursor-safe model snapshot | [`scale1m/hf_crawl.py`](../../scale1m/hf_crawl.py) | [`model provenance`](F1_runs/PROVENANCE.json) |
+| Cursor-safe dataset snapshot | [`scale1m/hf_crawl_datasets.py`](../../scale1m/hf_crawl_datasets.py) | [`dataset provenance`](F15_runs/PROVENANCE.json) |
+| Dataset descriptors and card matching | [`scale1m/dataset_descriptor.py`](../../scale1m/dataset_descriptor.py), [`scale1m/match_dataset_cards.py`](../../scale1m/match_dataset_cards.py) | [`coverage report`](F15_runs/f15b_coverage.json) |
+| Metric direction and orientation | [`scale1m/metric_semantics.py`](../../scale1m/metric_semantics.py), [`scale1m/canonicalize_rf.py`](../../scale1m/canonicalize_rf.py) | [`native canonicalization`](F2_runs/F2_REPORT.json) |
+| Six-source merge and query rules | [`scale1m/merge_supervision.py`](../../scale1m/merge_supervision.py) | [`merge report`](F2_runs/F2_MERGE_REPORT.json), [`rule file`](F2_runs/rf_gold_rules.json) |
+| Candidate and dataset row maps | [`scale1m/build_ladder_rf.py`](../../scale1m/build_ladder_rf.py) | [`ladder report`](F3_runs/LADDER_REPORT.json) |
+| Model metadata features | [`scale1m/embed_lake_rf.py`](../../scale1m/embed_lake_rf.py) | [`feature report`](F4_runs/FEATS_REPORT.json) |
+| Evidence-graph construction | [`scale1m/build_graph_rf.py`](../../scale1m/build_graph_rf.py) | [`graph report`](F5_runs/GRAPH_REPORT.json), [`lineage report`](F5_runs/lineage_stats.json) |
+| Leakage-controlled split | [`stage2TrainGraphSAGE/d0_splits.py`](../../stage2TrainGraphSAGE/d0_splits.py) | [`split audit`](F5_runs/f5_splits.json) |
+| Node encoders and graph network | [`model_node_encoder.py`](../../stage1BuildTransferGraph/dataset_embed/model_node_encoder.py), [`model.py`](../../stage2TrainGraphSAGE/model.py), [`edge_aware.py`](../../stage2TrainGraphSAGE/edge_aware.py) | final resolved configurations linked above |
+| Ranking, contrastive, and global objectives | [`stage2TrainGraphSAGE/losses.py`](../../stage2TrainGraphSAGE/losses.py), [`train.py`](../../stage2TrainGraphSAGE/train.py) | final run manifests and histories |
+| Held-out export and exact dense ranking | [`scale1m/export_rf.py`](../../scale1m/export_rf.py), [`scale/global_metrics.py`](../../scale/global_metrics.py) | [`dense eligible-query metrics`](X5_runs/X5_GD_ELIGIBILITY.json) |
+| Three-million-candidate baselines | [`scale1m/baselines.py`](../../scale1m/baselines.py), [`scale1m/eval_x6.py`](../../scale1m/eval_x6.py) | [`training-free baseline report`](X6_runs/X6_BASELINES.training_free.json) |
+| Split-safe task sidecar | [`stage3HNSW/build_prior_sidecar.py`](../../stage3HNSW/build_prior_sidecar.py), [`scale1m/eval_rf.py`](../../scale1m/eval_rf.py) | [`Y2 report`](Y2_runs/Y2_REPORT.json) |
+| HNSW top-1,000 and deterministic reranking | [`scale1m/eval_y2.py`](../../scale1m/eval_y2.py), [`scale/export_ours.py`](../../scale/export_ours.py) | [`Y2 report`](Y2_runs/Y2_REPORT.json) |
+| Final K=1,000 retrieval and timing | [`scale1m/eval_y4.py`](../../scale1m/eval_y4.py) | [`Y4 report`](Y4_runs/Y4_REPORT.json) |
 
-```bash
-# F1 / F1.5
-python -m scale1m.hf_crawl --sort createdAt --direction -1 --v2-fields --out <DATA>/candidates_full
-python -m scale1m.hf_crawl_datasets --out <DATA>/datasets_full
+## 8. Evidence-qualified limitations
 
-# F2–F5
-python -m scale1m.canonicalize_rf --candidates <DATA>/candidates_full --out <DATA>/rf
-python -m scale1m.merge_supervision --rf <DATA>/rf
-python -m scale1m.build_ladder_rf --rf <DATA>/rf --out <DATA>/ladder_rf
-python -m scale1m.embed_lake_rf --ladder <DATA>/ladder_rf/full_model_ids.parquet --out <DATA>/feats_rf
-python -m scale1m.build_graph_rf --ladder <DATA>/ladder_rf --feats <DATA>/feats_rf --rf <DATA>/rf --out <DATA>/graphs/hgraph_rf
+The following boundaries are properties of the present final artifact and should remain explicit in a paper derived from this report.
 
-# F6 baseline / X4 interventions
-python -m scale1m.train_rung --rung full --graph <DATA>/graphs/hgraph_rf --out <RUN> \
-  --seed 0 --epochs 25 --family-vocab <DATA>/feats_rf/family_vocab.csv \
-  --fanout --sparse-M --contrast-n-neg 256 --chunked-infer 50000 --skip-diagnostics
-# X4 GD additionally uses: --lake-gamma 0.5 --global-n-datasets 128
+1. **The result is metadata-and-history based.** `gold@10` tests the rank of an observed held-out best model; it does not execute the retrieved models on a new dataset and cannot assign correctness to unobserved query--model pairs.
+2. **Dataset-card coverage is sparse.** Only 3,928 of 18,729 nodes have a matched Hugging Face card; the remainder use name/task text. This affects both dataset features and `similar_to` topology.
+3. **Model size is sparse.** 71.929% of candidates use the unknown size bucket. Family coverage is broader, but 13.561% map to `Other`.
+4. **The dataset categorical tables are degenerate in this graph.** Task-type, class-count, and arity IDs each contain one vocabulary row. The dataset--task string still appears in node identity and text, but the three lookup tables add no between-node information.
+5. **The final graph encoder is topology-aware, not continuous-edge-weight-aware.** The code supports weighted relations, but the frozen final configuration sets the weighted relation list to empty.
+6. **Only three split seeds are measured.** Initialization is held fixed at seed 0, so the interval describes root-split variation rather than independent initialization uncertainty.
+7. **The archived HNSW measurements use held-out evaluation embeddings.** Three final-representation evaluation indexes are measured, but a separately archived full-message production index is not part of this evidence freeze. The algorithmic serving path is the same; the artifact distinction must remain explicit.
+8. **A never-before-seen dataset path is not validated for the final graph schema.** The final result is for materialized dataset--task nodes under root-aware held-out edges; it does not establish an inductive encoding path for a brand-new node.
+9. **Reproducibility depends on artifact hashes as well as Git.** The final runs record a repository head plus local changes. The as-run hashes for the principal training files match the current inspected versions, while graph, vocabulary, row maps, checkpoints, and exports are separately bound through manifests.
 
-# F7 / F8 / F9
-python -m scale1m.export_rf --run <RUN> --stage embed --out <EXPORT>
-python -m scale1m.export_rf --run <RUN> --stage metrics --out <EXPORT>
-python -m scale1m.export_rf --run <RUN> --stage index --out <EXPORT>
-python -m scale1m.export_rf --run <RUN> --stage curve --out <EXPORT>
-python -m scale1m.eval_rf --axis a --exports <EXPORT_ROOT> --run-fmt '<RUN_FMT>' --out <METRICS>
-python -m scale1m.eval_rf --axis b --exports <EXPORT_ROOT> --run-fmt '<RUN_FMT>' --out <METRICS>
-python -m scale1m.eval_rf --axis c --exports <EXPORT_ROOT> --run-fmt '<RUN_FMT>' --out <METRICS>
-python -m scale1m.eval_rf --axis d --exports <EXPORT_ROOT> --run-fmt '<RUN_FMT>' --out <METRICS>
-python -m scale1m.utility_scorecard --stage meta
-python -m scale1m.utility_scorecard --stage score
+## 9. Paper-ready method summary
 
-# X1–X5
-python -m scale1m.fast_lever_audit --stage all --seeds 0 1 2 --check
-python -m scale1m.eval_rf --axis p
-python -m scale1m.eval_rf --axis pinf
-python -m scale1m.eval_rf --axis s
-python -m scale1m.eval_rf --axis e --exports <EXPORT_ROOT> --run-fmt '<RUN_FMT>' --out <METRICS>
-```
+ModelLakeFishing first snapshots model and dataset metadata from a public model hub using cursor-resumable, hash-bound collectors. It canonicalizes repository identifiers, model family, parameter size, lineage, dataset--task identity, and heterogeneous evaluation records. Metric values are deduplicated, normalized within comparable groups, and oriented through an explicit higher/lower-is-better dictionary; observations whose direction is unknown remain graph evidence but are excluded from gold evaluation. Six evaluation sources are merged by deterministic source priority and capped by weight-stratified sampling, yielding 247,803 model--dataset supervision edges over 3,016,439 model nodes and 18,729 dataset--task nodes.
 
-The F3–F5 commands above are reproducible entry points reconstructed from the current `argparse` contracts; they are not represented as archived shell history. For F6 and X4, the exact as-run command is the `metadata.command` value in each run's `resolved_config.json`.[U/M]
+The resulting model--dataset evidence graph contains bidirectional performance edges, dataset-similarity edges, and bidirectional model-lineage edges. Model nodes combine a 64-dimensional hashed name vector, a 384-dimensional MiniLM descriptor, and learned size and family embeddings. Dataset nodes combine a 64-dimensional hashed name vector, a 384-dimensional card descriptor, ten observation statistics, and schema-level categorical embeddings. A one-layer relation-specific GraphSAGE encoder aggregates each relation with independent parameters and a learned relation gate, then projects model and dataset nodes through a shared head into a unit-normalized 128-dimensional retrieval space.
 
-## 17. Failure, repair, and negative-result ledger
+Training minimizes the sum of three score-aligned objectives: a within-dataset RankNet loss on oriented performance differences, a model--model contrastive loss whose positives are co-selected top performers, and a whole-lake logQ-corrected sampled-softmax loss. The full-lake proposal mixes a smoothed degree distribution and a uniform distribution over labeled models with equal weight; each global step samples 128 query datasets and 256 model negatives per query. Root-aware train/validation/test splits keep every dataset family on one side and remove held-out edges in both directions from message passing.
 
-| Stage | Failure or risk | Treatment | Evidentiary consequence |
-|---|---|---|---|
-| F0/F1 | API change and pagination omission | Descending `createdAt`, immutable `_id` cursor, zero-duplicate/order gates | Supports snapshot enumeration completeness; does not prove that every historical timestamp is a true publication date |
-| F1.5 | Basename guessing could inflate mapping coverage | Reject cross-owner and ambiguous matches; do not break ties by downloads | Trades coverage for conservative precision |
-| F2 | Mixing lower-is-better, unknown-direction, and reward metrics can reverse gold labels | Explicit semantics table and `gold_eligible` | Query policy is fully aligned only at X5 |
-| F2 | RL string-valued metrics cannot be parsed | No special parser was invented | RL not dominating the cap is evidence of limitation, not successful normalization |
-| F5 | Pandas interpreted literal `nan/null` family names as missing values | `keep_default_na=False` | Contract checks exposed a real row-order risk |
-| F6 | PYTHONPATH, sampling backend, plotting, and environment failures | Remote probes and script repair before formal runs | Failure logs are environment evidence, not model results |
-| F6 | Git binding is incomplete | File hashes plus checkpoint/run bindings | A commit hash alone cannot reproduce the run |
-| F7 | Full-graph forward propagation leaks held-out information | Held-out `z_*_eval` plus inequality gates | Full embeddings can inflate recovery by as much as 2.4× |
-| F8 | Per-query “multithreaded QPS” was unstable | Replaced with batch-query throughput | The first QPS result is discarded |
-| F8/X1 | CSLS appeared positive on seed 0 | Three-seed rerun produced a −41% mean and CSLS was removed | A material negative result that must remain visible |
-| X2 | Graph task id is constant zero | Sidecar reads the real task parquet | Repairs the service prior, not the training graph |
-| X3 | A nominal node-level protocol would leak through existing embeddings | Change only service-readable edges and label lower/upper-bound bias | The second protocol is not the primary protocol |
-| X4 | H200 queueing, staging/CUDA/`srun` failures, preemption, and TIMEOUT | Expanded GPU pool, probes, `X4_DIRECT=1`, same-RUN-ID resume | All nine runs remain valid; hardware heterogeneity must be disclosed |
-| X4 | No-op resume overwrote manifest cost fields | Separate full training segments from no-op gates; exclude starred costs | Prevents false 5.25 GB peak-memory claims |
-| X5 | Untrustworthy queries were mixed into the headline metric | Independent E axis reports old, eligible, and excluded sets | A metric-policy correction, not a model gain |
-
-## 18. Evidence gaps that remain open
-
-The following items must not be described as completed or proved:
-
-1. **X4 P/S/B/D axes have not been rerun.** There is no unified X4+task/sibling result, and F8 HNSW latency is not an X4 measurement.
-2. **X5 has not been integrated into export.** The A rows in `EXPORT_MANIFEST` and `F8_REPORT` retain the old query policy; X5 exists in separate JSON files.
-3. **X5 snapshot-only has not been recomputed.** The corrected policy is presently available only for the all-candidate condition.
-4. **The 500K training-scale point has not run.** Only a retrieval candidate-count curve with fixed representations exists.
-5. **F8 performance strata for query depth ≥3/5/10/20 and supervision source are absent from `F8_REPORT.json`.** F2 counts depth and source, but those counts are not stratified performance.
-6. **`displacement_quality` has not been redesigned.** Its current definition overlaps the training label.
-7. **F9's blinded third layer has not run.** The temporal protocol only froze the t0 list; no future-label outcome exists.
-8. **No real model execution has evaluated unlabeled recommendations.** Recorded-gold recovery cannot be restated as recommendation accuracy.
-9. **Discrete dataset task features are degenerate inside the training graph.** X2 repairs only the service sidecar; the F6/X4 encoder still sees a shared single-row bias.
-10. **Data quality remains incomplete.** Model size is missing for 71.929%; 79.03% of dataset nodes lack a real card; historical `curated` weights lack the original metric name; 12,680 historical models are absent from the snapshot.
-11. **Statistical power is limited.** There are only three split seeds. Even three same-direction GD results give a minimum simple sign-test probability of 1/8; causal support comes from the preregistered direction and magnitude gates, not a significance test.
-12. **The repository is not a clean experimental release.** HEAD predates most of the pipeline; later code and evidence are dirty or untracked. A read-only release/tag and full-file manifest are required before paper freeze.
-13. **The root test entry point has a namespace collision, but every suite was rerun independently.** In the repository `.venv` (Python 3.13.1, pytest 9.1.1), `scale1m/tests` produced 262 passed and `stage2TrainGraphSAGE/tests` 67 passed, exactly reproducing X5's archived 329; `stage1BuildTransferGraph/tests` added 8 passed and `stage3HNSW/tests` 7 passed, for 344 passed overall. Collecting once from the repository root raises 18 collection errors because several top-level directories expose a package named `tests`; stage1 also requires the repository parent on `PYTHONPATH`. These are collection/import conditions, not assertion failures. This audit also parsed 92 JSON files and AST-parsed 28 report-referenced/principal Python modules.[M/U]
-
-## 19. Documentation conflicts and evidentiary rulings
-
-| Conflict | Weaker evidence | Deciding evidence | Ruling used here |
-|---|---|---|---|
-| GraphSAGE layer count | `1Mplan.md` §2.1 and the stale `model.py` header say two layers | F6 and all nine X4 `resolved_config.num_layers=1` | **One layer as run** |
-| Snapshot-only candidate universe | Early planning language says 3,003,759 | F2/F3/F6/F7/X4 artifacts all bind N=3,016,439 | **Snapshot prefix plus 12,680 historical models** |
-| Number of historical-only models | Pre-merge estimate 16,713 | F2 merge reports `historical_only=12,680` | **12,680** |
-| True GD seed-1 continuation job | A stale process sentence pointed to 1522415 | Logs and correction: 1522429 executed epochs 10–24; 1522415 was a no-op | **1522429 trained; 1522415 gated only** |
-| Early GPU type on watgpu308 | Probe 1522377 received RTX A6000 | Both TIMEOUT segments lack a GPU name; another allocation under the same GRES, 1522415, records L40S | **GPU type unarchived** |
-| X4 sbatch SHA | Initial `a0b2ab…` | As-run file and `code_sha256.txt` contain `f1237a…` | **f1237a…** |
-| D seed-2 43,030 MiB | Operator observation | Delivery artifacts contain no nvidia-smi output | **Unarchived observation, not a reproducible measurement** |
-| F9 availability 0.7099 | Seed-0 point estimate | X2 three seeds are 0.7099/0.6273/0.5729 | Cite as a seed-0 point or include the range |
-| Current `gold@10` | F8 0.0598 or old-policy X4 0.1429 | X5 eligible-query result | **F6 0.0625; X4 GD 0.1427** |
-
-## 20. Claim–evidence library for the paper
-
-### 20.1 Statements currently supported
-
-1. **Scale and traceability.** “The system trains over 3,016,439 model nodes, 18,729 dataset nodes, and 247,803 supervision edges merged from six sources. Of the model nodes, 3,003,759 come from the 2026-08-18 HuggingFace snapshot and 12,680 are historical-only appendages.” Cite the F1/F2/F3 reports and ladder/graph bindings.
-2. **Current effectiveness.** “Under root-aware holdout, X5 `gold_eligible`, and the all-candidate protocol, X4 GD obtains three-seed `gold@10` values 0.1355/0.1417/0.1508, mean 0.1427, versus 0.0625 for F6—a 2.28× ratio.” Cite the X5 F6/GD JSON files.
-3. **Mechanism decomposition.** “G alone improves all three seeds to 0.1197; D alone reaches 0.0724 but changes direction by seed; GD reaches 0.1427. Proposal distribution is the primary contributor, while coverage supplies a conditional combined increment.” Cite seedwise X4 old-policy changes together with the X5 current summary; describe the mechanism as a contributor, not a uniquely proved cause.
-4. **Candidate-scale robustness.** “With F6 representations and supervision rows forcibly retained, expanding retrieval candidates from 100K to 3.016M changes `gold@10` only from 0.0706 to 0.0700.” Cite F8 retrieval curve and retain both conditions.
-5. **ANN system result.** “For F6 embeddings, full-lake HNSW obtains `recall@50=0.9989`; at `ef=50`, local p50 is 0.0211 ms, 2,714× faster than same-machine exhaustive search.” Cite F8 B and disclose local hardware and the F6 representation.
-6. **Collapse and mitigation.** “Under F6, cold/frozen embeddings are approximately 98.5% collapsed with effective dimension near 3. X4 GD raises frozen effective dimension to 8 and lowers cosine from 0.908 to 0.778, but remains far below 128 dimensions.” Cite F8 and X4 C.
-7. **Prior branch.** “On F6 representations, the root-aware task prior moves `gold@10` from 0.0598 to 0.3009 while median parameter count rises from 2.42B to 7.57B. In the second protocol, sibling+task(A) reaches 0.3536 and median parameters 12.11B.” Cite X2/X3 and keep this branch separate from X4.
-8. **Metric boundary.** “`gold@10` measures recovery of historical records, not recommendation accuracy; for F6 seed 0, 95.2% of top-ten query–model pairs have no record for the target query.” Cite F9.
-
-### 20.2 Statements not currently supported
-
-- “The final system's `gold@10` is 0.35/0.43.” Those values use F6 representations under a second protocol or an upper bound, not a unified X4+X5 system.
-- “X4 retains a 2,714× HNSW speedup.” X4 indexes and the B axis have not run.
-- “14.27% of unlabeled recommendations are truly best.” `gold@10` does not have this meaning.
-- “The system is a two-layer GraphSAGE.” The as-run system has one layer.
-- “All X4 runs used the same L40S/A6000/H200 GPU.” Hardware was heterogeneous, and two early segments have no archived type.
-- “D is independently effective.” Its three-seed direction is inconsistent.
-- “Representation collapse is solved.” Effective dimension is still only about 8/128.
-- “F8 completed performance stratification by source and query depth.” Those tables were not archived.
-
-## 21. Closeout priorities that preserve the nine X4 runs
-
-If the paper evidence freeze permits artifact computation but no retraining, the priority order is:
-
-1. Build split-specific and full sidecars for X4 GD/G/D, rerun P/S/E and the matched second-layer utility table, and retain the F6 branch as the control.
-2. Integrate X5 eligibility into export metrics as a new version rather than overwriting the old `EXPORT_MANIFEST`; add snapshot-only or explicitly retire that column.
-3. Use the existing candidate/source fields to compute the F8 depth ≥3/5/10/20 and source-stratified A tables. This is evaluation recomputation, not training.
-4. If the paper needs a system-level claim for X4, build a full-lake GD HNSW index and rerun B/D under the same-machine F8 protocol; do not relabel F8 measurements.
-5. Create a clean release commit/tag, lock the environment, and emit a complete SHA manifest; preserve a tarball of the current dirty tree as transitional evidence.
-6. If new GPU experiments become permissible, consider more seeds, a D≈44 alignment arm, and a genuine node-level retrain. These would be new experiments and must not rewrite the existing record.
-
-This report closes the evidence chain from raw API enumeration through supervision normalization, features and graph construction, training, held-out export, ANN evaluation, utility interpretation, and X1–X5 diagnosis/intervention/query-policy correction. All headline conclusions use the current X-series state; the F series is retained only as a traceable baseline.
+At retrieval time, inner-product HNSW retrieves 1,000 dense candidates and a deterministic, split-safe task prior reranks only that pool using $r=(\cos+1)/2+p_t(m)$. Across the three root split seeds, the final `gold@10` values are 0.3279, 0.3388, and 0.2427, with a mean of 0.3031; exact full-pool fusion reaches 0.3216 but requires all-model dense scoring and all-model prior fusion. The measured HNSW recalls at 1,000 are all above 0.99, and the latest repeated HNSW-plus-reranking p50 / p95 are 0.694 / 1.223 ms from precomputed query embeddings.
