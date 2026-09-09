@@ -2,7 +2,7 @@
   "schema_version": 1,
   "bundles": {
     "inputs-3m-v1": {
-      "description": "Frozen 2026-08-18 Hub snapshots and five historical evidence graphs required for a full rebuild.",
+      "description": "Frozen metadata snapshots and source evidence required for a full rebuild.",
       "files": [
         {
           "root": "data",
@@ -16,66 +16,40 @@
           "target": "data1m/datasets_full",
           "include": ["CURSOR.json", "PROVENANCE.json", "SHARDS.json", "hf_models_*.jsonl.gz"]
         },
-        {"root": "repo", "source": "stage1BuildTransferGraph/hgraph_ml_v2.pt", "target": "data1m/historical_graphs/hgraph_ml_v2.pt"},
-        {"root": "repo", "source": "stage1BuildTransferGraph/hgraph_d05_nocontent.pt", "target": "data1m/historical_graphs/hgraph_d05_nocontent.pt"},
-        {"root": "repo", "source": "stage1BuildTransferGraph/hgraph_A_ctrl_2000m_xm0_xd0.pt", "target": "data1m/historical_graphs/hgraph_A_ctrl_2000m_xm0_xd0.pt"},
-        {"root": "repo", "source": "stage1BuildTransferGraph/hgraph_hf_effective_2000m_v2_xm0_xd0.pt", "target": "data1m/historical_graphs/hgraph_hf_effective_2000m_v2_xm0_xd0.pt"},
-        {"root": "repo", "source": "stage1BuildTransferGraph/hgraph_diverse_xd0.pt", "target": "data1m/historical_graphs/hgraph_diverse_xd0.pt"}
+        {"root": "repo", "source": "stage1BuildTransferGraph/hgraph_ml_v2.pt", "target": "data1m/source_evidence/hgraph_ml_v2.pt"},
+        {"root": "repo", "source": "stage1BuildTransferGraph/hgraph_d05_nocontent.pt", "target": "data1m/source_evidence/hgraph_d05_nocontent.pt"},
+        {"root": "repo", "source": "stage1BuildTransferGraph/hgraph_A_ctrl_2000m_xm0_xd0.pt", "target": "data1m/source_evidence/hgraph_A_ctrl_2000m_xm0_xd0.pt"},
+        {"root": "repo", "source": "stage1BuildTransferGraph/hgraph_hf_effective_2000m_v2_xm0_xd0.pt", "target": "data1m/source_evidence/hgraph_hf_effective_2000m_v2_xm0_xd0.pt"},
+        {"root": "repo", "source": "stage1BuildTransferGraph/hgraph_diverse_xd0.pt", "target": "data1m/source_evidence/hgraph_diverse_xd0.pt"}
       ]
     },
-    "eval-3m-v1": {
-      "description": "Frozen X4-GD evaluation embeddings, row maps, gold candidates, split-safe priors, and HNSW indexes for exact Y2/Y4 replay.",
+    "paper-3m-v1": {
+      "description": "Frozen row maps, held-out query embeddings, gold labels, split-safe task priors, and HNSW indexes needed to reproduce the final paper result.",
       "files": [
-        {"root": "data", "source": "data1m/exports_x4/X4GD_full_s0_e25/model_ids.parquet", "target": "data1m/exports_x4/_shared/model_ids.parquet"},
-        {"root": "data", "source": "data1m/exports_x4/X4GD_full_s0_e25/dataset_ids.parquet", "target": "data1m/exports_x4/_shared/dataset_ids.parquet"},
-        {"root": "data", "source": "data1m/rf/canon/dataset_nodes_merged.parquet", "target": "data1m/rf/canon/dataset_nodes_merged.parquet"},
-        {"root": "data", "source": "data1m/exports_x4/X4GD_full_s0_e25/EXPORT_MANIFEST.json", "target": "data1m/exports_x4/X4GD_full_s0_e25/EXPORT_MANIFEST.json"},
-        {"root": "data", "source": "data1m/exports_x4/X4GD_full_s0_e25/gold_cands.npz", "target": "data1m/exports_x4/X4GD_full_s0_e25/gold_cands.npz"},
-        {"root": "data", "source": "data1m/exports_x4/X4GD_full_s0_e25/z_m_eval.npy", "target": "data1m/exports_x4/X4GD_full_s0_e25/z_m_eval.npy"},
-        {"root": "data", "source": "data1m/exports_x4/X4GD_full_s0_e25/z_d_eval.npy", "target": "data1m/exports_x4/X4GD_full_s0_e25/z_d_eval.npy"},
-        {"root": "data", "source": "data1m/exports_x4/X4GD_full_s0_e25/hnsw_y2_eval.bin", "target": "data1m/exports_x4/X4GD_full_s0_e25/hnsw_y2_eval.bin"},
-        {"root": "data", "source": "data1m/exports_rf/RF_full_s0_e25/prior_sidecar_s0.npz", "target": "data1m/exports_x4/X4GD_full_s0_e25/prior_sidecar_s0.npz"},
-        {"root": "data", "source": "data1m/exports_rf/RF_full_s0_e25/prior_sidecar_s0_meta.json", "target": "data1m/exports_x4/X4GD_full_s0_e25/prior_sidecar_s0_meta.json"},
-        {"root": "data", "source": "data1m/exports_x4/X4GD_full_s1_e25/EXPORT_MANIFEST.json", "target": "data1m/exports_x4/X4GD_full_s1_e25/EXPORT_MANIFEST.json"},
-        {"root": "data", "source": "data1m/exports_x4/X4GD_full_s1_e25/gold_cands.npz", "target": "data1m/exports_x4/X4GD_full_s1_e25/gold_cands.npz"},
-        {"root": "data", "source": "data1m/exports_x4/X4GD_full_s1_e25/z_m_eval.npy", "target": "data1m/exports_x4/X4GD_full_s1_e25/z_m_eval.npy"},
-        {"root": "data", "source": "data1m/exports_x4/X4GD_full_s1_e25/z_d_eval.npy", "target": "data1m/exports_x4/X4GD_full_s1_e25/z_d_eval.npy"},
-        {"root": "data", "source": "data1m/exports_x4/X4GD_full_s1_e25/hnsw_y2_eval.bin", "target": "data1m/exports_x4/X4GD_full_s1_e25/hnsw_y2_eval.bin"},
-        {"root": "data", "source": "data1m/exports_rf/RF_full_s1_e25/prior_sidecar_s1.npz", "target": "data1m/exports_x4/X4GD_full_s1_e25/prior_sidecar_s1.npz"},
-        {"root": "data", "source": "data1m/exports_rf/RF_full_s1_e25/prior_sidecar_s1_meta.json", "target": "data1m/exports_x4/X4GD_full_s1_e25/prior_sidecar_s1_meta.json"},
-        {"root": "data", "source": "data1m/exports_x4/X4GD_full_s2_e25/EXPORT_MANIFEST.json", "target": "data1m/exports_x4/X4GD_full_s2_e25/EXPORT_MANIFEST.json"},
-        {"root": "data", "source": "data1m/exports_x4/X4GD_full_s2_e25/gold_cands.npz", "target": "data1m/exports_x4/X4GD_full_s2_e25/gold_cands.npz"},
-        {"root": "data", "source": "data1m/exports_x4/X4GD_full_s2_e25/z_m_eval.npy", "target": "data1m/exports_x4/X4GD_full_s2_e25/z_m_eval.npy"},
-        {"root": "data", "source": "data1m/exports_x4/X4GD_full_s2_e25/z_d_eval.npy", "target": "data1m/exports_x4/X4GD_full_s2_e25/z_d_eval.npy"},
-        {"root": "data", "source": "data1m/exports_x4/X4GD_full_s2_e25/hnsw_y2_eval.bin", "target": "data1m/exports_x4/X4GD_full_s2_e25/hnsw_y2_eval.bin"},
-        {"root": "data", "source": "data1m/exports_rf/RF_full_s2_e25/prior_sidecar_s2.npz", "target": "data1m/exports_x4/X4GD_full_s2_e25/prior_sidecar_s2.npz"},
-        {"root": "data", "source": "data1m/exports_rf/RF_full_s2_e25/prior_sidecar_s2_meta.json", "target": "data1m/exports_x4/X4GD_full_s2_e25/prior_sidecar_s2_meta.json"},
-        {"root": "data", "source": "data1m/metrics_y2/exact_pool_s0.npz", "target": "data1m/frozen_replay/y2/exact_pool_s0.npz"},
-        {"root": "data", "source": "data1m/metrics_y2/exact_pool_s1.npz", "target": "data1m/frozen_replay/y2/exact_pool_s1.npz"},
-        {"root": "data", "source": "data1m/metrics_y2/exact_pool_s2.npz", "target": "data1m/frozen_replay/y2/exact_pool_s2.npz"},
-        {"root": "data", "source": "data1m/metrics_y4/exact_pool_top10000_s0.npz", "target": "data1m/frozen_replay/y4/exact_pool_top10000_s0.npz"},
-        {"root": "data", "source": "data1m/metrics_y4/exact_pool_top10000_s1.npz", "target": "data1m/frozen_replay/y4/exact_pool_top10000_s1.npz"},
-        {"root": "data", "source": "data1m/metrics_y4/exact_pool_top10000_s2.npz", "target": "data1m/frozen_replay/y4/exact_pool_top10000_s2.npz"}
+        {"root": "data", "source": "data1m/exports_x4/X4GD_full_s0_e25/model_ids.parquet", "target": "data1m/final_system/seed_0/model_ids.parquet"},
+        {"root": "data", "source": "data1m/exports_x4/X4GD_full_s0_e25/dataset_ids.parquet", "target": "data1m/final_system/seed_0/dataset_ids.parquet"},
+        {"root": "data", "source": "data1m/rf/canon/dataset_nodes_merged.parquet", "target": "data1m/final_system/dataset_nodes.parquet"},
+        {"root": "data", "source": "data1m/exports_x4/X4GD_full_s0_e25/gold_cands.npz", "target": "data1m/final_system/seed_0/gold_candidates.npz"},
+        {"root": "data", "source": "data1m/exports_x4/X4GD_full_s0_e25/z_d_eval.npy", "target": "data1m/final_system/seed_0/query_embeddings.npy"},
+        {"root": "data", "source": "data1m/exports_x4/X4GD_full_s0_e25/hnsw_y2_eval.bin", "target": "data1m/final_system/seed_0/hnsw_top1000.bin"},
+        {"root": "data", "source": "data1m/exports_rf/RF_full_s0_e25/prior_sidecar_s0.npz", "target": "data1m/final_system/seed_0/task_prior.npz"},
+        {"root": "data", "source": "data1m/exports_rf/RF_full_s0_e25/prior_sidecar_s0_meta.json", "target": "data1m/final_system/seed_0/task_prior_meta.json"},
+        {"root": "data", "source": "data1m/exports_x4/X4GD_full_s1_e25/gold_cands.npz", "target": "data1m/final_system/seed_1/gold_candidates.npz"},
+        {"root": "data", "source": "data1m/exports_x4/X4GD_full_s1_e25/z_d_eval.npy", "target": "data1m/final_system/seed_1/query_embeddings.npy"},
+        {"root": "data", "source": "data1m/exports_x4/X4GD_full_s1_e25/hnsw_y2_eval.bin", "target": "data1m/final_system/seed_1/hnsw_top1000.bin"},
+        {"root": "data", "source": "data1m/exports_rf/RF_full_s1_e25/prior_sidecar_s1.npz", "target": "data1m/final_system/seed_1/task_prior.npz"},
+        {"root": "data", "source": "data1m/exports_rf/RF_full_s1_e25/prior_sidecar_s1_meta.json", "target": "data1m/final_system/seed_1/task_prior_meta.json"},
+        {"root": "data", "source": "data1m/exports_x4/X4GD_full_s2_e25/gold_cands.npz", "target": "data1m/final_system/seed_2/gold_candidates.npz"},
+        {"root": "data", "source": "data1m/exports_x4/X4GD_full_s2_e25/z_d_eval.npy", "target": "data1m/final_system/seed_2/query_embeddings.npy"},
+        {"root": "data", "source": "data1m/exports_x4/X4GD_full_s2_e25/hnsw_y2_eval.bin", "target": "data1m/final_system/seed_2/hnsw_top1000.bin"},
+        {"root": "data", "source": "data1m/exports_rf/RF_full_s2_e25/prior_sidecar_s2.npz", "target": "data1m/final_system/seed_2/task_prior.npz"},
+        {"root": "data", "source": "data1m/exports_rf/RF_full_s2_e25/prior_sidecar_s2_meta.json", "target": "data1m/final_system/seed_2/task_prior_meta.json"}
       ],
       "copies": [
-        {"from": "data1m/exports_x4/_shared/model_ids.parquet", "to": "data1m/exports_x4/X4GD_full_s0_e25/model_ids.parquet"},
-        {"from": "data1m/exports_x4/_shared/model_ids.parquet", "to": "data1m/exports_x4/X4GD_full_s1_e25/model_ids.parquet"},
-        {"from": "data1m/exports_x4/_shared/model_ids.parquet", "to": "data1m/exports_x4/X4GD_full_s2_e25/model_ids.parquet"},
-        {"from": "data1m/exports_x4/_shared/dataset_ids.parquet", "to": "data1m/exports_x4/X4GD_full_s0_e25/dataset_ids.parquet"},
-        {"from": "data1m/exports_x4/_shared/dataset_ids.parquet", "to": "data1m/exports_x4/X4GD_full_s1_e25/dataset_ids.parquet"},
-        {"from": "data1m/exports_x4/_shared/dataset_ids.parquet", "to": "data1m/exports_x4/X4GD_full_s2_e25/dataset_ids.parquet"}
-      ]
-    },
-    "graph-3m-v1": {
-      "description": "Frozen 3M graph store and metadata sidecars required for graph verification and all X6 training-free baselines.",
-      "files": [
-        {"root": "data", "source": "data1m/graphs/hgraph_rf", "target": "data1m/graphs/hgraph_rf"},
-        {"root": "data", "source": "data1m/baseline_rf/baseline_attrs.parquet", "target": "data1m/baseline_rf/baseline_attrs.parquet"},
-        {"root": "data", "source": "data1m/baseline_rf/SIDECAR_REPORT.json", "target": "data1m/baseline_rf/SIDECAR_REPORT.json"},
-        {"root": "data", "source": "data1m/ladder_rf/full_model_ids.parquet", "target": "data1m/ladder_rf/full_model_ids.parquet"},
-        {"root": "data", "source": "data1m/ladder_rf/full_dataset_ids.parquet", "target": "data1m/ladder_rf/full_dataset_ids.parquet"},
-        {"root": "data", "source": "data1m/ladder_rf/LADDER_REPORT.json", "target": "data1m/ladder_rf/LADDER_REPORT.json"},
-        {"root": "data", "source": "data1m/feats_rf/family_vocab.csv", "target": "data1m/feats_rf/family_vocab.csv"}
+        {"from": "data1m/final_system/seed_0/model_ids.parquet", "to": "data1m/final_system/seed_1/model_ids.parquet"},
+        {"from": "data1m/final_system/seed_0/model_ids.parquet", "to": "data1m/final_system/seed_2/model_ids.parquet"},
+        {"from": "data1m/final_system/seed_0/dataset_ids.parquet", "to": "data1m/final_system/seed_1/dataset_ids.parquet"},
+        {"from": "data1m/final_system/seed_0/dataset_ids.parquet", "to": "data1m/final_system/seed_2/dataset_ids.parquet"}
       ]
     }
   }

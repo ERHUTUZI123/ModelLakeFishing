@@ -1,0 +1,5 @@
+# Frozen final-result evaluator; canonical interpreter: CPython 3.11.x.
+numpy==2.4.6
+pandas==3.0.3
+pyarrow==24.0.0
+hnswlib==0.8.0

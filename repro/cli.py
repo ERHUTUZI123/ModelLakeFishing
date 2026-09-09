@@ -1,4 +1,4 @@
-"""One entry point for downloading, rebuilding, replaying, and verifying.
+"""One entry point for reproducing the final paper result.
 
 Public commands are exposed through ``python -m scale1m.reproduce`` so users
 do not need to reconstruct the experiment DAG from research notes.
@@ -27,9 +27,8 @@ DEFAULT_DATA_ROOT = REPO_ROOT / "data"
 DEFAULT_RUNS_ROOT = REPO_ROOT / "runs"
 BUNDLES_BY_PROFILE = {
     "inputs": ("inputs-3m-v1",),
-    "replay": ("eval-3m-v1", "graph-3m-v1"),
+    "final": ("paper-3m-v1",),
     "full": ("inputs-3m-v1",),
-    "all": ("inputs-3m-v1", "eval-3m-v1", "graph-3m-v1"),
 }
 
 
@@ -121,17 +120,28 @@ def doctor(profile: str, data_root: Path, runs_root: Path) -> dict:
         "torch": torch_info,
         "torch_geometric": pyg_info,
         "requirements": {
-            "archive": {"python": ">=3.9", "large_download": False},
-            "replay": {"python": "3.11", "free_disk_gib": 30,
-                       "cuda": "recommended for exact dense controls"},
+            "final": {"python": "3.11", "free_disk_gib": 24,
+                      "cuda": False},
             "full": {"python": "3.11", "ram_gib": 64,
                      "recommended_ram_gib": 96, "free_disk_gib": 120,
                      "gpu_gib": 48, "pyg_lib": True},
         },
     }
     failures = []
-    if profile in ("replay", "full") and sys.version_info[:2] != (3, 11):
+    required_packages = {
+        "final": ("numpy", "pandas", "pyarrow", "hnswlib"),
+        "full": ("numpy", "pandas", "pyarrow", "torch", "torch-geometric",
+                 "pyg-lib", "hnswlib"),
+    }[profile]
+    missing_packages = [name for name in required_packages
+                        if packages.get(name) is None]
+    if missing_packages:
+        failures.append("missing required packages: %s" %
+                        ", ".join(missing_packages))
+    if profile in ("final", "full") and sys.version_info[:2] != (3, 11):
         failures.append("Python 3.11 is required for the supported environment")
+    if platform.architecture()[0] != "64bit":
+        failures.append("a 64-bit Python interpreter is required")
     if profile == "full":
         if report["ram_gib"] is not None and report["ram_gib"] < 64:
             failures.append("full rebuild requires at least 64 GiB RAM")
@@ -143,8 +153,8 @@ def doctor(profile: str, data_root: Path, runs_root: Path) -> dict:
             failures.append("full rebuild requires an approximately 48 GiB GPU")
         if not pyg_info.get("with_pyg_lib"):
             failures.append("full rebuild requires the pyg-lib sampling backend")
-    if profile == "replay" and report["free_disk_gib"] < 30:
-        failures.append("artifact replay requires at least 30 GiB free disk")
+    if profile == "final" and report["free_disk_gib"] < 24:
+        failures.append("final-result reproduction requires at least 24 GiB free disk")
     report["failures"] = failures
     report["ok"] = not failures
     return report
@@ -210,94 +220,23 @@ def _module(*args: str) -> tuple[str, ...]:
     return (sys.executable, "-m", *args)
 
 
-def _evaluation_steps(data_root: Path, device: str, *, full: bool) -> list[Step]:
+def _final_steps(data_root: Path, *, build_index: bool) -> list[Step]:
     d = data_root / "data1m"
-    exports = d / "exports_x4"
-    graph = d / "graphs" / "hgraph_rf"
-    ladder = d / "ladder_rf" / "full_model_ids.parquet"
-    nodes = d / "rf" / "canon" / "dataset_nodes_merged.parquet"
-    x5 = d / "reproduced" / "x5"
-    x6 = d / "reproduced" / "x6"
-    y2 = d / "reproduced" / "y2"
-    y4 = d / "reproduced" / "y4"
-    sidecar_exports = exports
-    y2_exact_stage = "exact" if full else "replay-exact"
-    y4_exact_stage = "exact" if full else "replay-exact"
-    y2_pool_args = (() if full else (
-        "--frozen-pools", os.fspath(d / "frozen_replay" / "y2")))
-    y4_pool_args = (() if full else (
-        "--frozen-pools", os.fspath(d / "frozen_replay" / "y4")))
-    x5_argv = (_module(
-        "scale1m.eval_rf", "--axis", "e", "--exports", os.fspath(exports),
-        "--run-fmt", "X4GD_full_s%d_e25", "--graph", os.fspath(graph),
-        "--ladder", os.fspath(ladder), "--dataset-nodes", os.fspath(nodes),
-        "--out", os.fspath(x5), "--device", device)
-        if full else _module(
-            "scale1m.replay_x5", "--exports", os.fspath(exports),
-            "--run-fmt", "X4GD_full_s%d_e25", "--dataset-nodes",
-            os.fspath(nodes), "--frozen-pools",
-            os.fspath(d / "frozen_replay" / "y2"), "--out", os.fspath(x5)))
-    steps = [
-        Step("x5", x5_argv,
-             _complete_json(x5 / "X5_QUERY_ELIGIBILITY.json")),
-        Step("x6", _module("scale1m.eval_x6", "--stage", "training-free",
-             "--exports", os.fspath(exports), "--dataset-nodes", os.fspath(nodes),
-             "--baseline-attrs", os.fspath(d / "baseline_rf" /
-                                            "baseline_attrs.parquet"),
-             "--ladder", os.fspath(ladder), "--graph", os.fspath(graph),
-             "--out", os.fspath(x6), "--device", device),
-             _complete_json(x6 / "X6_BASELINES.json",
-                            stage="training-free-complete", all_gates=True)),
-        Step("y2-exact", _module("scale1m.eval_y2", "--stage", y2_exact_stage,
-             "--exports", os.fspath(exports), "--sidecar-exports",
-             os.fspath(sidecar_exports), "--sidecar-run-fmt",
-             "X4GD_full_s%d_e25", "--dataset-nodes", os.fspath(nodes),
-             "--out", os.fspath(y2), "--device", device, *y2_pool_args),
-             _complete_json(y2 / "Y2_REPORT.json",
-                            required=(("summary", "G_exact1000_task"),))),
-        Step("y2-hnsw", _module("scale1m.eval_y2", "--stage", "hnsw",
-             "--exports", os.fspath(exports), "--sidecar-exports",
-             os.fspath(sidecar_exports), "--sidecar-run-fmt",
-             "X4GD_full_s%d_e25", "--dataset-nodes", os.fspath(nodes),
-             "--out", os.fspath(y2), "--device", device),
-             _complete_json(y2 / "Y2_REPORT.json", stage="complete",
-                            required=(("hnsw", "2"),))),
-        Step("y2-finalize", _module("scale1m.eval_y2", "--stage", "finalize",
-             "--exports", os.fspath(exports), "--sidecar-exports",
-             os.fspath(sidecar_exports), "--sidecar-run-fmt",
-             "X4GD_full_s%d_e25", "--dataset-nodes", os.fspath(nodes),
-             "--out", os.fspath(y2), "--device", device),
-             _complete_json(y2 / "Y2_REPORT.json", stage="complete", all_gates=True,
-                            required=(("hnsw_summary", "gold@10"),))),
-        Step("y4-exact", _module("scale1m.eval_y4", "--stage", y4_exact_stage,
-             "--exports", os.fspath(exports), "--sidecar-exports",
-             os.fspath(sidecar_exports), "--sidecar-run-fmt",
-             "X4GD_full_s%d_e25", "--dataset-nodes", os.fspath(nodes),
-             "--y2-out", os.fspath(y2), "--y2-report",
-             os.fspath(y2 / "Y2_REPORT.json"), "--out", os.fspath(y4),
-             "--device", device, *y4_pool_args),
-             _complete_json(y4 / "Y4_REPORT.json",
-                            required=(("exact", "2"),))),
-        Step("y4-hnsw", _module("scale1m.eval_y4", "--stage", "hnsw",
-             "--exports", os.fspath(exports), "--sidecar-exports",
-             os.fspath(sidecar_exports), "--sidecar-run-fmt",
-             "X4GD_full_s%d_e25", "--dataset-nodes", os.fspath(nodes),
-             "--y2-out", os.fspath(y2), "--y2-report",
-             os.fspath(y2 / "Y2_REPORT.json"), "--out", os.fspath(y4),
-             "--device", device),
-             _complete_json(y4 / "Y4_REPORT.json",
-                            required=(("hnsw", "2"),))),
-        Step("y4-finalize", _module("scale1m.eval_y4", "--stage", "finalize",
-             "--exports", os.fspath(exports), "--sidecar-exports",
-             os.fspath(sidecar_exports), "--sidecar-run-fmt",
-             "X4GD_full_s%d_e25", "--dataset-nodes", os.fspath(nodes),
-             "--y2-out", os.fspath(y2), "--y2-report",
-             os.fspath(y2 / "Y2_REPORT.json"), "--out", os.fspath(y4),
-             "--docs-out", os.fspath(y4 / "archived_copy"), "--device", device),
-             _complete_json(y4 / "Y4_REPORT.json", stage="complete", all_gates=True,
-                            required=(("curve", "1000"),))),
-    ]
-    return steps
+    artifacts = d / "final_system"
+    output = d / "reproduced" / "final"
+    argv = list(_module(
+        "scale1m.eval_final", "--artifacts", os.fspath(artifacts),
+        "--out", os.fspath(output)))
+    if build_index:
+        argv.extend(("--dataset-nodes", os.fspath(
+            d / "rf" / "canon" / "dataset_nodes_merged.parquet"),
+                     "--build-missing-index"))
+    return [Step(
+        "final-result", tuple(argv),
+        _complete_json(
+            output / "FINAL_RESULTS.json",
+            required=(("summary", "gold@10"),
+                      ("integrity", "split_safe_task_prior"))))]
 
 
 def _full_steps(data_root: Path, runs_root: Path, device: str) -> list[Step]:
@@ -313,7 +252,7 @@ def _full_steps(data_root: Path, runs_root: Path, device: str) -> list[Step]:
              _complete_json(rf / "F2_REPORT.json")),
         Step("merge", _module("scale1m.merge_supervision", "--rf", os.fspath(rf),
              "--candidates", os.fspath(candidates), "--source-dir",
-             os.fspath(d / "historical_graphs")),
+             os.fspath(d / "source_evidence")),
              _complete_json(rf / "F2_MERGE_REPORT.json")),
         Step("dataset-cards", _module("scale1m.match_dataset_cards", "--nodes",
              os.fspath(nodes), "--datasets", os.fspath(d / "datasets_full"),
@@ -333,15 +272,10 @@ def _full_steps(data_root: Path, runs_root: Path, device: str) -> list[Step]:
         Step("split-audit", _module("scale1m.audit_rf_splits", "--graph",
              os.fspath(graph), "--out", os.fspath(graph / "f5_splits.json")),
              _complete_json(graph / "f5_splits.json")),
-        Step("baseline-sidecar", _module("scale1m.baseline_sidecar", "--candidates",
-             os.fspath(candidates), "--ladder", os.fspath(ladder /
-                                                          "full_model_ids.parquet"),
-             "--out", os.fspath(d / "baseline_rf")),
-             _complete_json(d / "baseline_rf" / "SIDECAR_REPORT.json")),
     ]
     for seed in range(3):
-        run = runs_root / ("X4GD_full_s%d_e25" % seed)
-        export = d / "exports_x4" / ("X4GD_full_s%d_e25" % seed)
+        run = runs_root / ("paper_seed_%d" % seed)
+        export = d / "final_system" / ("seed_%d" % seed)
         steps.append(Step(
             "train-s%d" % seed,
             _module("scale1m.train_rung", "--rung", "full", "--graph",
@@ -361,21 +295,13 @@ def _full_steps(data_root: Path, runs_root: Path, device: str) -> list[Step]:
             _complete_json(export / "EXPORT_MANIFEST.json",
                            required=(("stages", "embed"),))))
         steps.append(Step(
-            "export-metrics-s%d" % seed,
-            _module("scale1m.export_rf", "--run", os.fspath(run), "--stage", "metrics",
-                    "--graph", os.fspath(graph), "--ladder",
-                    os.fspath(ladder / "full_model_ids.parquet"), "--out",
-                    os.fspath(export), "--device", device),
-            _complete_json(export / "EXPORT_MANIFEST.json",
-                           required=(("stages", "metrics"),))))
-        steps.append(Step(
             "prior-s%d" % seed,
             _module("stage3HNSW.build_prior_sidecar", "--graph-store",
                     os.fspath(graph), "--export", os.fspath(export), "--split-seed",
                     str(seed), "--task-nodes", os.fspath(nodes), "--out",
-                    os.fspath(export / ("prior_sidecar_s%d.npz" % seed))),
-            lambda p=export / ("prior_sidecar_s%d.npz" % seed): p.is_file()))
-    return steps + _evaluation_steps(data_root, device, full=True)
+                    os.fspath(export / "task_prior.npz")),
+            lambda p=export / "task_prior.npz": p.is_file()))
+    return steps + _final_steps(data_root, build_index=True)
 
 
 def _matches(name: str, selected: set[str]) -> bool:
@@ -386,13 +312,13 @@ def _matches(name: str, selected: set[str]) -> bool:
 
 def run(profile: str, data_root: Path, runs_root: Path, device: str,
         selected: set[str], dry_run: bool, force: bool) -> int:
-    if profile == "replay":
+    if profile == "final":
         if not dry_run:
-            input_checks = verify_assets("replay", data_root)
+            input_checks = verify_assets("final", data_root)
             if any(not row["ok"] for row in input_checks):
                 print(json.dumps(input_checks, indent=2), file=sys.stderr)
-                raise SystemExit("replay bundles are missing or corrupt; run download first")
-        steps = _evaluation_steps(data_root, device, full=False)
+                raise SystemExit("final-result bundle is missing or corrupt; run download first")
+        steps = _final_steps(data_root, build_index=False)
     elif profile == "full":
         if not dry_run:
             input_checks = verify_assets("full", data_root)
@@ -442,7 +368,7 @@ def run(profile: str, data_root: Path, runs_root: Path, device: str,
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="python -m scale1m.reproduce",
-        description="Reproduce the fixed 3M ModelLakeFishing evidence chain")
+        description="Reproduce the final 3M ModelLakeFishing paper result")
     parser.add_argument("--data-root", default=None,
                         help="default: $MLF_DATA_DIR or <repository>/data")
     parser.add_argument("--runs-root", default=None,
@@ -450,8 +376,7 @@ def _parser() -> argparse.ArgumentParser:
     sub = parser.add_subparsers(dest="command", required=True)
 
     p = sub.add_parser("doctor", help="inspect hardware and dependencies")
-    p.add_argument("--profile", choices=("archive", "replay", "full"),
-                   default="archive")
+    p.add_argument("--profile", choices=("final", "full"), default="final")
 
     p = sub.add_parser("download", help="download and hash-check frozen bundles")
     p.add_argument("--profile", choices=tuple(BUNDLES_BY_PROFILE), required=True)
@@ -463,16 +388,16 @@ def _parser() -> argparse.ArgumentParser:
     p.add_argument("--force", action="store_true",
                    help="replace only nonmatching files within declared bundle paths")
 
-    p = sub.add_parser("run", help="execute the replay or full-rebuild DAG")
-    p.add_argument("--profile", choices=("replay", "full"), required=True)
+    p = sub.add_parser("run", help="execute the final evaluation or full rebuild")
+    p.add_argument("--profile", choices=("final", "full"), required=True)
     p.add_argument("--device", default="cuda")
     p.add_argument("--only", nargs="*", default=[],
-                   help="step/group names, e.g. x6 y2 y4 or train-s0")
+                   help="optional step names, e.g. final-result or train-s0")
     p.add_argument("--dry-run", action="store_true")
     p.add_argument("--force", action="store_true")
 
     p = sub.add_parser("verify", help="validate reports against registered results")
-    p.add_argument("--profile", choices=("archive", "inputs", "replay", "full"),
+    p.add_argument("--profile", choices=("final", "inputs", "full"),
                    required=True)
     p.add_argument("--output", default=None,
                    help="default: <data-root>/reproduction_report.<profile>.json")

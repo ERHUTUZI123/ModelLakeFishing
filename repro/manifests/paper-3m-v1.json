@@ -1,0 +1,115 @@
+{
+  "bundle": "paper-3m-v1",
+  "copies": [
+    {
+      "from": "data1m/final_system/seed_0/model_ids.parquet",
+      "to": "data1m/final_system/seed_1/model_ids.parquet"
+    },
+    {
+      "from": "data1m/final_system/seed_0/model_ids.parquet",
+      "to": "data1m/final_system/seed_2/model_ids.parquet"
+    },
+    {
+      "from": "data1m/final_system/seed_0/dataset_ids.parquet",
+      "to": "data1m/final_system/seed_1/dataset_ids.parquet"
+    },
+    {
+      "from": "data1m/final_system/seed_0/dataset_ids.parquet",
+      "to": "data1m/final_system/seed_2/dataset_ids.parquet"
+    }
+  ],
+  "files": [
+    {
+      "bytes": 538554,
+      "path": "data1m/final_system/dataset_nodes.parquet",
+      "sha256": "763201d8e6e103a664b658ec7148b657d28f1d0cdc6f70a54b06687122dbdc57"
+    },
+    {
+      "bytes": 512997,
+      "path": "data1m/final_system/seed_0/dataset_ids.parquet",
+      "sha256": "f169c734b111f1356513850b3acdfe9549870e1fabf59de3cdcb58fb81db4a03"
+    },
+    {
+      "bytes": 581668,
+      "path": "data1m/final_system/seed_0/gold_candidates.npz",
+      "sha256": "6e23878998abcc5c0ef4043c3fdbc43791c248c85f56974c3fc9069ee6d1a4cd"
+    },
+    {
+      "bytes": 2377706264,
+      "path": "data1m/final_system/seed_0/hnsw_top1000.bin",
+      "sha256": "8a7e6666bc3c8f5ce8963e611b0b98a2c4ab8a077279cdd4b61a61dc2c9a5752"
+    },
+    {
+      "bytes": 76464143,
+      "path": "data1m/final_system/seed_0/model_ids.parquet",
+      "sha256": "ea3cff16d54210ababf05daac8eb1b5edc459bc9b4e83263bc5a1805f411440b"
+    },
+    {
+      "bytes": 9589376,
+      "path": "data1m/final_system/seed_0/query_embeddings.npy",
+      "sha256": "88ce9eadafc15b2f474a610309dfa50ca9bf2be9dc3605667c3e75829f292e93"
+    },
+    {
+      "bytes": 4265254,
+      "path": "data1m/final_system/seed_0/task_prior.npz",
+      "sha256": "fd132227fc73a210b4d41b90f4aa5f7fb6bb4bbd77c1469600f8283a5a7c06c1"
+    },
+    {
+      "bytes": 341,
+      "path": "data1m/final_system/seed_0/task_prior_meta.json",
+      "sha256": "84114e3ebff2d22d9fd9a1ec3150512d9ec8c195060364f25549753f3795f1cf"
+    },
+    {
+      "bytes": 513556,
+      "path": "data1m/final_system/seed_1/gold_candidates.npz",
+      "sha256": "4cfa0ebda8812299f9a0ff9fe5cc327585685be1f69a0abbe3a3ffe980586779"
+    },
+    {
+      "bytes": 2377731608,
+      "path": "data1m/final_system/seed_1/hnsw_top1000.bin",
+      "sha256": "3f68f8224f71f1ddda65c734aecd1008e232bb415680a83226b904ebabb3a5ab"
+    },
+    {
+      "bytes": 9589376,
+      "path": "data1m/final_system/seed_1/query_embeddings.npy",
+      "sha256": "a1fcda00fe96a1dd55062beb1edf7ee57e71b8d373cbd5f75a04a30fa0911f8f"
+    },
+    {
+      "bytes": 4239174,
+      "path": "data1m/final_system/seed_1/task_prior.npz",
+      "sha256": "43bc44b5a1d729393193b8f56eb62656e44fb18a13dfa678430cc5fb1e079141"
+    },
+    {
+      "bytes": 341,
+      "path": "data1m/final_system/seed_1/task_prior_meta.json",
+      "sha256": "960db383b93c5d103399e18fd326eccb25efe068c6b93e07feb168fefa2224e5"
+    },
+    {
+      "bytes": 619856,
+      "path": "data1m/final_system/seed_2/gold_candidates.npz",
+      "sha256": "558f0f0e96b8151a8a25dac0fc7471c580e963a9d60d98ec188b75474a56d765"
+    },
+    {
+      "bytes": 2377706264,
+      "path": "data1m/final_system/seed_2/hnsw_top1000.bin",
+      "sha256": "c14855c60b5276f4ccd652f539872158af2917afa257159917822f9c172579b6"
+    },
+    {
+      "bytes": 9589376,
+      "path": "data1m/final_system/seed_2/query_embeddings.npy",
+      "sha256": "532abb88b2ba7c41430f4c6fe2bdf0061fe36468b221db1721d6ffaa7926f6b1"
+    },
+    {
+      "bytes": 4223414,
+      "path": "data1m/final_system/seed_2/task_prior.npz",
+      "sha256": "8c543f4b3fc274a1c94c1dcb5346ccda219200a5a7532d744f9ab9f440cd70f8"
+    },
+    {
+      "bytes": 341,
+      "path": "data1m/final_system/seed_2/task_prior_meta.json",
+      "sha256": "9db6936655a7f0ebc80eea7a1e74bfef3f12ac3f9a07f75cd9b3ce0cf432e7e3"
+    }
+  ],
+  "schema_version": 1,
+  "tree_sha256": "bcf7c12663f1d5def9a18b48d52f997505df6c12f8e665d9330c98f06339f01d"
+}

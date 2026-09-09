@@ -14,7 +14,7 @@ from repro.archive import (
     extract_bundle,
     sha256_file,
 )
-from repro.verify import _equal, _pointer, summarize, verify
+from repro.verify import PAPER_RESULTS_PATH, _equal, _pointer, summarize
 
 
 def test_json_pointer_and_recursive_numeric_tolerance():
@@ -52,10 +52,12 @@ def test_multipart_roundtrip_and_installed_hashes(tmp_path):
     assert (target / "alias" / "b.txt").read_text(encoding="utf-8") == "fixed\n"
 
 
-def test_archive_profile_has_no_strict_failures(tmp_path):
-    report = verify("archive", tmp_path / "unused-data", tmp_path / "unused-runs")
-    assert report["summary"]["strict_failed"] == 0
-    assert report["summary"]["checks"] > 150
+def test_registered_paper_result_is_final_system_only():
+    payload = json.loads(PAPER_RESULTS_PATH.read_text(encoding="utf-8"))
+    assert payload["system"]["candidate_models"] == 3_016_439
+    assert payload["system"]["candidate_pool"] == 1_000
+    assert payload["metrics"]["gold@10"]["mean"] == 0.3031382167829068
+    assert len(payload["recommendation_content_sha256"]) == 3
 
 
 def test_summary_does_not_promote_informational_mismatch():

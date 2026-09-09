@@ -29,7 +29,7 @@ def main(argv=None) -> int:
     parser.add_argument("bundles", nargs="+", help="bundle ids from bundle_sources.json")
     parser.add_argument("--data-root", type=Path, required=True)
     parser.add_argument("--repo-root", type=Path, default=REPO_ROOT)
-    parser.add_argument("--out", type=Path, default=REPO_ROOT / "release_assets" / "3m-evidence-v1")
+    parser.add_argument("--out", type=Path, default=None)
     parser.add_argument("--part-bytes", type=int, default=1_800_000_000)
     args = parser.parse_args(argv)
 
@@ -37,13 +37,15 @@ def main(argv=None) -> int:
                              .read_text(encoding="utf-8"))
     asset_path = REPO_ROOT / "repro" / "assets.json"
     assets = json.loads(asset_path.read_text(encoding="utf-8"))
+    output_dir = (args.out if args.out is not None else
+                  REPO_ROOT / "release_assets" / assets["release_tag"])
     for bundle_id in args.bundles:
         if bundle_id not in source_spec["bundles"]:
             parser.error("unknown bundle %s" % bundle_id)
         asset, manifest = build_bundle(
             bundle_id, source_spec["bundles"][bundle_id],
             args.repo_root.resolve(), args.data_root.resolve(),
-            args.out.resolve(), args.part_bytes)
+            output_dir.resolve(), args.part_bytes)
         write_json(REPO_ROOT / asset["manifest"], manifest)
         assets["bundles"][bundle_id] = asset
         print("[built] %s: %d files, %d parts, %.3f GiB" % (
