@@ -1,0 +1,116 @@
+{
+  "stages": {
+    "embed": {
+      "run_id": "A0GD_full_s2_e25",
+      "checkpoint": "/u801/x98liu/model_lake/runs/A0_20260912/A0GD_full_s2_e25/ckpt/last.pt",
+      "checkpoint_epoch": 24,
+      "graph": "/u801/x98liu/model_lake/data1m/a0_20260912/graph",
+      "graph_digest": "acddeb93d926efcb636c83d452fe360736a0e6e4ac68cab3f5fef210e7cef5db",
+      "binding": {
+        "family_vocab_path": "/u801/x98liu/model_lake/data1m/feats_rf/family_vocab.csv",
+        "family_vocab_sha256": "00d304df9bd72acb2c2c1ca5b84ed0dc9d4adb0cbc9f098f32a9e62109d24005",
+        "num_families": 41056,
+        "num_size_buckets": 15,
+        "size_bucket_version": "min5.0_max12.0_w0.50_n15",
+        "name_seed": 42,
+        "name_dim": 64,
+        "desc_dim": 384,
+        "encoder_name": "all-MiniLM-L6-v2",
+        "graph_sha256": "acddeb93d926efcb636c83d452fe360736a0e6e4ac68cab3f5fef210e7cef5db",
+        "split_seed": 2
+      },
+      "split_seed": 2,
+      "rung": "full",
+      "n_models": 3016439,
+      "n_datasets": 18729,
+      "n_test_queries": 1595,
+      "expect_n": 3016439,
+      "device": "cuda",
+      "chunk": 50000,
+      "seconds": 38.2,
+      "gates": [
+        {
+          "gate": "G-F7a",
+          "name": "candidate pool size",
+          "ok": true,
+          "n_models": 3016439,
+          "expect_n": 3016439
+        },
+        {
+          "gate": "G-F7c",
+          "name": "row order vs ladder",
+          "ok": true,
+          "n_probed": 100,
+          "probe_mismatches": [],
+          "total_mismatches": 0
+        },
+        {
+          "gate": "G-F7d",
+          "name": "chunked == whole-graph forward",
+          "ran": true,
+          "n_models": 100000,
+          "max_abs_delta": {
+            "model": 8.940696716308594e-08,
+            "dataset": 1.043081283569336e-07
+          },
+          "ok": true
+        }
+      ],
+      "a0": {
+        "protocol": "a0",
+        "run_id": "A0_20260912",
+        "seed": 2,
+        "graph_digest": "acddeb93d926efcb636c83d452fe360736a0e6e4ac68cab3f5fef210e7cef5db",
+        "checkpoint_sha256": "9a090d58fd889b730299af226135fbb6727de5998a9fc133b9eaeb58138eb6f8"
+      },
+      "artifact_hashes": {
+        "z_m.npy": "4f06f8fe68d4d805013961b54e6a83ccf5e050c11931e4f5db1fab9c9d25d869",
+        "z_d.npy": "c625d2d16c62e21efa9c70bd1d33cab212c8b8df2d3277d0de48d774b2293715",
+        "z_m_eval.npy": "4d8962fe6e74df349a55fbb32d0bda2aeacceba1ff541290162d27a9fa293224",
+        "z_d_eval.npy": "564b43479ab599e215b03a6af098b7d6a6d06720388e705e4588ff8be7fc6ebf",
+        "gold_cands.npz": "ab5e1a43eb8cf474d0e82c00700793b85f66fd131105e4c62c92e5f1e2f4c94a",
+        "model_ids.parquet": "ea3cff16d54210ababf05daac8eb1b5edc459bc9b4e83263bc5a1805f411440b",
+        "dataset_ids.parquet": "f169c734b111f1356513850b3acdfe9549870e1fabf59de3cdcb58fb81db4a03"
+      },
+      "export_segments": [
+        {
+          "start_ns": 962509730346349,
+          "end_ns": 962549844085042,
+          "clock": "perf_counter_ns",
+          "scope": "embed stage after graph/checkpoint preflight; includes chunk verification and artifact hashing"
+        }
+      ]
+    }
+  },
+  "written_at": "2026-09-14T01:01:31+00:00",
+  "gates": [
+    {
+      "gate": "G-F7a",
+      "name": "candidate pool size",
+      "ok": true,
+      "n_models": 3016439,
+      "expect_n": 3016439
+    },
+    {
+      "gate": "G-F7c",
+      "name": "row order vs ladder",
+      "ok": true,
+      "n_probed": 100,
+      "probe_mismatches": [],
+      "total_mismatches": 0
+    },
+    {
+      "gate": "G-F7d",
+      "name": "chunked == whole-graph forward",
+      "ran": true,
+      "n_models": 100000,
+      "max_abs_delta": {
+        "model": 8.940696716308594e-08,
+        "dataset": 1.043081283569336e-07
+      },
+      "ok": true
+    }
+  ],
+  "gates_failed": [],
+  "gates_passed": true
+}

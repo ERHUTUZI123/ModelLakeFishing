@@ -1,7 +1,6 @@
 .venv/
 __pycache__/
 *.pyc
-
 CLAUDE.md
 plan.txt
 plan.md
@@ -46,3 +45,8 @@ stage1BuildTransferGraph/dataset_embed/data/family_vocab.csv
 notes.md
 
 stage2TrainGraphSAGE/artifacts
+
+/docs/1M/A0_runs/A0_6/audit_delivery.tar.gz
+/docs/1M/A0_runs/frozen/git_head_to_index.patch.gz
+/docs/1M/A0_runs/frozen/git_head_to_worktree.patch.gz
+/docs/1M/A0_runs/frozen/git_index_to_worktree.patch.gz

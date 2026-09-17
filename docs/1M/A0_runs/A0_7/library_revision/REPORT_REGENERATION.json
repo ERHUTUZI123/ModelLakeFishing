@@ -1,0 +1,33 @@
+{
+  "command": [
+    "D:\\research\\model_lake\\codes\\ModelLakeFishing\\.venv\\Scripts\\python.exe",
+    "-X",
+    "utf8",
+    "-u",
+    "-B",
+    "-m",
+    "scale1m.recompute_a0",
+    "--raw",
+    "D:/research/model_lake/data/data1m/a0_20260912/metrics",
+    "--protocol",
+    "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_6\\inputs\\A0_PROTOCOL.linux.json",
+    "--inventory",
+    "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_7\\frozen\\A0_METRIC_INVENTORY.json",
+    "--out",
+    "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_7\\results",
+    "--records",
+    "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_7\\results\\A0_RECORD_SOURCES.json",
+    "--source-counts",
+    "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_7\\results\\A0_SOURCE_COUNTS.json"
+  ],
+  "exit_code": 2,
+  "start_ns": 2342239894400,
+  "end_ns": 2434329169700,
+  "seconds": 92.0892753,
+  "started_at_utc": "2026-09-15T01:43:47.489692+00:00",
+  "reader_sha256": "3ce80ac6f066716bef0f8a7731ad6abcb25fb94d3f79f7d9cf9ce5b36cf0c0f9",
+  "scope": "Independent report re-read and unit-contract repair; formal training, embeddings, raw query outputs and measured costs reused by verified hash.",
+  "raw_measurement_values_and_statuses_unchanged": true,
+  "native_quality_rows_identical": true,
+  "measurements_compared": 982
+}

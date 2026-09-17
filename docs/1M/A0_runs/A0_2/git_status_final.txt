@@ -1,0 +1,59 @@
+A  docs/1M/X6_baselines_not_finished.md
+A  docs/1M/X6_runs/X6NoGraph_full_s2_e25/MANIFEST.json
+A  docs/1M/X6_runs/X6NoGraph_full_s2_e25/ckpt/best.pt
+A  docs/1M/X6_runs/X6NoGraph_full_s2_e25/ckpt/checkpoint_epoch_14.pt
+A  docs/1M/X6_runs/X6NoGraph_full_s2_e25/ckpt/checkpoint_epoch_19.pt
+A  docs/1M/X6_runs/X6NoGraph_full_s2_e25/ckpt/checkpoint_epoch_24.pt
+A  docs/1M/X6_runs/X6NoGraph_full_s2_e25/ckpt/family_vocab.csv
+A  docs/1M/X6_runs/X6NoGraph_full_s2_e25/ckpt/last.pt
+A  docs/1M/X6_runs/X6NoGraph_full_s2_e25/metadata/resolved_config.json
+A  docs/1M/X6_runs/X6NoGraph_full_s2_e25/metadata/uncommitted.patch
+A  docs/1M/X6_runs/X6NoGraph_full_s2_e25/metrics/train_history.json
+A  docs/1M/Y0.md
+A  docs/1M/Z0.md
+A  docs/1M/Z1.md
+A  docs/1M/Z1_runs/Z1_REPORT.json
+A  docs/1M/Z2.md
+A  docs/1M/Z2_runs/Z2_FROZEN.json
+A  docs/1M/Z2_runs/Z2_REPORT.json
+AM docs/1M/figures/lake_a.pdf
+AM docs/1M/figures/lake_a.png
+AM docs/1M/figures/lake_a.svg
+AM docs/1M/figures/lake_ab.pdf
+AM docs/1M/figures/lake_ab.png
+AM docs/1M/figures/lake_ab.svg
+A  docs/1M/figures/lake_ab_captions.tex
+AM docs/1M/figures/lake_b.pdf
+AM docs/1M/figures/lake_b.png
+AM docs/1M/figures/lake_b.svg
+A  docs/1M/figures/model_lake_galaxy.md
+A  docs/1M/figures/model_lake_galaxy.pdf
+A  docs/1M/figures/model_lake_galaxy.png
+ M lake3d/lake3d_offline.html
+ M scale1m/build_graph_rf.py
+ M scale1m/eval_y2.py
+ M scale1m/export_rf.py
+ M scale1m/train_rung.py
+A  scripts/watgpu/train_x6_nograph.sbatch
+ M stage2TrainGraphSAGE/ablation.py
+ M stage3HNSW/build_prior_sidecar.py
+ M viz/lake_ab.py
+?? docs/1M/A0.1.md
+?? docs/1M/A0.2.md
+?? docs/1M/A0.md
+?? docs/1M/A0_runs/
+?? docs/METHODOLOGY_WRITING_MAP_zh.md
+?? lake3d/lake3d.html
+?? scale1m/a0_evaluation.py
+?? scale1m/a0_graph_validation.py
+?? scale1m/a0_recompute_checks.py
+?? scale1m/a0_source_counts.py
+?? scale1m/prepare_a0_graph.py
+?? scale1m/recompute_a0.py
+?? scale1m/tests/test_a0_evaluation.py
+?? scale1m/tests/test_a0_producer_bindings.py
+?? scale1m/tests/test_a0_recompute_checks.py
+?? scale1m/tests/test_a0_smoke.py
+?? scale1m/tests/test_a0_source_counts.py
+?? scale1m/tests/test_prepare_a0_graph.py
+?? scale1m/tests/test_recompute_a0.py

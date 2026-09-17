@@ -1,0 +1,87 @@
+{
+  "stage": "A0.6",
+  "status": "complete",
+  "updated_at_utc": "2026-09-14T02:05:14.509038+00:00",
+  "artifacts": [
+    {
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0.6.md",
+      "sha256": "6a0f7d9c0795a216283089a608093669fe23adaaf68568ae441bfe85db9e5bb1",
+      "bytes": 12856
+    },
+    {
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0.md",
+      "sha256": "6c0e335ca4969727b99d0a11183c2e3f4d5a655cefae01af24bca5cfc42d1b0f",
+      "bytes": 47969
+    },
+    {
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_6\\STATUS.json",
+      "sha256": "ebbfcf1ce21d46d081961ea5335c7f0a125915b54243ad8c2d2423ca48b2076d",
+      "bytes": 59012
+    },
+    {
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_6\\events.jsonl",
+      "sha256": "0afe342f7e37d2d00e249b79f98b5f6a476fa904e4385876033e09bc1be054d0",
+      "bytes": 5908
+    },
+    {
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_6\\run.sbatch",
+      "sha256": "7358d830191a961a40ac2e2fc57d05267b3bddfaaccbdcd95227b6cc9e9af320",
+      "bytes": 2086
+    },
+    {
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_6\\validate.py",
+      "sha256": "97451b915d0081838229199c2a18663dfc413b8b2fcb5ac12dbb49760527e9fa",
+      "bytes": 2280
+    },
+    {
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_6\\watch.py",
+      "sha256": "ea5bc3a76533e401df40a81311e429412c18e224632a190d2bef6325287e453f",
+      "bytes": 14285
+    },
+    {
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_6\\PATH_RELOCATION.json",
+      "sha256": "c989bf67120296d2b5add441b2bec438d6ad677990eb9ba0e08be52ec0cd3e2f",
+      "bytes": 27355
+    },
+    {
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_6\\inputs.tar.gz",
+      "sha256": "9018885792a35f09dba893b66f5922997acccc46439453b28e311c2fde80c111",
+      "bytes": 393952
+    },
+    {
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_6\\retry_308.sh",
+      "sha256": "41829e0036268bba4d64f07a32f630637c7515c21078e155fbe7613681da5108",
+      "bytes": 501
+    },
+    {
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_6\\audit_delivery.tar.gz",
+      "sha256": "4677e7294b622ff64e11923070d45bac9709bbea7ebbc783d3047770bc79930a",
+      "bytes": 123322924
+    },
+    {
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_6\\local_verify.py",
+      "sha256": "5b0a4b089a4060969b11bbe9289f54e3fba115533ca2bfe9989ba2ef23a0d3b6",
+      "bytes": 8839
+    },
+    {
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_6\\local_verification\\STATUS.json",
+      "sha256": "f57dd279bae12259e0697125ff9a2fd58371832fe91f4f41b8d4fc488ccca1be",
+      "bytes": 4330
+    },
+    {
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_6\\local_verification\\EXACT_MANIFEST.remote.json",
+      "sha256": "49e1d62b7c1f8506243d77e7186830a071a5c4c20026bd19ac289bfa1231b2cf",
+      "bytes": 91670
+    },
+    {
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_6\\frozen\\watch_before_local.py",
+      "sha256": "f065738f6056788ddf8f40e2f19c7c3e3e29ab5b73083c4dd292445c250c3ca7",
+      "bytes": 12792
+    }
+  ],
+  "previous_manifest": {
+    "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_6\\frozen\\A0_SOURCE_MANIFEST.json",
+    "sha256": "b1b3de4a80dd4bc2ed389128462d24d0449050d0cb2a04fade20a0b79fb5719c",
+    "bytes": 1548
+  }
+}

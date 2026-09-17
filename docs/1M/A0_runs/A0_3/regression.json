@@ -1,0 +1,90 @@
+{
+  "stage": "A0.3",
+  "operation": "regression",
+  "argv": [
+    "D:\\research\\model_lake\\codes\\ModelLakeFishing\\.venv\\Scripts\\python.exe",
+    "-X",
+    "utf8",
+    "-B",
+    "-m",
+    "pytest",
+    "scale1m/tests",
+    "stage2TrainGraphSAGE/tests",
+    "-q",
+    "--junitxml=D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_3\\regression.xml"
+  ],
+  "cwd": "D:\\research\\model_lake\\codes\\ModelLakeFishing",
+  "pid": 2828,
+  "returncode": 0,
+  "elapsed_seconds": 26.069272600001568,
+  "peak_process_working_set_bytes": 4263936,
+  "samples": [
+    {
+      "seconds": 0.005180700001801597,
+      "rss": 2322432,
+      "available_ram": 5047152640
+    },
+    {
+      "seconds": 2.013254900000902,
+      "rss": 4263936,
+      "available_ram": 4312301568
+    },
+    {
+      "seconds": 4.018732100001216,
+      "rss": 4263936,
+      "available_ram": 4258025472
+    },
+    {
+      "seconds": 6.023294700000406,
+      "rss": 4263936,
+      "available_ram": 4160335872
+    },
+    {
+      "seconds": 8.027936200000113,
+      "rss": 4263936,
+      "available_ram": 4136669184
+    },
+    {
+      "seconds": 10.032500199999049,
+      "rss": 4263936,
+      "available_ram": 4113408000
+    },
+    {
+      "seconds": 12.037077799999679,
+      "rss": 4263936,
+      "available_ram": 4091793408
+    },
+    {
+      "seconds": 14.041589399999793,
+      "rss": 4263936,
+      "available_ram": 4059959296
+    },
+    {
+      "seconds": 16.046173500002624,
+      "rss": 4263936,
+      "available_ram": 4058025984
+    },
+    {
+      "seconds": 18.051301300001796,
+      "rss": 4263936,
+      "available_ram": 4031119360
+    },
+    {
+      "seconds": 20.055844500002422,
+      "rss": 4263936,
+      "available_ram": 4033740800
+    },
+    {
+      "seconds": 22.060185700000147,
+      "rss": 4263936,
+      "available_ram": 3919908864
+    },
+    {
+      "seconds": 24.0646256,
+      "rss": 4263936,
+      "available_ram": 3664175104
+    }
+  ],
+  "finished_at_utc": "2026-09-13T01:50:59.762442+00:00",
+  "log_sha256": "8f767ce4e303bb341dafa8009046f072e691af097484c1d14cf26ae6375db36d"
+}

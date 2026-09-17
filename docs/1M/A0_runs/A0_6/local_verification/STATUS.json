@@ -1,0 +1,146 @@
+{
+  "status": "PASS",
+  "pid": 21000,
+  "seeds": {
+    "0": {
+      "vectors": {
+        "z_m_eval.npy": {
+          "shape": [
+            3016439,
+            128
+          ],
+          "finite": true,
+          "max_norm_error": 1.7881393432617188e-07
+        },
+        "z_d_eval.npy": {
+          "shape": [
+            18729,
+            128
+          ],
+          "finite": true,
+          "max_norm_error": 1.1920928955078125e-07
+        }
+      },
+      "exact": {
+        "status": "PASS",
+        "queries": 1476,
+        "pairs_checked": 1476000,
+        "gpu_max_score_abs_error": 7.152557373046875e-07,
+        "fused_exact_match": true,
+        "saved_top10_exact_match": true,
+        "unique_candidates_per_query": 1000
+      },
+      "hnsw": {
+        "status": "PASS",
+        "queries": 1476,
+        "pairs_checked": 1476000,
+        "gpu_max_score_abs_error": 1.7881393432617188e-07,
+        "fused_exact_match": true,
+        "saved_top10_exact_match": true,
+        "unique_candidates_per_query": 1000
+      }
+    },
+    "1": {
+      "vectors": {
+        "z_m_eval.npy": {
+          "shape": [
+            3016439,
+            128
+          ],
+          "finite": true,
+          "max_norm_error": 1.7881393432617188e-07
+        },
+        "z_d_eval.npy": {
+          "shape": [
+            18729,
+            128
+          ],
+          "finite": true,
+          "max_norm_error": 1.7881393432617188e-07
+        }
+      },
+      "exact": {
+        "status": "PASS",
+        "queries": 1101,
+        "pairs_checked": 1101000,
+        "gpu_max_score_abs_error": 5.960464477539062e-07,
+        "fused_exact_match": true,
+        "saved_top10_exact_match": true,
+        "unique_candidates_per_query": 1000
+      },
+      "hnsw": {
+        "status": "PASS",
+        "queries": 1101,
+        "pairs_checked": 1101000,
+        "gpu_max_score_abs_error": 1.7881393432617188e-07,
+        "fused_exact_match": true,
+        "saved_top10_exact_match": true,
+        "unique_candidates_per_query": 1000
+      }
+    },
+    "2": {
+      "vectors": {
+        "z_m_eval.npy": {
+          "shape": [
+            3016439,
+            128
+          ],
+          "finite": true,
+          "max_norm_error": 1.7881393432617188e-07
+        },
+        "z_d_eval.npy": {
+          "shape": [
+            18729,
+            128
+          ],
+          "finite": true,
+          "max_norm_error": 1.1920928955078125e-07
+        }
+      },
+      "exact": {
+        "status": "PASS",
+        "queries": 1545,
+        "pairs_checked": 1545000,
+        "gpu_max_score_abs_error": 6.556510925292969e-07,
+        "fused_exact_match": true,
+        "saved_top10_exact_match": true,
+        "unique_candidates_per_query": 1000
+      },
+      "hnsw": {
+        "status": "PASS",
+        "queries": 1545,
+        "pairs_checked": 1545000,
+        "gpu_max_score_abs_error": 1.7881393432617188e-07,
+        "fused_exact_match": true,
+        "saved_top10_exact_match": true,
+        "unique_candidates_per_query": 1000
+      }
+    }
+  },
+  "scope": "Supplemental delivery verification; official metrics and timings remain from the remote evaluator.",
+  "score_atol": 1e-05,
+  "tolerance_scope": "Cross-device dot-product check only; saved scores, ties, ranks and metric gates are unchanged.",
+  "phase": "complete",
+  "updated_at_utc": "2026-09-14T02:04:41.020214+00:00",
+  "gpu": "NVIDIA GeForce RTX 4060 Laptop GPU",
+  "cpu_threads": 8,
+  "torch_version": "2.12.0+cu126",
+  "available_ram_bytes": 2545516544,
+  "code_sha256": "5b0a4b089a4060969b11bbe9289f54e3fba115533ca2bfe9989ba2ef23a0d3b6",
+  "file": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_6\\local_verification\\a0_exact_s2.npz",
+  "expected_bytes": 32387588,
+  "downloaded_bytes": 32387588,
+  "transfer_mib_per_second": 6.170064869428047,
+  "current_seed": 2,
+  "verification": {
+    "status": "PASS",
+    "queries": 1545,
+    "pairs_checked": 1545000,
+    "gpu_max_score_abs_error": 6.556510925292969e-07,
+    "fused_exact_match": true,
+    "saved_top10_exact_match": true,
+    "unique_candidates_per_query": 1000
+  },
+  "gpu_peak_allocated_bytes": 70400000,
+  "cpu_peak_working_set_bytes": 2484269056
+}

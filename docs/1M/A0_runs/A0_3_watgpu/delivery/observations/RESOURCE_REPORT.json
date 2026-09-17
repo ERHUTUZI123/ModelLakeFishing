@@ -1,0 +1,11 @@
+{
+  "returncode": 0,
+  "elapsed_seconds": 181.318530051969,
+  "sampled_peak_process_tree_rss_bytes": 30377656320,
+  "os_child_maxrss_bytes": 35015499776,
+  "sampled_peak_gpu_process_memory_mib": 45192,
+  "sampling_seconds": 2,
+  "rss_scope": "Linux process-tree sampled sum plus OS direct-child high-water mark",
+  "gpu_scope": "nvidia-smi sampled process memory; exact PyTorch allocation peak in SMOKE_REPORT.json",
+  "run": "/u801/x98liu/model_lake/runs/A0_20260912/smoke_s0_e1_retry1"
+}

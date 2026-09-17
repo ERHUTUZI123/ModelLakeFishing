@@ -1,0 +1,22 @@
+[
+  {
+    "line": 60,
+    "en": "The audit found zero affected rows in the frozen node/card tables and preserved the matching inputs unchanged. The declared snapshot date is 2026-08-18; this verifies the frozen metadata declaration rather than independently reconstructing the historical API state. Counts, per-shard hashes, order hashes, and the collision trace are in the [A0.1 snapshot audit](A0_runs/audit/A0_SNAPSHOT_AUDIT.json)."
+  },
+  {
+    "line": 227,
+    "en": "The final `x_m` matrix has shape `[3,016,439, 448]`, dtype `float32`, file size 5.41 GB, and SHA-256 `ba1020872ddb6e90726c755f9f08f236f4c73e506013c91d8a0075fc0c0361e6`. The append-only `feats_rf/family_vocab.csv` vocabulary has 41,056 rows and SHA-256 `00d304df9bd72acb2c2c1ca5b84ed0dc9d4adb0cbc9f098f32a9e62109d24005`. Unknown size accounts for 71.929% of models and `Other` for 13.561%. The 41,056 rows are the embedding index cardinality; 40,927 distinct family IDs actually occur in the graph. Feature construction is in [`scale1m/embed_lake_rf.py`](../../scale1m/embed_lake_rf.py); current shape, cardinality, and coverage measurements are in [A0.7 source recount](A0_runs/A0_7/results/A0_SOURCE_COUNTS.json), with frozen-file hashes in [A0.1 input audit](A0_runs/audit/A0_INPUT_AUDIT.json)."
+  },
+  {
+    "line": 479,
+    "en": "with unit coefficient on every term. MSE, embedding-uniformity regularization, dataset-to-model contrastive loss, optional mined-negative branches of the global objective, positive inverse-propensity weighting, separate projection heads, and early stopping are disabled. The local RankNet hard-pair selection and lineage-based contrastive negative weighting described above remain active."
+  },
+  {
+    "line": 625,
+    "en": "Index build time includes initialization, insertion, serialization, and final file replacement. Total index storage is 7,133,409,984 bytes, or 6.643506 GiB. Here GB denotes $10^9$ bytes and GiB denotes $2^{30}$ bytes."
+  },
+  {
+    "line": 731,
+    "en": "The library audit corrected a reporting-unit mismatch in the initial A0.7 inventory: six retrieval ratios had been stored as fractions under a percent declaration. Scientific fractions remain unchanged; percent-valued inventory entries now multiply those fractions by 100, and old/new differences use consistent units. The raw arrays, learned model, and formal evaluation stay bound to their original bytes. The reader change and its validation are recorded in [UNIT_CORRECTION.md](A0_runs/A0_7/library_revision/UNIT_CORRECTION.md)."
+  }
+]

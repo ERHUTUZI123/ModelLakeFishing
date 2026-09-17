@@ -1,0 +1,32 @@
+usage: export_rf.py [-h] --run RUN --stage {embed,metrics,index,curve}
+                    [--graph GRAPH] [--ladder LADDER]
+                    [--supervision SUPERVISION] [--rung RUNG] [--ckpt CKPT]
+                    [--out OUT] [--chunk CHUNK] [--device DEVICE] [--progress]
+                    [--hnsw-M HNSW_M] [--ef-construction EF_CONSTRUCTION]
+                    [--hnsw-threads HNSW_THREADS] [--iso-recall ISO_RECALL]
+                    [--curve-queries CURVE_QUERIES] [--verify-chunked]
+                    [--no-verify-chunked] [--verify-nodes VERIFY_NODES]
+
+F7: export and index the RF lake
+
+options:
+  -h, --help            show this help message and exit
+  --run RUN             an F6 run directory
+  --stage {embed,metrics,index,curve}
+  --graph GRAPH
+  --ladder LADDER
+  --supervision SUPERVISION
+  --rung RUNG
+  --ckpt CKPT
+  --out OUT             default: <run>/exports
+  --chunk CHUNK
+  --device DEVICE
+  --progress
+  --hnsw-M HNSW_M
+  --ef-construction EF_CONSTRUCTION
+  --hnsw-threads HNSW_THREADS
+  --iso-recall ISO_RECALL
+  --curve-queries CURVE_QUERIES
+  --verify-chunked
+  --no-verify-chunked
+  --verify-nodes VERIFY_NODES

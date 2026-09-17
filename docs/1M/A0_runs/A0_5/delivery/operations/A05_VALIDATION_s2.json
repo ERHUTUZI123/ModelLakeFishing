@@ -1,0 +1,133 @@
+{
+  "status": "PASS",
+  "seed": 2,
+  "checkpoint_sha256": "9a090d58fd889b730299af226135fbb6727de5998a9fc133b9eaeb58138eb6f8",
+  "checkpoint_epoch": 24,
+  "graph_digest": "acddeb93d926efcb636c83d452fe360736a0e6e4ac68cab3f5fef210e7cef5db",
+  "embedding_checks": {
+    "z_m": {
+      "shape": [
+        3016439,
+        128
+      ],
+      "dtype": "float32",
+      "max_norm_error": 1.7881393432617188e-07,
+      "finite": true
+    },
+    "z_m_eval": {
+      "shape": [
+        3016439,
+        128
+      ],
+      "dtype": "float32",
+      "max_norm_error": 1.7881393432617188e-07,
+      "finite": true
+    },
+    "z_d": {
+      "shape": [
+        18729,
+        128
+      ],
+      "dtype": "float32",
+      "max_norm_error": 1.1920928955078125e-07,
+      "finite": true
+    },
+    "z_d_eval": {
+      "shape": [
+        18729,
+        128
+      ],
+      "dtype": "float32",
+      "max_norm_error": 1.1920928955078125e-07,
+      "finite": true
+    }
+  },
+  "chunk_gates": [
+    {
+      "gate": "G-F7a",
+      "name": "candidate pool size",
+      "ok": true,
+      "n_models": 3016439,
+      "expect_n": 3016439
+    },
+    {
+      "gate": "G-F7c",
+      "name": "row order vs ladder",
+      "ok": true,
+      "n_probed": 100,
+      "probe_mismatches": [],
+      "total_mismatches": 0
+    },
+    {
+      "gate": "G-F7d",
+      "name": "chunked == whole-graph forward",
+      "ran": true,
+      "n_models": 100000,
+      "max_abs_delta": {
+        "model": 8.940696716308594e-08,
+        "dataset": 1.043081283569336e-07
+      },
+      "ok": true
+    }
+  ],
+  "queries": 1545,
+  "query_ids_candidates_values_match_A01": true,
+  "row_tables_match_graph": true,
+  "visible_edges": 196124,
+  "visible_edge_order_matches_A01": true,
+  "tasks": 2198,
+  "scored_roots_excluded": true,
+  "prior_formula_max_abs_error": 0.0,
+  "no_evidence_zero_checks": 385000,
+  "export_seconds": 38.2,
+  "prior_build_segments": [
+    {
+      "start_ns": 962553530916525,
+      "end_ns": 962561053157705,
+      "clock": "perf_counter_ns",
+      "scope": "prior build including input verification"
+    }
+  ],
+  "files": {
+    "gold_cands.npz": {
+      "sha256": "ab5e1a43eb8cf474d0e82c00700793b85f66fd131105e4c62c92e5f1e2f4c94a",
+      "bytes": 619856
+    },
+    "prior_sidecar_s2.npz": {
+      "sha256": "709a1ca442403de1a2af8b76878100e8b9b6677fdb6a5e3b6d368872879f6893",
+      "bytes": 4223414
+    },
+    "z_d_eval.npy": {
+      "sha256": "564b43479ab599e215b03a6af098b7d6a6d06720388e705e4588ff8be7fc6ebf",
+      "bytes": 9589376
+    },
+    "EXPORT_MANIFEST.json": {
+      "sha256": "a2a6eb85c6fc57e459f20a371b2c45fe2f8adfbf349962b50f6e4dd8194a81de",
+      "bytes": 3804
+    },
+    "z_m_eval.npy": {
+      "sha256": "4d8962fe6e74df349a55fbb32d0bda2aeacceba1ff541290162d27a9fa293224",
+      "bytes": 1544416896
+    },
+    "z_m.npy": {
+      "sha256": "4f06f8fe68d4d805013961b54e6a83ccf5e050c11931e4f5db1fab9c9d25d869",
+      "bytes": 1544416896
+    },
+    "z_d.npy": {
+      "sha256": "c625d2d16c62e21efa9c70bd1d33cab212c8b8df2d3277d0de48d774b2293715",
+      "bytes": 9589376
+    },
+    "model_ids.parquet": {
+      "sha256": "ea3cff16d54210ababf05daac8eb1b5edc459bc9b4e83263bc5a1805f411440b",
+      "bytes": 76464143
+    },
+    "prior_sidecar_s2_meta.json": {
+      "sha256": "c5987f28cb9a3aff74b34ac15a0a7f87d7f64010b3a463e162fcaac341ff382a",
+      "bytes": 1017
+    },
+    "dataset_ids.parquet": {
+      "sha256": "f169c734b111f1356513850b3acdfe9549870e1fabf59de3cdcb58fb81db4a03",
+      "bytes": 512997
+    }
+  }
+}

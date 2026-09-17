@@ -1,0 +1,4504 @@
+{
+  "schema": "a0.input_audit.v1",
+  "stage": "A0.1",
+  "files": [
+    {
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\EVIDENCE_SOURCE_LIBRARY_en.md",
+      "before": {
+        "size_bytes": 51538,
+        "mtime_ns": 1788881510399760600,
+        "inode": 10133099162695714
+      },
+      "sha256": "6c7d883734fb9a05ca99c4a8409e366955c86ba2e644bd5328c9ba696ff344cd",
+      "expected_sha256": "6c7d883734fb9a05ca99c4a8409e366955c86ba2e644bd5328c9ba696ff344cd",
+      "expected_source": "A0 frozen source",
+      "after": {
+        "size_bytes": 51538,
+        "mtime_ns": 1788881510399760600,
+        "inode": 10133099162695714
+      }
+    },
+    {
+      "path": "D:\\research\\model_lake\\data\\data1m\\datasets_full\\dataset_cards_merged.parquet",
+      "before": {
+        "size_bytes": 948312,
+        "mtime_ns": 1787238698294196100,
+        "inode": 3096224744358114
+      },
+      "sha256": "5b2ef73ae32ca4cca558c777404d46ffa7eb4cca4a16e1ef9ad24f28f6715407",
+      "expected_sha256": null,
+      "expected_source": null,
+      "after": {
+        "size_bytes": 948312,
+        "mtime_ns": 1787238698294196100,
+        "inode": 3096224744358114
+      }
+    },
+    {
+      "path": "D:\\research\\model_lake\\data\\data1m\\feats_rf\\descriptors_head.txt",
+      "before": {
+        "size_bytes": 2975,
+        "mtime_ns": 1787246406610425900,
+        "inode": 3659174697779765
+      },
+      "sha256": "8d9ce43927265bd0ca8aba969137b62e02aa7694367191ba71b5e17c541767a8",
+      "expected_sha256": null,
+      "expected_source": null,
+      "after": {
+        "size_bytes": 2975,
+        "mtime_ns": 1787246406610425900,
+        "inode": 3659174697779765
+      }
+    },
+    {
+      "path": "D:\\research\\model_lake\\data\\data1m\\feats_rf\\family_id.npy",
+      "before": {
+        "size_bytes": 24131640,
+        "mtime_ns": 1787246473516105300,
+        "inode": 3940649674490446
+      },
+      "sha256": "dded052dde8b58eeba7cf3cc7fa8db0bc4b8018d3cd3f7d3199de6a3210c26f4",
+      "expected_sha256": null,
+      "expected_source": null,
+      "after": {
+        "size_bytes": 24131640,
+        "mtime_ns": 1787246473516105300,
+        "inode": 3940649674490446
+      }
+    },
+    {
+      "path": "D:\\research\\model_lake\\data\\data1m\\feats_rf\\family_vocab.csv",
+      "before": {
+        "size_bytes": 620886,
+        "mtime_ns": 1787246473184970700,
+        "inode": 4222124651201062
+      },
+      "sha256": "00d304df9bd72acb2c2c1ca5b84ed0dc9d4adb0cbc9f098f32a9e62109d24005",
+      "expected_sha256": "00d304df9bd72acb2c2c1ca5b84ed0dc9d4adb0cbc9f098f32a9e62109d24005",
+      "expected_source": "authoritative sections 3.2-3.4",
+      "after": {
+        "size_bytes": 620886,
+        "mtime_ns": 1787246473184970700,
+        "inode": 4222124651201062
+      }
+    },
+    {
+      "path": "D:\\research\\model_lake\\data\\data1m\\feats_rf\\FEATS_REPORT.json",
+      "before": {
+        "size_bytes": 2135,
+        "mtime_ns": 1787246480528988700,
+        "inode": 4222124651201103
+      },
+      "sha256": "dbafb576203a7dec589c608c81b66d1cb4df4a27e8658c870d548e69f8dc7601",
+      "expected_sha256": null,
+      "expected_source": null,
+      "after": {
+        "size_bytes": 2135,
+        "mtime_ns": 1787246480528988700,
+        "inode": 4222124651201103
+      }
+    },
+    {
+      "path": "D:\\research\\model_lake\\data\\data1m\\feats_rf\\size_bucket_id.npy",
+      "before": {
+        "size_bytes": 24131640,
+        "mtime_ns": 1787246473499479700,
+        "inode": 5066549581333069
+      },
+      "sha256": "5e53150e530513753bb71c3e394ca0caff20db648430f5c5423ac818bbc16b55",
+      "expected_sha256": null,
+      "expected_source": null,
+      "after": {
+        "size_bytes": 24131640,
+        "mtime_ns": 1787246473499479700,
+        "inode": 5066549581333069
+      }
+    },
+    {
+      "path": "D:\\research\\model_lake\\data\\data1m\\feats_rf\\x_desc_part-000.npy",
+      "before": {
+        "size_bytes": 1536000128,
+        "mtime_ns": 1787245993987650300,
+        "inode": 2533274790937041
+      },
+      "sha256": "507d852f8312f8476846c86be28cd7ed1f5c912f65c357a98b305e128668062a",
+      "expected_sha256": null,
+      "expected_source": null,
+      "after": {
+        "size_bytes": 1536000128,
+        "mtime_ns": 1787245993987650300,
+        "inode": 2533274790937041
+      }
+    },
+    {
+      "path": "D:\\research\\model_lake\\data\\data1m\\feats_rf\\x_desc_part-001.npy",
+      "before": {
+        "size_bytes": 1536000128,
+        "mtime_ns": 1787246216179298100,
+        "inode": 4503599627911720
+      },
+      "sha256": "3a55a9e8924301d83fbacf3ca07e366722457093fd62e6ea6cb8262b8376bba4",
+      "expected_sha256": null,
+      "expected_source": null,
+      "after": {
+        "size_bytes": 1536000128,
+        "mtime_ns": 1787246216179298100,
+        "inode": 4503599627911720
+      }
+    },
+    {
+      "path": "D:\\research\\model_lake\\data\\data1m\\feats_rf\\x_desc_part-002.npy",
+      "before": {
+        "size_bytes": 1536000128,
+        "mtime_ns": 1787246401785289500,
+        "inode": 4785074604622378
+      },
+      "sha256": "e336d34eb847e2ee537c91f4450c85729dbf4d299925ef18e06a0ee8280905a6",
+      "expected_sha256": null,
+      "expected_source": null,
+      "after": {
+        "size_bytes": 1536000128,
+        "mtime_ns": 1787246401785289500,
+        "inode": 4785074604622378
+      }
+    },
+    {
+      "path": "D:\\research\\model_lake\\data\\data1m\\feats_rf\\x_desc_part-003.npy",
+      "before": {
+        "size_bytes": 25250432,
+        "mtime_ns": 1787246406385828200,
+        "inode": 3940649674490420
+      },
+      "sha256": "c2e5389347f315651849178a94434beeaa32014d0602ac894643237ba0bb1101",
+      "expected_sha256": null,
+      "expected_source": null,
+      "after": {
+        "size_bytes": 25250432,
+        "mtime_ns": 1787246406385828200,
+        "inode": 3940649674490420
+      }
+    },
+    {
+      "path": "D:\\research\\model_lake\\data\\data1m\\feats_rf\\x_m.npy",
+      "before": {
+        "size_bytes": 5405458816,
+        "mtime_ns": 1787246406618303200,
+        "inode": 3940649674490422
+      },
+      "sha256": "ba1020872ddb6e90726c755f9f08f236f4c73e506013c91d8a0075fc0c0361e6",
+      "expected_sha256": "ba1020872ddb6e90726c755f9f08f236f4c73e506013c91d8a0075fc0c0361e6",
+      "expected_source": "authoritative sections 3.2-3.4",
+      "after": {
+        "size_bytes": 5405458816,
+        "mtime_ns": 1787246406618303200,
+        "inode": 3940649674490422
+      }
+    },
+    {
+      "path": "D:\\research\\model_lake\\data\\data1m\\graphs\\hgraph_rf\\edges.npz",
+      "before": {
+        "size_bytes": 65515096,
+        "mtime_ns": 1787248675076989000,
+        "inode": 3659174697779839
+      },
+      "sha256": "c67a65eb7715728b357dd92a1816c3a7374caf28b2370f42ea6c84cb5a1695c2",
+      "expected_sha256": "c67a65eb7715728b357dd92a1816c3a7374caf28b2370f42ea6c84cb5a1695c2",
+      "expected_source": "graph file table, whose digest is bound to authoritative section 3.6",
+      "after": {
+        "size_bytes": 65515096,
+        "mtime_ns": 1787248675076989000,
+        "inode": 3659174697779839
+      }
+    },
+    {
+      "path": "D:\\research\\model_lake\\data\\data1m\\graphs\\hgraph_rf\\GRAPH_REPORT.json",
+      "before": {
+        "size_bytes": 1173,
+        "mtime_ns": 1787248683459785800,
+        "inode": 6473924464886365
+      },
+      "sha256": "53081ab8fe339c4aedb22c37f4ac6a8b19acc710e2e5915aaab0577bb5074527",
+      "expected_sha256": "53081ab8fe339c4aedb22c37f4ac6a8b19acc710e2e5915aaab0577bb5074527",
+      "expected_source": "graph file table, whose digest is bound to authoritative section 3.6",
+      "after": {
+        "size_bytes": 1173,
+        "mtime_ns": 1787248683459785800,
+        "inode": 6473924464886365
+      }
+    },
+    {
+      "path": "D:\\research\\model_lake\\data\\data1m\\graphs\\hgraph_rf\\lineage_stats.json",
+      "before": {
+        "size_bytes": 493,
+        "mtime_ns": 1787248683442848600,
+        "inode": 5348024558043740
+      },
+      "sha256": "8a0d3ea913723693c647fffdad032708510378a9481ef3a23aa3bc1ec3eb75bb",
+      "expected_sha256": "8a0d3ea913723693c647fffdad032708510378a9481ef3a23aa3bc1ec3eb75bb",
+      "expected_source": "graph file table, whose digest is bound to authoritative section 3.6",
+      "after": {
+        "size_bytes": 493,
+        "mtime_ns": 1787248683442848600,
+        "inode": 5348024558043740
+      }
+    },
+    {
+      "path": "D:\\research\\model_lake\\data\\data1m\\graphs\\hgraph_rf\\meta.json",
+      "before": {
+        "size_bytes": 1033706,
+        "mtime_ns": 1787256698319373500,
+        "inode": 5066549581333083
+      },
+      "sha256": "4ed7b5d13395d3e5fe98faa3e3b546199e6c569687e2b0d27fbd278676398fa0",
+      "expected_sha256": null,
+      "expected_source": null,
+      "after": {
+        "size_bytes": 1033706,
+        "mtime_ns": 1787256698319373500,
+        "inode": 5066549581333083
+      }
+    },
+    {
+      "path": "D:\\research\\model_lake\\data\\data1m\\graphs\\hgraph_rf\\nodes.npz",
+      "before": {
+        "size_bytes": 72995758,
+        "mtime_ns": 1787248675011575000,
+        "inode": 3659174697779838
+      },
+      "sha256": "4e2d97496691706b706bb174e538c3aadaaf1976e1dbf85394ebeaa3240a5969",
+      "expected_sha256": "4e2d97496691706b706bb174e538c3aadaaf1976e1dbf85394ebeaa3240a5969",
+      "expected_source": "graph file table, whose digest is bound to authoritative section 3.6",
+      "after": {
+        "size_bytes": 72995758,
+        "mtime_ns": 1787248675011575000,
+        "inode": 3659174697779838
+      }
+    },
+    {
+      "path": "D:\\research\\model_lake\\data\\data1m\\graphs\\hgraph_rf\\unique_dataset_id.parquet",
+      "before": {
+        "size_bytes": 512997,
+        "mtime_ns": 1787248675493177900,
+        "inode": 3940649674490497
+      },
+      "sha256": "f169c734b111f1356513850b3acdfe9549870e1fabf59de3cdcb58fb81db4a03",
+      "expected_sha256": "f169c734b111f1356513850b3acdfe9549870e1fabf59de3cdcb58fb81db4a03",
+      "expected_source": "graph file table, whose digest is bound to authoritative section 3.6",
+      "after": {
+        "size_bytes": 512997,
+        "mtime_ns": 1787248675493177900,
+        "inode": 3940649674490497
+      }
+    },
+    {
+      "path": "D:\\research\\model_lake\\data\\data1m\\graphs\\hgraph_rf\\unique_model_id.parquet",
+      "before": {
+        "size_bytes": 76464143,
+        "mtime_ns": 1787248675476302500,
+        "inode": 3940649674490496
+      },
+      "sha256": "ea3cff16d54210ababf05daac8eb1b5edc459bc9b4e83263bc5a1805f411440b",
+      "expected_sha256": "ea3cff16d54210ababf05daac8eb1b5edc459bc9b4e83263bc5a1805f411440b",
+      "expected_source": "graph file table, whose digest is bound to authoritative section 3.6",
+      "after": {
+        "size_bytes": 76464143,
+        "mtime_ns": 1787248675476302500,
+        "inode": 3940649674490496
+      }
+    },
+    {
+      "path": "D:\\research\\model_lake\\data\\data1m\\graphs\\hgraph_rf\\x_dataset.npy",
+      "before": {
+        "size_bytes": 34311656,
+        "mtime_ns": 1787248674928561500,
+        "inode": 2814749767647869
+      },
+      "sha256": "f4279117459d01fddc5c1ca889f2bca4e34f6c56611effebd3e05a48ad8d8b93",
+      "expected_sha256": "f4279117459d01fddc5c1ca889f2bca4e34f6c56611effebd3e05a48ad8d8b93",
+      "expected_source": "graph file table, whose digest is bound to authoritative section 3.6",
+      "after": {
+        "size_bytes": 34311656,
+        "mtime_ns": 1787248674928561500,
+        "inode": 2814749767647869
+      }
+    },
+    {
+      "path": "D:\\research\\model_lake\\data\\data1m\\graphs\\hgraph_rf\\x_model.npy",
+      "before": {
+        "size_bytes": 5405458816,
+        "mtime_ns": 1787248029507790800,
+        "inode": 4222124651201127
+      },
+      "sha256": "ba1020872ddb6e90726c755f9f08f236f4c73e506013c91d8a0075fc0c0361e6",
+      "expected_sha256": "ba1020872ddb6e90726c755f9f08f236f4c73e506013c91d8a0075fc0c0361e6",
+      "expected_source": "graph file table, whose digest is bound to authoritative section 3.6",
+      "after": {
+        "size_bytes": 5405458816,
+        "mtime_ns": 1787248029507790800,
+        "inode": 4222124651201127
+      }
+    },
+    {
+      "path": "D:\\research\\model_lake\\data\\data1m\\ladder_rf\\full_dataset_ids.parquet",
+      "before": {
+        "size_bytes": 649264,
+        "mtime_ns": 1787240678758765900,
+        "inode": 3096224744358123
+      },
+      "sha256": "31c027ff2eeb693aed6abaa5d235f4a6264bb4b3245bfd71cf1c8b85d32173cb",
+      "expected_sha256": "31c027ff2eeb693aed6abaa5d235f4a6264bb4b3245bfd71cf1c8b85d32173cb",
+      "expected_source": "authoritative sections 3.2-3.4",
+      "after": {
+        "size_bytes": 649264,
+        "mtime_ns": 1787240678758765900,
+        "inode": 3096224744358123
+      }
+    },
+    {
+      "path": "D:\\research\\model_lake\\data\\data1m\\ladder_rf\\full_model_ids.parquet",
+      "before": {
+        "size_bytes": 99101130,
+        "mtime_ns": 1787240678708243500,
+        "inode": 4503599627911400
+      },
+      "sha256": "fee360d1fef9afa4c446b70af35bcbf4ead2c75387f47abc3b0d21c944ae3efa",
+      "expected_sha256": "fee360d1fef9afa4c446b70af35bcbf4ead2c75387f47abc3b0d21c944ae3efa",
+      "expected_source": "authoritative sections 3.2-3.4",
+      "after": {
+        "size_bytes": 99101130,
+        "mtime_ns": 1787240678708243500,
+        "inode": 4503599627911400
+      }
+    },
+    {
+      "path": "D:\\research\\model_lake\\data\\data1m\\rf\\canon\\dataset_nodes.parquet",
+      "before": {
+        "size_bytes": 306310,
+        "mtime_ns": 1787238286415272500,
+        "inode": 3096224744357370
+      },
+      "sha256": "1d6c6878738347237fa517c86caa37b31002e32e277d2e59e6b8bb3049c84624",
+      "expected_sha256": null,
+      "expected_source": null,
+      "after": {
+        "size_bytes": 306310,
+        "mtime_ns": 1787238286415272500,
+        "inode": 3096224744357370
+      }
+    },
+    {
+      "path": "D:\\research\\model_lake\\data\\data1m\\rf\\canon\\dataset_nodes_merged.parquet",
+      "before": {
+        "size_bytes": 538554,
+        "mtime_ns": 1787238572334406500,
+        "inode": 3940649674490077
+      },
+      "sha256": "763201d8e6e103a664b658ec7148b657d28f1d0cdc6f70a54b06687122dbdc57",
+      "expected_sha256": null,
+      "expected_source": null,
+      "after": {
+        "size_bytes": 538554,
+        "mtime_ns": 1787238572334406500,
+        "inode": 3940649674490077
+      }
+    },
+    {
+      "path": "D:\\research\\model_lake\\data\\data1m\\rf\\canon\\models_out_of_snapshot.parquet",
+      "before": {
+        "size_bytes": 193792,
+        "mtime_ns": 1787238572352379000,
+        "inode": 3659174697779423
+      },
+      "sha256": "a96c930625f839452dc539ade6f077d413ca1ce2b8e359b5dff6d9e838197b90",
+      "expected_sha256": null,
+      "expected_source": null,
+      "after": {
+        "size_bytes": 193792,
+        "mtime_ns": 1787238572352379000,
+        "inode": 3659174697779423
+      }
+    },
+    {
+      "path": "D:\\research\\model_lake\\data\\data1m\\rf\\canon\\part-00000.parquet",
+      "before": {
+        "size_bytes": 1496218,
+        "mtime_ns": 1787238222502523300,
+        "inode": 3377699721067961
+      },
+      "sha256": "05f6a3b2844ab6ff0443dc71abdb354b5c2450c98ee978081a5d372cda3a64b9",
+      "expected_sha256": null,
+      "expected_source": null,
+      "after": {
+        "size_bytes": 1496218,
+        "mtime_ns": 1787238222502523300,
+        "inode": 3377699721067961
+      }
+    },
+    {
+      "path": "D:\\research\\model_lake\\data\\data1m\\rf\\canon\\part-00001.parquet",
+      "before": {
+        "size_bytes": 1515395,
+        "mtime_ns": 1787238223338714300,
+        "inode": 4503599627910586
+      },
+      "sha256": "e3f0b50dcbf1cbf069f3b1745f560b5ed33c348826628cdba6e6594c99646a4e",
+      "expected_sha256": null,
+      "expected_source": null,
+      "after": {
+        "size_bytes": 1515395,
+        "mtime_ns": 1787238223338714300,
+        "inode": 4503599627910586
+      }
+    },
+    {
+      "path": "D:\\research\\model_lake\\data\\data1m\\rf\\canon\\part-00002.parquet",
+      "before": {
+        "size_bytes": 1491720,
+        "mtime_ns": 1787238224151466900,
+        "inode": 3377699721067963
+      },
+      "sha256": "10690e6ed98771b63d6710f7fade88aa1b2670492b7199d477a4ce73b7c9d01d",
+      "expected_sha256": null,
+      "expected_source": null,
+      "after": {
+        "size_bytes": 1491720,
+        "mtime_ns": 1787238224151466900,
+        "inode": 3377699721067963
+      }
+    },
+    {
+      "path": "D:\\research\\model_lake\\data\\data1m\\rf\\canon\\part-00003.parquet",
+      "before": {
+        "size_bytes": 1552260,
+        "mtime_ns": 1787238225033078600,
+        "inode": 4785074604621244
+      },
+      "sha256": "5367d1b3bb892dd5b4270879f92f8099ea73115689ec7006043a26c9b55a7d67",
+      "expected_sha256": null,
+      "expected_source": null,
+      "after": {
+        "size_bytes": 1552260,
+        "mtime_ns": 1787238225033078600,
+        "inode": 4785074604621244
+      }
+    },
+    {
+      "path": "D:\\research\\model_lake\\data\\data1m\\rf\\canon\\part-00004.parquet",
+      "before": {
+        "size_bytes": 1557753,
+        "mtime_ns": 1787238225920238200,
+        "inode": 4503599627910589
+      },
+      "sha256": "42799ad3a2b40a60e04f7d9af2ffcf75092d3887596ef0e823372883a152a435",
+      "expected_sha256": null,
+      "expected_source": null,
+      "after": {
+        "size_bytes": 1557753,
+        "mtime_ns": 1787238225920238200,
+        "inode": 4503599627910589
+      }
+    },
+    {
+      "path": "D:\\research\\model_lake\\data\\data1m\\rf\\canon\\part-00005.parquet",
+      "before": {
+        "size_bytes": 1470108,
+        "mtime_ns": 1787238226836454700,
+        "inode": 4785074604621246
+      },
+      "sha256": "aeb8b1f9a4d34f8545fe1cd719adc53706aa7a426c747db09344d8e46d9bd838",
+      "expected_sha256": null,
+      "expected_source": null,
+      "after": {
+        "size_bytes": 1470108,
+        "mtime_ns": 1787238226836454700,
+        "inode": 4785074604621246
+      }
+    },
+    {
+      "path": "D:\\research\\model_lake\\data\\data1m\\rf\\canon\\part-00006.parquet",
+      "before": {
+        "size_bytes": 1523624,
+        "mtime_ns": 1787238227703136900,
+        "inode": 3377699721067967
+      },
+      "sha256": "7aab60aabc32beeef9aa1f68da32c0e55b95e9152ca8e604658751e7a936f633",
+      "expected_sha256": null,
+      "expected_source": null,
+      "after": {
+        "size_bytes": 1523624,
+        "mtime_ns": 1787238227703136900,
+        "inode": 3377699721067967
+      }
+    },
+    {
+      "path": "D:\\research\\model_lake\\data\\data1m\\rf\\canon\\part-00007.parquet",
+      "before": {
+        "size_bytes": 1495658,
+        "mtime_ns": 1787238228540122200,
+        "inode": 4222124651199936
+      },
+      "sha256": "a34da029e7f7e89fba0deb62139250302f029e7d34006c836a93510110c02b61",
+      "expected_sha256": null,
+      "expected_source": null,
+      "after": {
+        "size_bytes": 1495658,
+        "mtime_ns": 1787238228540122200,
+        "inode": 4222124651199936
+      }
+    },
+    {
+      "path": "D:\\research\\model_lake\\data\\data1m\\rf\\canon\\part-00008.parquet",
+      "before": {
+        "size_bytes": 1528309,
+        "mtime_ns": 1787238229543184300,
+        "inode": 3096224744357313
+      },
+      "sha256": "2573505427b8fdafb24bd0a4d4509c0091da24e0d1a3f47540a247337e2c8a8b",
+      "expected_sha256": null,
+      "expected_source": null,
+      "after": {
+        "size_bytes": 1528309,
+        "mtime_ns": 1787238229543184300,
+        "inode": 3096224744357313
+      }
+    },
+    {
+      "path": "D:\\research\\model_lake\\data\\data1m\\rf\\canon\\part-00009.parquet",
+      "before": {
+        "size_bytes": 1520003,
+        "mtime_ns": 1787238230453278800,
+        "inode": 5629499534753218
+      },
+      "sha256": "aa8653a945a6ed14611daae857d76ca629ec5c4f58215bcb292765609aa014d3",
+      "expected_sha256": null,
+      "expected_source": null,
+      "after": {
+        "size_bytes": 1520003,
+        "mtime_ns": 1787238230453278800,
+        "inode": 5629499534753218
+      }
+    },
+    {
+      "path": "D:\\research\\model_lake\\data\\data1m\\rf\\canon\\part-00010.parquet",
+      "before": {
+        "size_bytes": 1487808,
+        "mtime_ns": 1787238231286921900,
+        "inode": 4785074604621251
+      },
+      "sha256": "ea0a4b7a6f2df158d87e223bc718c52f95f7c66f3711c5b2e89e570eb382b911",
+      "expected_sha256": null,
+      "expected_source": null,
+      "after": {
+        "size_bytes": 1487808,
+        "mtime_ns": 1787238231286921900,
+        "inode": 4785074604621251
+      }
+    },
+    {
+      "path": "D:\\research\\model_lake\\data\\data1m\\rf\\canon\\part-00011.parquet",
+      "before": {
+        "size_bytes": 1518444,
+        "mtime_ns": 1787238232236583200,
+        "inode": 5066549581331908
+      },
+      "sha256": "0fcfc4a6dd71149ccc5dcfd8d3d1b288efab7e29001ff7aed4dd395c5e14b7c6",
+      "expected_sha256": null,
+      "expected_source": null,
+      "after": {
+        "size_bytes": 1518444,
+        "mtime_ns": 1787238232236583200,
+        "inode": 5066549581331908
+      }
+    },
+    {
+      "path": "D:\\research\\model_lake\\data\\data1m\\rf\\canon\\part-00012.parquet",
+      "before": {
+        "size_bytes": 1423433,
+        "mtime_ns": 1787238233121008300,
+        "inode": 3659174697778629
+      },
+      "sha256": "9322346dde28bf6b1e6572acbecf386ef4121f1104e63058c181b9ef99d7f7ab",
+      "expected_sha256": null,
+      "expected_source": null,
+      "after": {
+        "size_bytes": 1423433,
+        "mtime_ns": 1787238233121008300,
+        "inode": 3659174697778629
+      }
+    },
+    {
+      "path": "D:\\research\\model_lake\\data\\data1m\\rf\\canon\\part-00013.parquet",
+      "before": {
+        "size_bytes": 1310479,
+        "mtime_ns": 1787238233920520900,
+        "inode": 5629499534753222
+      },
+      "sha256": "883ce921afb7cb1fb5d6071b06a30e898d821c00f317ec41bb70ef3cb539fef2",
+      "expected_sha256": null,
+      "expected_source": null,
+      "after": {
+        "size_bytes": 1310479,
+        "mtime_ns": 1787238233920520900,
+        "inode": 5629499534753222
+      }
+    },
+    {
+      "path": "D:\\research\\model_lake\\data\\data1m\\rf\\canon\\part-00014.parquet",
+      "before": {
+        "size_bytes": 1273421,
+        "mtime_ns": 1787238234686989800,
+        "inode": 3659174697778631
+      },
+      "sha256": "e1cef29dfbd56dfe947fc4289fa1f817fa5826a01d84a9e2a2093d1b5b7c8f0c",
+      "expected_sha256": null,
+      "expected_source": null,
+      "after": {
+        "size_bytes": 1273421,
+        "mtime_ns": 1787238234686989800,
+        "inode": 3659174697778631
+      }
+    },
+    {
+      "path": "D:\\research\\model_lake\\data\\data1m\\rf\\canon\\part-00015.parquet",
+      "before": {
+        "size_bytes": 1316209,
+        "mtime_ns": 1787238235437017900,
+        "inode": 5910974511463880
+      },
+      "sha256": "af644fc976a8d0bfc1aae589bac0ac6c298fb0ac72ca7201b828ddac1d54fba4",
+      "expected_sha256": null,
+      "expected_source": null,
+      "after": {
+        "size_bytes": 1316209,
+        "mtime_ns": 1787238235437017900,
+        "inode": 5910974511463880
+      }
+    },
+    {
+      "path": "D:\\research\\model_lake\\data\\data1m\\rf\\canon\\part-00016.parquet",
+      "before": {
+        "size_bytes": 1486417,
+        "mtime_ns": 1787238236306805900,
+        "inode": 5910974511463881
+      },
+      "sha256": "aeed32dfd55b112743db84816e0389542908cf31c9516debccf65ef3b68fd7bf",
+      "expected_sha256": null,
+      "expected_source": null,
+      "after": {
+        "size_bytes": 1486417,
+        "mtime_ns": 1787238236306805900,
+        "inode": 5910974511463881
+      }
+    },
+    {
+      "path": "D:\\research\\model_lake\\data\\data1m\\rf\\canon\\part-00017.parquet",
+      "before": {
+        "size_bytes": 1454799,
+        "mtime_ns": 1787238237186306200,
+        "inode": 5910974511463882
+      },
+      "sha256": "cafbadd438bc7aecf6bd11604f9d070ef4bb13f48fa79045c386c4d6901b198f",
+      "expected_sha256": null,
+      "expected_source": null,
+      "after": {
+        "size_bytes": 1454799,
+        "mtime_ns": 1787238237186306200,
+        "inode": 5910974511463882
+      }
+    },
+    {
+      "path": "D:\\research\\model_lake\\data\\data1m\\rf\\canon\\part-00018.parquet",
+      "before": {
+        "size_bytes": 1421892,
+        "mtime_ns": 1787238238102948600,
+        "inode": 3659174697778635
+      },
+      "sha256": "4c349a279adaa87e3e36dcbe0dc146c95d453a636e86d8c9d00474cf05682922",
+      "expected_sha256": null,
+      "expected_source": null,
+      "after": {
+        "size_bytes": 1421892,
+        "mtime_ns": 1787238238102948600,
+        "inode": 3659174697778635
+      }
+    },
+    {
+      "path": "D:\\research\\model_lake\\data\\data1m\\rf\\canon\\part-00019.parquet",
+      "before": {
+        "size_bytes": 1479769,
+        "mtime_ns": 1787238238954068500,
+        "inode": 4785074604621260
+      },
+      "sha256": "464cdc10fc5a6baf608a2873c6a8e7c50fd48d0e618b427a9f13207027c8351a",
+      "expected_sha256": null,
+      "expected_source": null,
+      "after": {
+        "size_bytes": 1479769,
+        "mtime_ns": 1787238238954068500,
+        "inode": 4785074604621260
+      }
+    },
+    {
+      "path": "D:\\research\\model_lake\\data\\data1m\\rf\\canon\\part-00020.parquet",
+      "before": {
+        "size_bytes": 1443772,
+        "mtime_ns": 1787238239890037100,
+        "inode": 5066549581331917
+      },
+      "sha256": "056745ddd83b7b166baa334cd9b804a571aa98562420ab780073a34ac83709bf",
+      "expected_sha256": null,
+      "expected_source": null,
+      "after": {
+        "size_bytes": 1443772,
+        "mtime_ns": 1787238239890037100,
+        "inode": 5066549581331917
+      }
+    },
+    {
+      "path": "D:\\research\\model_lake\\data\\data1m\\rf\\canon\\part-00021.parquet",
+      "before": {
+        "size_bytes": 1471190,
+        "mtime_ns": 1787238240819218200,
+        "inode": 4785074604621262
+      },
+      "sha256": "e741794560f36db9a7ca54500176ed38e2846934b1badcdd58b6545e18a096b8",
+      "expected_sha256": null,
+      "expected_source": null,
+      "after": {
+        "size_bytes": 1471190,
+        "mtime_ns": 1787238240819218200,
+        "inode": 4785074604621262
+      }
+    },
+    {
+      "path": "D:\\research\\model_lake\\data\\data1m\\rf\\canon\\part-00022.parquet",
+      "before": {
+        "size_bytes": 1342575,
+        "mtime_ns": 1787238241719690700,
+        "inode": 7318349395017167
+      },
+      "sha256": "cae7cc30f48571f59ec914fef88dbd96dc1f9acaf816ca891e7951364423fb43",
+      "expected_sha256": null,
+      "expected_source": null,
+      "after": {
+        "size_bytes": 1342575,
+        "mtime_ns": 1787238241719690700,
+        "inode": 7318349395017167
+      }
+    },
+    {
+      "path": "D:\\research\\model_lake\\data\\data1m\\rf\\canon\\part-00023.parquet",
+      "before": {
+        "size_bytes": 1449351,
+        "mtime_ns": 1787238242587368900,
+        "inode": 4785074604621264
+      },
+      "sha256": "d376d3292e808f30d30ef3617b66f397b6e3447d9dd8553b63f5645d430f5e81",
+      "expected_sha256": null,
+      "expected_source": null,
+      "after": {
+        "size_bytes": 1449351,
+        "mtime_ns": 1787238242587368900,
+        "inode": 4785074604621264
+      }
+    },
+    {
+      "path": "D:\\research\\model_lake\\data\\data1m\\rf\\canon\\part-00024.parquet",
+      "before": {
+        "size_bytes": 1569506,
+        "mtime_ns": 1787238243536764700,
+        "inode": 4503599627910610
+      },
+      "sha256": "a4bf6cc601078c417f4ef1a0007b87b3a045ea5ad04bd36e7d8a0f0a99bb6b1d",
+      "expected_sha256": null,
+      "expected_source": null,
+      "after": {
+        "size_bytes": 1569506,
+        "mtime_ns": 1787238243536764700,
+        "inode": 4503599627910610
+      }
+    },
+    {
+      "path": "D:\\research\\model_lake\\data\\data1m\\rf\\canon\\part-00025.parquet",
+      "before": {
+        "size_bytes": 1724065,
+        "mtime_ns": 1787238244487526500,
+        "inode": 4503599627910612
+      },
+      "sha256": "7ad4a44ca8d3d297a36305f213a9be6351fb4aa6bb4e54691c04a9315d317dda",
+      "expected_sha256": null,
+      "expected_source": null,
+      "after": {
+        "size_bytes": 1724065,
+        "mtime_ns": 1787238244487526500,
+        "inode": 4503599627910612
+      }
+    },
+    {
+      "path": "D:\\research\\model_lake\\data\\data1m\\rf\\canon\\part-00026.parquet",
+      "before": {
+        "size_bytes": 1670621,
+        "mtime_ns": 1787238245503692400,
+        "inode": 3659174697778645
+      },
+      "sha256": "5b7b35b79f6b43948829d460ef06867f9cd764a3c0ab3adb52c74a174252381c",
+      "expected_sha256": null,
+      "expected_source": null,
+      "after": {
+        "size_bytes": 1670621,
+        "mtime_ns": 1787238245503692400,
+        "inode": 3659174697778645
+      }
+    },
+    {
+      "path": "D:\\research\\model_lake\\data\\data1m\\rf\\canon\\part-00027.parquet",
+      "before": {
+        "size_bytes": 1809303,
+        "mtime_ns": 1787238246552908200,
+        "inode": 5066549581331926
+      },
+      "sha256": "72778d077ab7453dd19b9baae82933a72cfba50bd6c1345cd746aa91a3e87673",
+      "expected_sha256": null,
+      "expected_source": null,
+      "after": {
+        "size_bytes": 1809303,
+        "mtime_ns": 1787238246552908200,
+        "inode": 5066549581331926
+      }
+    },
+    {
+      "path": "D:\\research\\model_lake\\data\\data1m\\rf\\canon\\part-00028.parquet",
+      "before": {
+        "size_bytes": 1737193,
+        "mtime_ns": 1787238247472603500,
+        "inode": 7881299348438487
+      },
+      "sha256": "55129602e9eac38b6d5ae6e6d14039571586b9813a739ed4a7fbb44aa4297fcd",
+      "expected_sha256": null,
+      "expected_source": null,
+      "after": {
+        "size_bytes": 1737193,
+        "mtime_ns": 1787238247472603500,
+        "inode": 7881299348438487
+      }
+    },
+    {
+      "path": "D:\\research\\model_lake\\data\\data1m\\rf\\canon\\part-00029.parquet",
+      "before": {
+        "size_bytes": 1684308,
+        "mtime_ns": 1787238248370147300,
+        "inode": 5910974511463896
+      },
+      "sha256": "8bd4f32ee08ac9f59daaa07d4c2f871dfd00f8859910932b4ee4564d38f292d3",
+      "expected_sha256": null,
+      "expected_source": null,
+      "after": {
+        "size_bytes": 1684308,
+        "mtime_ns": 1787238248370147300,
+        "inode": 5910974511463896
+      }
+    },
+    {
+      "path": "D:\\research\\model_lake\\data\\data1m\\rf\\canon\\part-00030.parquet",
+      "before": {
+        "size_bytes": 1610478,
+        "mtime_ns": 1787238249386428000,
+        "inode": 5910974511463897
+      },
+      "sha256": "e62847b3b7093c3cc3d0fd9c74a59f2b4cf6f79c7819ce50d3baa73b2df185e9",
+      "expected_sha256": null,
+      "expected_source": null,
+      "after": {
+        "size_bytes": 1610478,
+        "mtime_ns": 1787238249386428000,
+        "inode": 5910974511463897
+      }
+    },
+    {
+      "path": "D:\\research\\model_lake\\data\\data1m\\rf\\canon\\part-00031.parquet",
+      "before": {
+        "size_bytes": 1624324,
+        "mtime_ns": 1787238250422142600,
+        "inode": 6473924464885210
+      },
+      "sha256": "4f796939d1a7075068f528cbaca738890e0d60b0c6684e54e91d5d03400507a1",
+      "expected_sha256": null,
+      "expected_source": null,
+      "after": {
+        "size_bytes": 1624324,
+        "mtime_ns": 1787238250422142600,
+        "inode": 6473924464885210
+      }
+    },
+    {
+      "path": "D:\\research\\model_lake\\data\\data1m\\rf\\canon\\part-00032.parquet",
+      "before": {
+        "size_bytes": 1676658,
+        "mtime_ns": 1787238251337210400,
+        "inode": 3659174697778651
+      },
+      "sha256": "605d0cbc18efe4dadc3cee83f2b407df293a70fc39e0bcaf9841a4f249e491ec",
+      "expected_sha256": null,
+      "expected_source": null,
+      "after": {
+        "size_bytes": 1676658,
+        "mtime_ns": 1787238251337210400,
+        "inode": 3659174697778651
+      }
+    },
+    {
+      "path": "D:\\research\\model_lake\\data\\data1m\\rf\\canon\\part-00033.parquet",
+      "before": {
+        "size_bytes": 1662760,
+        "mtime_ns": 1787238252344916000,
+        "inode": 4503599627910620
+      },
+      "sha256": "413275906b169b46734fb85bd8bbadc9edf904bfc02e1079c0490bfe9411b286",
+      "expected_sha256": null,
+      "expected_source": null,
+      "after": {
+        "size_bytes": 1662760,
+        "mtime_ns": 1787238252344916000,
+        "inode": 4503599627910620
+      }
+    },
+    {
+      "path": "D:\\research\\model_lake\\data\\data1m\\rf\\canon\\part-00034.parquet",
+      "before": {
+        "size_bytes": 1733953,
+        "mtime_ns": 1787238253286832500,
+        "inode": 5629499534753245
+      },
+      "sha256": "70800701277c7b051c3ef13f482b842695f6fdab159a25b24bafa209e583f85e",
+      "expected_sha256": null,
+      "expected_source": null,
+      "after": {
+        "size_bytes": 1733953,
+        "mtime_ns": 1787238253286832500,
+        "inode": 5629499534753245
+      }
+    },
+    {
+      "path": "D:\\research\\model_lake\\data\\data1m\\rf\\canon\\part-00035.parquet",
+      "before": {
+        "size_bytes": 1822730,
+        "mtime_ns": 1787238254554694700,
+        "inode": 4503599627910622
+      },
+      "sha256": "e7018c40951949ca4b34f5409c659b2b423eb3f219d2ac221b309683d2d32f32",
+      "expected_sha256": null,
+      "expected_source": null,
+      "after": {
+        "size_bytes": 1822730,
+        "mtime_ns": 1787238254554694700,
+        "inode": 4503599627910622
+      }
+    },
+    {
+      "path": "D:\\research\\model_lake\\data\\data1m\\rf\\canon\\part-00036.parquet",
+      "before": {
+        "size_bytes": 1688721,
+        "mtime_ns": 1787238255669232100,
+        "inode": 3659174697778655
+      },
+      "sha256": "cea392f243d4fbab81a18aba3e258bc4f7c02fe9c4820f37c4f3cd1fa8f99154",
+      "expected_sha256": null,
+      "expected_source": null,
+      "after": {
+        "size_bytes": 1688721,
+        "mtime_ns": 1787238255669232100,
+        "inode": 3659174697778655
+      }
+    },
+    {
+      "path": "D:\\research\\model_lake\\data\\data1m\\rf\\canon\\part-00037.parquet",
+      "before": {
+        "size_bytes": 1504302,
+        "mtime_ns": 1787238256727513000,
+        "inode": 5066549581331936
+      },
+      "sha256": "55086c5304b8ffc6c37551a322163d7d75838d101971a1660c0458e20bddf0ce",
+      "expected_sha256": null,
+      "expected_source": null,
+      "after": {
+        "size_bytes": 1504302,
+        "mtime_ns": 1787238256727513000,
+        "inode": 5066549581331936
+      }
+    },
+    {
+      "path": "D:\\research\\model_lake\\data\\data1m\\rf\\canon\\part-00038.parquet",
+      "before": {
+        "size_bytes": 1477313,
+        "mtime_ns": 1787238257769104200,
+        "inode": 3659174697778657
+      },
+      "sha256": "22497c5bdc636733ecde101c49b1c047008d30e31933ce939a11f3ad14d536d0",
+      "expected_sha256": null,
+      "expected_source": null,
+      "after": {
+        "size_bytes": 1477313,
+        "mtime_ns": 1787238257769104200,
+        "inode": 3659174697778657
+      }
+    },
+    {
+      "path": "D:\\research\\model_lake\\data\\data1m\\rf\\canon\\part-00039.parquet",
+      "before": {
+        "size_bytes": 1523153,
+        "mtime_ns": 1787238258820310900,
+        "inode": 4503599627910626
+      },
+      "sha256": "74784c8d45942e99ec9e83344238be0a000fe29cd9ef4d6987e399242e71b02d",
+      "expected_sha256": null,
+      "expected_source": null,
+      "after": {
+        "size_bytes": 1523153,
+        "mtime_ns": 1787238258820310900,
+        "inode": 4503599627910626
+      }
+    },
+    {
+      "path": "D:\\research\\model_lake\\data\\data1m\\rf\\canon\\part-00040.parquet",
+      "before": {
+        "size_bytes": 1410128,
+        "mtime_ns": 1787238259935824100,
+        "inode": 5629499534753251
+      },
+      "sha256": "72ca575abad401c778783837ddf1a300eb05bf5fc6cc10b9d6c56445111159fa",
+      "expected_sha256": null,
+      "expected_source": null,
+      "after": {
+        "size_bytes": 1410128,
+        "mtime_ns": 1787238259935824100,
+        "inode": 5629499534753251
+      }
+    },
+    {
+      "path": "D:\\research\\model_lake\\data\\data1m\\rf\\canon\\part-00041.parquet",
+      "before": {
+        "size_bytes": 1118046,
+        "mtime_ns": 1787238260655858600,
+        "inode": 4222124651199972
+      },
+      "sha256": "98e6cc23145b5d1f89ebeb39ca9a11b8fb34391393b480e7681de8126b42ad4d",
+      "expected_sha256": null,
+      "expected_source": null,
+      "after": {
+        "size_bytes": 1118046,
+        "mtime_ns": 1787238260655858600,
+        "inode": 4222124651199972
+      }
+    },
+    {
+      "path": "D:\\research\\model_lake\\data\\data1m\\rf\\canon\\part-00042.parquet",
+      "before": {
+        "size_bytes": 1130811,
+        "mtime_ns": 1787238261569153000,
+        "inode": 3659174697778661
+      },
+      "sha256": "335865e50389f4bd01ab76320e167ce65a2994aeaaf2033cb5da29cdfb62a8ed",
+      "expected_sha256": null,
+      "expected_source": null,
+      "after": {
+        "size_bytes": 1130811,
+        "mtime_ns": 1787238261569153000,
+        "inode": 3659174697778661
+      }
+    },
+    {
+      "path": "D:\\research\\model_lake\\data\\data1m\\rf\\canon\\part-00043.parquet",
+      "before": {
+        "size_bytes": 1173093,
+        "mtime_ns": 1787238262501060800,
+        "inode": 4222124651199974
+      },
+      "sha256": "26a06f1299009f7eba6f5567d6bc653f25a01c3f3eafddbbd22e226b3bc4702d",
+      "expected_sha256": null,
+      "expected_source": null,
+      "after": {
+        "size_bytes": 1173093,
+        "mtime_ns": 1787238262501060800,
+        "inode": 4222124651199974
+      }
+    },
+    {
+      "path": "D:\\research\\model_lake\\data\\data1m\\rf\\canon\\part-00044.parquet",
+      "before": {
+        "size_bytes": 1289431,
+        "mtime_ns": 1787238263319979500,
+        "inode": 3377699721068007
+      },
+      "sha256": "24dc3110578f894fbfe2be31ed558603ddfc21bb33fdf57b08d4cd3793c227ce",
+      "expected_sha256": null,
+      "expected_source": null,
+      "after": {
+        "size_bytes": 1289431,
+        "mtime_ns": 1787238263319979500,
+        "inode": 3377699721068007
+      }
+    },
+    {
+      "path": "D:\\research\\model_lake\\data\\data1m\\rf\\canon\\part-00045.parquet",
+      "before": {
+        "size_bytes": 1313877,
+        "mtime_ns": 1787238264219135500,
+        "inode": 4503599627910632
+      },
+      "sha256": "327b1dced69eaf9be4c9d2f6e596de6ac4e43e34c7fcf0e9d215e87b96a193a2",
+      "expected_sha256": null,
+      "expected_source": null,
+      "after": {
+        "size_bytes": 1313877,
+        "mtime_ns": 1787238264219135500,
+        "inode": 4503599627910632
+      }
+    },
+    {
+      "path": "D:\\research\\model_lake\\data\\data1m\\rf\\canon\\part-00046.parquet",
+      "before": {
+        "size_bytes": 1406182,
+        "mtime_ns": 1787238265319019300,
+        "inode": 4222124651199977
+      },
+      "sha256": "d0239629df4ea4200a2d005bd6587087761d5ba1df96c2216873b13177341c67",
+      "expected_sha256": null,
+      "expected_source": null,
+      "after": {
+        "size_bytes": 1406182,
+        "mtime_ns": 1787238265319019300,
+        "inode": 4222124651199977
+      }
+    },
+    {
+      "path": "D:\\research\\model_lake\\data\\data1m\\rf\\canon\\part-00047.parquet",
+      "before": {
+        "size_bytes": 1384355,
+        "mtime_ns": 1787238266219386200,
+        "inode": 3377699721068010
+      },
+      "sha256": "bae15acde7ce0bb33db2334232359a99585a82ca79b6cfb9cb40b0689143b9d5",
+      "expected_sha256": null,
+      "expected_source": null,
+      "after": {
+        "size_bytes": 1384355,
+        "mtime_ns": 1787238266219386200,
+        "inode": 3377699721068010
+      }
+    },
+    {
+      "path": "D:\\research\\model_lake\\data\\data1m\\rf\\canon\\part-00048.parquet",
+      "before": {
+        "size_bytes": 1431342,
+        "mtime_ns": 1787238267219216600,
+        "inode": 4785074604621291
+      },
+      "sha256": "2330df586e52ab5ea4e4a55d90e06e5c4e8f79a50d36675c0bfb58ddadae522f",
+      "expected_sha256": null,
+      "expected_source": null,
+      "after": {
+        "size_bytes": 1431342,
+        "mtime_ns": 1787238267219216600,
+        "inode": 4785074604621291
+      }
+    },
+    {
+      "path": "D:\\research\\model_lake\\data\\data1m\\rf\\canon\\part-00049.parquet",
+      "before": {
+        "size_bytes": 1467720,
+        "mtime_ns": 1787238268095805500,
+        "inode": 4222124651199980
+      },
+      "sha256": "43d1cefcf521fc97f95db9a7cfc5e4f41292aafdc9e39670f75589e1d0b09fc7",
+      "expected_sha256": null,
+      "expected_source": null,
+      "after": {
+        "size_bytes": 1467720,
+        "mtime_ns": 1787238268095805500,
+        "inode": 4222124651199980
+      }
+    },
+    {
+      "path": "D:\\research\\model_lake\\data\\data1m\\rf\\canon\\part-00050.parquet",
+      "before": {
+        "size_bytes": 1507025,
+        "mtime_ns": 1787238269072874500,
+        "inode": 4222124651199981
+      },
+      "sha256": "733a5a69711e7ed5659f457b307aecb87f90e0769258c2e488d9efeeccdcd35b",
+      "expected_sha256": null,
+      "expected_source": null,
+      "after": {
+        "size_bytes": 1507025,
+        "mtime_ns": 1787238269072874500,
+        "inode": 4222124651199981
+      }
+    },
+    {
+      "path": "D:\\research\\model_lake\\data\\data1m\\rf\\canon\\part-00051.parquet",
+      "before": {
+        "size_bytes": 1371678,
+        "mtime_ns": 1787238270118831900,
+        "inode": 3940649674489326
+      },
+      "sha256": "535829c4d18a9b66887f4c10a0753a9d8f7099b47dfb488a41f5405aa74a3b6e",
+      "expected_sha256": null,
+      "expected_source": null,
+      "after": {
+        "size_bytes": 1371678,
+        "mtime_ns": 1787238270118831900,
+        "inode": 3940649674489326
+      }
+    },
+    {
+      "path": "D:\\research\\model_lake\\data\\data1m\\rf\\canon\\part-00052.parquet",
+      "before": {
+        "size_bytes": 1405388,
+        "mtime_ns": 1787238271002269000,
+        "inode": 4222124651199983
+      },
+      "sha256": "ffffcb034e0e89b7b76bcd23bb9b04ce2a20c2a7b12241378b6b9d6363a478b6",
+      "expected_sha256": null,
+      "expected_source": null,
+      "after": {
+        "size_bytes": 1405388,
+        "mtime_ns": 1787238271002269000,
+        "inode": 4222124651199983
+      }
+    },
+    {
+      "path": "D:\\research\\model_lake\\data\\data1m\\rf\\canon\\part-00053.parquet",
+      "before": {
+        "size_bytes": 1357026,
+        "mtime_ns": 1787238272056032400,
+        "inode": 3940649674489328
+      },
+      "sha256": "1379ab0c341681465b9794e696e3c43158bae40928760c0ad683202ebf8f90b8",
+      "expected_sha256": null,
+      "expected_source": null,
+      "after": {
+        "size_bytes": 1357026,
+        "mtime_ns": 1787238272056032400,
+        "inode": 3940649674489328
+      }
+    },
+    {
+      "path": "D:\\research\\model_lake\\data\\data1m\\rf\\canon\\part-00054.parquet",
+      "before": {
+        "size_bytes": 1327357,
+        "mtime_ns": 1787238272891580800,
+        "inode": 5066549581331953
+      },
+      "sha256": "03dc82fb9d2478b850eb55f1c1d15f117d3fa794f21f038449ff4dc5a9e8f640",
+      "expected_sha256": null,
+      "expected_source": null,
+      "after": {
+        "size_bytes": 1327357,
+        "mtime_ns": 1787238272891580800,
+        "inode": 5066549581331953
+      }
+    },
+    {
+      "path": "D:\\research\\model_lake\\data\\data1m\\rf\\canon\\part-00055.parquet",
+      "before": {
+        "size_bytes": 1293600,
+        "mtime_ns": 1787238273754617200,
+        "inode": 5348024558042610
+      },
+      "sha256": "9ec4724aba8e36725daee6356ca6774472014b53a5778d56387b4f56082f3732",
+      "expected_sha256": null,
+      "expected_source": null,
+      "after": {
+        "size_bytes": 1293600,
+        "mtime_ns": 1787238273754617200,
+        "inode": 5348024558042610
+      }
+    },
+    {
+      "path": "D:\\research\\model_lake\\data\\data1m\\rf\\canon\\part-00056.parquet",
+      "before": {
+        "size_bytes": 1230003,
+        "mtime_ns": 1787238274570563100,
+        "inode": 4785074604621299
+      },
+      "sha256": "e04d574809cfe0d4e3ae9085ff1bbf17944f3e734fe54ae20c2af995cb7cbbb7",
+      "expected_sha256": null,
+      "expected_source": null,
+      "after": {
+        "size_bytes": 1230003,
+        "mtime_ns": 1787238274570563100,
+        "inode": 4785074604621299
+      }
+    },
+    {
+      "path": "D:\\research\\model_lake\\data\\data1m\\rf\\canon\\part-00057.parquet",
+      "before": {
+        "size_bytes": 1152183,
+        "mtime_ns": 1787238275406868400,
+        "inode": 3377699721068020
+      },
+      "sha256": "7eaa198283e96278150bc62640093acfabdbe14ad76941ff9129b2bf3c8630b4",
+      "expected_sha256": null,
+      "expected_source": null,
+      "after": {
+        "size_bytes": 1152183,
+        "mtime_ns": 1787238275406868400,
+        "inode": 3377699721068020
+      }
+    },
+    {
+      "path": "D:\\research\\model_lake\\data\\data1m\\rf\\canon\\part-00058.parquet",
+      "before": {
+        "size_bytes": 1145153,
+        "mtime_ns": 1787238276304862100,
+        "inode": 4222124651199989
+      },
+      "sha256": "24b6ca2d09c00be9be3c4b335c8e5d69d3a8e08dff56a9c3392e9ac5a1466c2e",
+      "expected_sha256": null,
+      "expected_source": null,
+      "after": {
+        "size_bytes": 1145153,
+        "mtime_ns": 1787238276304862100,
+        "inode": 4222124651199989
+      }
+    },
+    {
+      "path": "D:\\research\\model_lake\\data\\data1m\\rf\\canon\\part-00059.parquet",
+      "before": {
+        "size_bytes": 947368,
+        "mtime_ns": 1787238277106206100,
+        "inode": 3659174697778678
+      },
+      "sha256": "9e1716c56803957f51c91be14a7952b3bce74f73da608968847e242848994129",
+      "expected_sha256": null,
+      "expected_source": null,
+      "after": {
+        "size_bytes": 947368,
+        "mtime_ns": 1787238277106206100,
+        "inode": 3659174697778678
+      }
+    },
+    {
+      "path": "D:\\research\\model_lake\\data\\data1m\\rf\\canon\\part-00060.parquet",
+      "before": {
+        "size_bytes": 64307,
+        "mtime_ns": 1787238277169419300,
+        "inode": 4222124651199991
+      },
+      "sha256": "c5a10aa55848a636b1dd5da1131bf775227565c35dfb5e6c9b32b6658e5180c4",
+      "expected_sha256": null,
+      "expected_source": null,
+      "after": {
+        "size_bytes": 64307,
+        "mtime_ns": 1787238277169419300,
+        "inode": 4222124651199991
+      }
+    },
+    {
+      "path": "D:\\research\\model_lake\\data\\data1m\\rf\\canon\\supervision.parquet",
+      "before": {
+        "size_bytes": 1442657,
+        "mtime_ns": 1787238286116632800,
+        "inode": 5348024558042617
+      },
+      "sha256": "49ec83e7853322e21e3a2610a6dd44861f1c9f699faf8837034306eb61d1d42c",
+      "expected_sha256": null,
+      "expected_source": null,
+      "after": {
+        "size_bytes": 1442657,
+        "mtime_ns": 1787238286116632800,
+        "inode": 5348024558042617
+      }
+    },
+    {
+      "path": "D:\\research\\model_lake\\data\\data1m\\rf\\canon\\supervision_conflicts.parquet",
+      "before": {
+        "size_bytes": 46226,
+        "mtime_ns": 1787238572351580700,
+        "inode": 3659174697779422
+      },
+      "sha256": "a6b9c5a55e792224464fc5a4377d8888300d8bd917ef2f3c074b8d28740281e0",
+      "expected_sha256": null,
+      "expected_source": null,
+      "after": {
+        "size_bytes": 46226,
+        "mtime_ns": 1787238572351580700,
+        "inode": 3659174697779422
+      }
+    },
+    {
+      "path": "D:\\research\\model_lake\\data\\data1m\\rf\\canon\\supervision_merged.parquet",
+      "before": {
+        "size_bytes": 4689091,
+        "mtime_ns": 1787238572318710400,
+        "inode": 4222124651200079
+      },
+      "sha256": "86c775ef9b01f7a67d63f13f0e5e95b0e539f143f101b8247970fe54c388c29f",
+      "expected_sha256": null,
+      "expected_source": null,
+      "after": {
+        "size_bytes": 4689091,
+        "mtime_ns": 1787238572318710400,
+        "inode": 4222124651200079
+      }
+    },
+    {
+      "path": "D:\\research\\model_lake\\data\\data1m\\rf\\canon\\supervision_uncapped.parquet",
+      "before": {
+        "size_bytes": 2564187,
+        "mtime_ns": 1787238286399652200,
+        "inode": 3659174697778615
+      },
+      "sha256": "211749fd9cefc98019ffa1eee463755e0558d30d4692b898f2469dec2ecd1940",
+      "expected_sha256": null,
+      "expected_source": null,
+      "after": {
+        "size_bytes": 2564187,
+        "mtime_ns": 1787238286399652200,
+        "inode": 3659174697778615
+      }
+    },
+    {
+      "path": "D:\\research\\model_lake\\data\\data1m\\rf\\F2_MERGE_REPORT.json",
+      "before": {
+        "size_bytes": 2367,
+        "mtime_ns": 1787238572352379000,
+        "inode": 4503599627910722
+      },
+      "sha256": "1d27d672ff3470cd71410b09cd077c929d75f01b03bc9abdcc48b9fa85dd0d67",
+      "expected_sha256": null,
+      "expected_source": null,
+      "after": {
+        "size_bytes": 2367,
+        "mtime_ns": 1787238572352379000,
+        "inode": 4503599627910722
+      }
+    },
+    {
+      "path": "D:\\research\\model_lake\\data\\data1m\\rf\\F2_REPORT.json",
+      "before": {
+        "size_bytes": 7334,
+        "mtime_ns": 1787238286415272500,
+        "inode": 4785074604621307
+      },
+      "sha256": "5a997e4cd08f9642ef491bbe9c1ca4cbee1ee5e39e415177c6a90705fad739cf",
+      "expected_sha256": null,
+      "expected_source": null,
+      "after": {
+        "size_bytes": 7334,
+        "mtime_ns": 1787238286415272500,
+        "inode": 4785074604621307
+      }
+    },
+    {
+      "path": "D:\\research\\model_lake\\data\\data1m\\rf\\rf_gold_rules.json",
+      "before": {
+        "size_bytes": 2265,
+        "mtime_ns": 1787238572352379000,
+        "inode": 3659174697779424
+      },
+      "sha256": "be3fb05ecf92ea0112ba4de10b8191d71dfe096b8667a86911c2ebaeadb9cdb1",
+      "expected_sha256": "be3fb05ecf92ea0112ba4de10b8191d71dfe096b8667a86911c2ebaeadb9cdb1",
+      "expected_source": "authoritative sections 3.2-3.4",
+      "after": {
+        "size_bytes": 2265,
+        "mtime_ns": 1787238572352379000,
+        "inode": 3659174697779424
+      }
+    }
+  ],
+  "checks": [
+    {
+      "name": "source_stable",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "hash:EVIDENCE_SOURCE_LIBRARY_en.md",
+      "status": "PASS",
+      "observed": "6c7d883734fb9a05ca99c4a8409e366955c86ba2e644bd5328c9ba696ff344cd",
+      "expected": "6c7d883734fb9a05ca99c4a8409e366955c86ba2e644bd5328c9ba696ff344cd",
+      "source": "A0 frozen source"
+    },
+    {
+      "name": "required_file_exists:ladder_rf\\full_model_ids.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "required_file_exists:ladder_rf\\full_dataset_ids.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "required_file_exists:feats_rf\\family_vocab.csv",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "required_file_exists:feats_rf\\x_m.npy",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "required_file_exists:rf\\rf_gold_rules.json",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "required_file_exists:graphs\\hgraph_rf\\edges.npz",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "required_file_exists:graphs\\hgraph_rf\\GRAPH_REPORT.json",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "required_file_exists:graphs\\hgraph_rf\\lineage_stats.json",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "required_file_exists:graphs\\hgraph_rf\\nodes.npz",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "required_file_exists:graphs\\hgraph_rf\\unique_dataset_id.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "required_file_exists:graphs\\hgraph_rf\\unique_model_id.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "required_file_exists:graphs\\hgraph_rf\\x_dataset.npy",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "required_file_exists:graphs\\hgraph_rf\\x_model.npy",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "file_stable_while_hashing:datasets_full\\dataset_cards_merged.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "file_stable_while_hashing:feats_rf\\descriptors_head.txt",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "file_stable_while_hashing:feats_rf\\family_id.npy",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "file_stable_while_hashing:feats_rf\\family_vocab.csv",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "hash:family_vocab.csv",
+      "status": "PASS",
+      "observed": "00d304df9bd72acb2c2c1ca5b84ed0dc9d4adb0cbc9f098f32a9e62109d24005",
+      "expected": "00d304df9bd72acb2c2c1ca5b84ed0dc9d4adb0cbc9f098f32a9e62109d24005",
+      "source": "authoritative sections 3.2-3.4"
+    },
+    {
+      "name": "file_stable_while_hashing:feats_rf\\FEATS_REPORT.json",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "file_stable_while_hashing:feats_rf\\size_bucket_id.npy",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "file_stable_while_hashing:feats_rf\\x_desc_part-000.npy",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "file_stable_while_hashing:feats_rf\\x_desc_part-001.npy",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "file_stable_while_hashing:feats_rf\\x_desc_part-002.npy",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "file_stable_while_hashing:feats_rf\\x_desc_part-003.npy",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "file_stable_while_hashing:feats_rf\\x_m.npy",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "hash:x_m.npy",
+      "status": "PASS",
+      "observed": "ba1020872ddb6e90726c755f9f08f236f4c73e506013c91d8a0075fc0c0361e6",
+      "expected": "ba1020872ddb6e90726c755f9f08f236f4c73e506013c91d8a0075fc0c0361e6",
+      "source": "authoritative sections 3.2-3.4"
+    },
+    {
+      "name": "file_stable_while_hashing:graphs\\hgraph_rf\\edges.npz",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "hash:edges.npz",
+      "status": "PASS",
+      "observed": "c67a65eb7715728b357dd92a1816c3a7374caf28b2370f42ea6c84cb5a1695c2",
+      "expected": "c67a65eb7715728b357dd92a1816c3a7374caf28b2370f42ea6c84cb5a1695c2",
+      "source": "graph file table, whose digest is bound to authoritative section 3.6"
+    },
+    {
+      "name": "file_stable_while_hashing:graphs\\hgraph_rf\\GRAPH_REPORT.json",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "hash:GRAPH_REPORT.json",
+      "status": "PASS",
+      "observed": "53081ab8fe339c4aedb22c37f4ac6a8b19acc710e2e5915aaab0577bb5074527",
+      "expected": "53081ab8fe339c4aedb22c37f4ac6a8b19acc710e2e5915aaab0577bb5074527",
+      "source": "graph file table, whose digest is bound to authoritative section 3.6"
+    },
+    {
+      "name": "file_stable_while_hashing:graphs\\hgraph_rf\\lineage_stats.json",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "hash:lineage_stats.json",
+      "status": "PASS",
+      "observed": "8a0d3ea913723693c647fffdad032708510378a9481ef3a23aa3bc1ec3eb75bb",
+      "expected": "8a0d3ea913723693c647fffdad032708510378a9481ef3a23aa3bc1ec3eb75bb",
+      "source": "graph file table, whose digest is bound to authoritative section 3.6"
+    },
+    {
+      "name": "file_stable_while_hashing:graphs\\hgraph_rf\\meta.json",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "file_stable_while_hashing:graphs\\hgraph_rf\\nodes.npz",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "hash:nodes.npz",
+      "status": "PASS",
+      "observed": "4e2d97496691706b706bb174e538c3aadaaf1976e1dbf85394ebeaa3240a5969",
+      "expected": "4e2d97496691706b706bb174e538c3aadaaf1976e1dbf85394ebeaa3240a5969",
+      "source": "graph file table, whose digest is bound to authoritative section 3.6"
+    },
+    {
+      "name": "file_stable_while_hashing:graphs\\hgraph_rf\\unique_dataset_id.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "hash:unique_dataset_id.parquet",
+      "status": "PASS",
+      "observed": "f169c734b111f1356513850b3acdfe9549870e1fabf59de3cdcb58fb81db4a03",
+      "expected": "f169c734b111f1356513850b3acdfe9549870e1fabf59de3cdcb58fb81db4a03",
+      "source": "graph file table, whose digest is bound to authoritative section 3.6"
+    },
+    {
+      "name": "file_stable_while_hashing:graphs\\hgraph_rf\\unique_model_id.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "hash:unique_model_id.parquet",
+      "status": "PASS",
+      "observed": "ea3cff16d54210ababf05daac8eb1b5edc459bc9b4e83263bc5a1805f411440b",
+      "expected": "ea3cff16d54210ababf05daac8eb1b5edc459bc9b4e83263bc5a1805f411440b",
+      "source": "graph file table, whose digest is bound to authoritative section 3.6"
+    },
+    {
+      "name": "file_stable_while_hashing:graphs\\hgraph_rf\\x_dataset.npy",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "hash:x_dataset.npy",
+      "status": "PASS",
+      "observed": "f4279117459d01fddc5c1ca889f2bca4e34f6c56611effebd3e05a48ad8d8b93",
+      "expected": "f4279117459d01fddc5c1ca889f2bca4e34f6c56611effebd3e05a48ad8d8b93",
+      "source": "graph file table, whose digest is bound to authoritative section 3.6"
+    },
+    {
+      "name": "file_stable_while_hashing:graphs\\hgraph_rf\\x_model.npy",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "hash:x_model.npy",
+      "status": "PASS",
+      "observed": "ba1020872ddb6e90726c755f9f08f236f4c73e506013c91d8a0075fc0c0361e6",
+      "expected": "ba1020872ddb6e90726c755f9f08f236f4c73e506013c91d8a0075fc0c0361e6",
+      "source": "graph file table, whose digest is bound to authoritative section 3.6"
+    },
+    {
+      "name": "file_stable_while_hashing:ladder_rf\\full_dataset_ids.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "hash:full_dataset_ids.parquet",
+      "status": "PASS",
+      "observed": "31c027ff2eeb693aed6abaa5d235f4a6264bb4b3245bfd71cf1c8b85d32173cb",
+      "expected": "31c027ff2eeb693aed6abaa5d235f4a6264bb4b3245bfd71cf1c8b85d32173cb",
+      "source": "authoritative sections 3.2-3.4"
+    },
+    {
+      "name": "file_stable_while_hashing:ladder_rf\\full_model_ids.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "hash:full_model_ids.parquet",
+      "status": "PASS",
+      "observed": "fee360d1fef9afa4c446b70af35bcbf4ead2c75387f47abc3b0d21c944ae3efa",
+      "expected": "fee360d1fef9afa4c446b70af35bcbf4ead2c75387f47abc3b0d21c944ae3efa",
+      "source": "authoritative sections 3.2-3.4"
+    },
+    {
+      "name": "file_stable_while_hashing:rf\\canon\\dataset_nodes.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "file_stable_while_hashing:rf\\canon\\dataset_nodes_merged.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "file_stable_while_hashing:rf\\canon\\models_out_of_snapshot.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "file_stable_while_hashing:rf\\canon\\part-00000.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "file_stable_while_hashing:rf\\canon\\part-00001.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "file_stable_while_hashing:rf\\canon\\part-00002.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "file_stable_while_hashing:rf\\canon\\part-00003.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "file_stable_while_hashing:rf\\canon\\part-00004.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "file_stable_while_hashing:rf\\canon\\part-00005.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "file_stable_while_hashing:rf\\canon\\part-00006.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "file_stable_while_hashing:rf\\canon\\part-00007.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "file_stable_while_hashing:rf\\canon\\part-00008.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "file_stable_while_hashing:rf\\canon\\part-00009.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "file_stable_while_hashing:rf\\canon\\part-00010.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "file_stable_while_hashing:rf\\canon\\part-00011.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "file_stable_while_hashing:rf\\canon\\part-00012.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "file_stable_while_hashing:rf\\canon\\part-00013.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "file_stable_while_hashing:rf\\canon\\part-00014.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "file_stable_while_hashing:rf\\canon\\part-00015.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "file_stable_while_hashing:rf\\canon\\part-00016.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "file_stable_while_hashing:rf\\canon\\part-00017.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "file_stable_while_hashing:rf\\canon\\part-00018.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "file_stable_while_hashing:rf\\canon\\part-00019.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "file_stable_while_hashing:rf\\canon\\part-00020.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "file_stable_while_hashing:rf\\canon\\part-00021.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "file_stable_while_hashing:rf\\canon\\part-00022.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "file_stable_while_hashing:rf\\canon\\part-00023.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "file_stable_while_hashing:rf\\canon\\part-00024.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "file_stable_while_hashing:rf\\canon\\part-00025.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "file_stable_while_hashing:rf\\canon\\part-00026.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "file_stable_while_hashing:rf\\canon\\part-00027.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "file_stable_while_hashing:rf\\canon\\part-00028.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "file_stable_while_hashing:rf\\canon\\part-00029.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "file_stable_while_hashing:rf\\canon\\part-00030.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "file_stable_while_hashing:rf\\canon\\part-00031.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "file_stable_while_hashing:rf\\canon\\part-00032.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "file_stable_while_hashing:rf\\canon\\part-00033.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "file_stable_while_hashing:rf\\canon\\part-00034.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "file_stable_while_hashing:rf\\canon\\part-00035.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "file_stable_while_hashing:rf\\canon\\part-00036.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "file_stable_while_hashing:rf\\canon\\part-00037.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "file_stable_while_hashing:rf\\canon\\part-00038.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "file_stable_while_hashing:rf\\canon\\part-00039.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "file_stable_while_hashing:rf\\canon\\part-00040.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "file_stable_while_hashing:rf\\canon\\part-00041.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "file_stable_while_hashing:rf\\canon\\part-00042.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "file_stable_while_hashing:rf\\canon\\part-00043.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "file_stable_while_hashing:rf\\canon\\part-00044.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "file_stable_while_hashing:rf\\canon\\part-00045.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "file_stable_while_hashing:rf\\canon\\part-00046.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "file_stable_while_hashing:rf\\canon\\part-00047.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "file_stable_while_hashing:rf\\canon\\part-00048.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "file_stable_while_hashing:rf\\canon\\part-00049.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "file_stable_while_hashing:rf\\canon\\part-00050.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "file_stable_while_hashing:rf\\canon\\part-00051.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "file_stable_while_hashing:rf\\canon\\part-00052.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "file_stable_while_hashing:rf\\canon\\part-00053.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "file_stable_while_hashing:rf\\canon\\part-00054.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "file_stable_while_hashing:rf\\canon\\part-00055.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "file_stable_while_hashing:rf\\canon\\part-00056.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "file_stable_while_hashing:rf\\canon\\part-00057.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "file_stable_while_hashing:rf\\canon\\part-00058.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "file_stable_while_hashing:rf\\canon\\part-00059.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "file_stable_while_hashing:rf\\canon\\part-00060.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "file_stable_while_hashing:rf\\canon\\supervision.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "file_stable_while_hashing:rf\\canon\\supervision_conflicts.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "file_stable_while_hashing:rf\\canon\\supervision_merged.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "file_stable_while_hashing:rf\\canon\\supervision_uncapped.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "file_stable_while_hashing:rf\\F2_MERGE_REPORT.json",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "file_stable_while_hashing:rf\\F2_REPORT.json",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "file_stable_while_hashing:rf\\rf_gold_rules.json",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "hash:rf_gold_rules.json",
+      "status": "PASS",
+      "observed": "be3fb05ecf92ea0112ba4de10b8191d71dfe096b8667a86911c2ebaeadb9cdb1",
+      "expected": "be3fb05ecf92ea0112ba4de10b8191d71dfe096b8667a86911c2ebaeadb9cdb1",
+      "source": "authoritative sections 3.2-3.4"
+    },
+    {
+      "name": "actual_file_graph_digest",
+      "status": "PASS",
+      "observed": "0e80b8393846dcc4b9e354218fd5139a906d569125d2e8545e17ccd01612b76c",
+      "expected": "0e80b8393846dcc4b9e354218fd5139a906d569125d2e8545e17ccd01612b76c",
+      "source": "3.6"
+    },
+    {
+      "name": "model_count",
+      "status": "PASS",
+      "observed": 3016439,
+      "expected": 3016439,
+      "source": "3.3"
+    },
+    {
+      "name": "dataset_task_count",
+      "status": "PASS",
+      "observed": 18729,
+      "expected": 18729,
+      "source": "1"
+    },
+    {
+      "name": "model_ladder_contiguous_physical_order",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "dataset_ladder_contiguous_physical_order",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "model_graph_map_contiguous_physical_order",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "dataset_graph_map_contiguous_physical_order",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "model_keys_normalized_unique",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "graph_model_map_equal_ladder",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "graph_dataset_map_equal_ladder",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "dataset_nodes_sorted_unique",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "canonical_dataset_nodes_same_set",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "canonical_dataset_metadata_equal_ladder",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "dataset_node_serialization",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "graph_roots_match_dataset_names",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "canonical_prefix:part-00000.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "canonical_prefix:part-00001.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "canonical_prefix:part-00002.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "canonical_prefix:part-00003.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "canonical_prefix:part-00004.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "canonical_prefix:part-00005.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "canonical_prefix:part-00006.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "canonical_prefix:part-00007.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "canonical_prefix:part-00008.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "canonical_prefix:part-00009.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "canonical_prefix:part-00010.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "canonical_prefix:part-00011.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "canonical_prefix:part-00012.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "canonical_prefix:part-00013.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "canonical_prefix:part-00014.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "canonical_prefix:part-00015.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "canonical_prefix:part-00016.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "canonical_prefix:part-00017.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "canonical_prefix:part-00018.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "canonical_prefix:part-00019.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "canonical_prefix:part-00020.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "canonical_prefix:part-00021.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "canonical_prefix:part-00022.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "canonical_prefix:part-00023.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "canonical_prefix:part-00024.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "canonical_prefix:part-00025.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "canonical_prefix:part-00026.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "canonical_prefix:part-00027.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "canonical_prefix:part-00028.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "canonical_prefix:part-00029.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "canonical_prefix:part-00030.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "canonical_prefix:part-00031.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "canonical_prefix:part-00032.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "canonical_prefix:part-00033.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "canonical_prefix:part-00034.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "canonical_prefix:part-00035.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "canonical_prefix:part-00036.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "canonical_prefix:part-00037.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "canonical_prefix:part-00038.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "canonical_prefix:part-00039.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "canonical_prefix:part-00040.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "canonical_prefix:part-00041.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "canonical_prefix:part-00042.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "canonical_prefix:part-00043.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "canonical_prefix:part-00044.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "canonical_prefix:part-00045.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "canonical_prefix:part-00046.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "canonical_prefix:part-00047.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "canonical_prefix:part-00048.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "canonical_prefix:part-00049.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "canonical_prefix:part-00050.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "canonical_prefix:part-00051.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "canonical_prefix:part-00052.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "canonical_prefix:part-00053.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "canonical_prefix:part-00054.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "canonical_prefix:part-00055.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "canonical_prefix:part-00056.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "canonical_prefix:part-00057.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "canonical_prefix:part-00058.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "canonical_prefix:part-00059.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "canonical_prefix:part-00060.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "canonical_snapshot_count",
+      "status": "PASS",
+      "observed": [
+        3003759,
+        61
+      ],
+      "expected": [
+        3003759,
+        61
+      ],
+      "source": "2.1,3.3"
+    },
+    {
+      "name": "historical_suffix_count_order_identity",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "snapshot_origin_flags",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "historical_sizes_unknown",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "native_capped_rows",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": "3.1"
+    },
+    {
+      "name": "native_uncapped_rows",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": "3.1"
+    },
+    {
+      "name": "recorded_conflict_rows",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": "3.2"
+    },
+    {
+      "name": "retained_supervision_source_counts",
+      "status": "PASS",
+      "observed": {
+        "modellens_v2": 117898,
+        "hf_model_index": 73670,
+        "d0_v1_5": 45992,
+        "hf_effective": 5223,
+        "a_ctrl_2000m": 3670,
+        "diverse_zoo": 1350
+      },
+      "expected": {
+        "modellens_v2": 117898,
+        "hf_model_index": 73670,
+        "d0_v1_5": 45992,
+        "hf_effective": 5223,
+        "a_ctrl_2000m": 3670,
+        "diverse_zoo": 1350
+      },
+      "source": "3.2"
+    },
+    {
+      "name": "supervision_unique_pairs_cap",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "supervision_finite_oriented_range",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "supervision_all_endpoints_resolve",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "graph_supervision_exact_table_order_weights",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "supervision_reverse_exact",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "graph_relation_counts",
+      "status": "PASS",
+      "observed": {
+        "model__trained_on__dataset": 247803,
+        "dataset__rev_trained_on__model": 247803,
+        "dataset__similar_to__dataset": 374580,
+        "model__is_base_of__model": 859065,
+        "model__rev_is_base_of__model": 859065
+      },
+      "expected": {
+        "model__trained_on__dataset": 247803,
+        "dataset__rev_trained_on__model": 247803,
+        "dataset__similar_to__dataset": 374580,
+        "model__is_base_of__model": 859065,
+        "model__rev_is_base_of__model": 859065
+      },
+      "source": "3.6"
+    },
+    {
+      "name": "raw_similarity_degree20_no_self",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "lineage_endpoints_no_self",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "lineage_reverse_exact",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "model_node_id_order",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "dataset_node_id_order",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "family_vocab_41056",
+      "status": "PASS",
+      "observed": 41056,
+      "expected": 41056,
+      "source": "3.4"
+    },
+    {
+      "name": "family_vocab_matches_graph_meta",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "family_and_size_ids_range",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "separate_categorical_arrays_equal_graph",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "unknown_size_published_precision",
+      "status": "PASS",
+      "observed": 71.92938428391888,
+      "expected": "71.929%",
+      "source": "3.4"
+    },
+    {
+      "name": "other_family_published_precision",
+      "status": "PASS",
+      "observed": 13.56092399017517,
+      "expected": "13.561%",
+      "source": "3.4"
+    },
+    {
+      "name": "dataset.task_type_id_single_zero_category",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "dataset.n_class_bucket_id_single_zero_category",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "dataset.arity_id_single_zero_category",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "matched_cards",
+      "status": "PASS",
+      "observed": 3928,
+      "expected": 3928,
+      "source": "2.3"
+    },
+    {
+      "name": "card_keys_equal_nodes",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "x_model.npy_shape_dtype",
+      "status": "PASS",
+      "observed": [
+        [
+          3016439,
+          448
+        ],
+        "float32"
+      ],
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "x_model.npy_finite_nonzero",
+      "status": "PASS",
+      "observed": {
+        "nonfinite": 0,
+        "all_zero_rows": 0
+      },
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "x_dataset.npy_shape_dtype",
+      "status": "PASS",
+      "observed": [
+        [
+          18729,
+          458
+        ],
+        "float32"
+      ],
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "x_dataset.npy_finite_nonzero",
+      "status": "PASS",
+      "observed": {
+        "nonfinite": 0,
+        "all_zero_rows": 0
+      },
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "original_dataset_statistics_exact_reconstruction",
+      "status": "PASS",
+      "observed": 0.0,
+      "expected": 0.0,
+      "source": "3.5"
+    },
+    {
+      "name": "seed0_query_ids_independent_agreement",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "seed0_eligible_queries",
+      "status": "PASS",
+      "observed": 1476,
+      "expected": 1476,
+      "source": "5.4"
+    },
+    {
+      "name": "seed0_prior_visible_edge_count",
+      "status": "PASS",
+      "observed": 198216,
+      "expected": 198216,
+      "source": "5.3"
+    },
+    {
+      "name": "seed0_root_partition_disjoint",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "seed0_query_root_excluded_from_prior",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "seed0_train_reverse_message_exact",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "seed0_validation_reverse_message_exact",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "seed0_test_reverse_message_exact",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "seed1_query_ids_independent_agreement",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "seed1_eligible_queries",
+      "status": "PASS",
+      "observed": 1101,
+      "expected": 1101,
+      "source": "5.4"
+    },
+    {
+      "name": "seed1_prior_visible_edge_count",
+      "status": "PASS",
+      "observed": 196912,
+      "expected": 196912,
+      "source": "5.3"
+    },
+    {
+      "name": "seed1_root_partition_disjoint",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "seed1_query_root_excluded_from_prior",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "seed1_train_reverse_message_exact",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "seed1_validation_reverse_message_exact",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "seed1_test_reverse_message_exact",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "seed2_query_ids_independent_agreement",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "seed2_eligible_queries",
+      "status": "PASS",
+      "observed": 1545,
+      "expected": 1545,
+      "source": "5.4"
+    },
+    {
+      "name": "seed2_prior_visible_edge_count",
+      "status": "PASS",
+      "observed": 196124,
+      "expected": 196124,
+      "source": "5.3"
+    },
+    {
+      "name": "seed2_root_partition_disjoint",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "seed2_query_root_excluded_from_prior",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "seed2_train_reverse_message_exact",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "seed2_validation_reverse_message_exact",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "seed2_test_reverse_message_exact",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "input_unchanged:EVIDENCE_SOURCE_LIBRARY_en.md",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "input_unchanged:dataset_cards_merged.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "input_unchanged:descriptors_head.txt",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "input_unchanged:family_id.npy",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "input_unchanged:family_vocab.csv",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "input_unchanged:FEATS_REPORT.json",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "input_unchanged:size_bucket_id.npy",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "input_unchanged:x_desc_part-000.npy",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "input_unchanged:x_desc_part-001.npy",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "input_unchanged:x_desc_part-002.npy",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "input_unchanged:x_desc_part-003.npy",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "input_unchanged:x_m.npy",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "input_unchanged:edges.npz",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "input_unchanged:GRAPH_REPORT.json",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "input_unchanged:lineage_stats.json",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "input_unchanged:meta.json",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "input_unchanged:nodes.npz",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "input_unchanged:unique_dataset_id.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "input_unchanged:unique_model_id.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "input_unchanged:x_dataset.npy",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "input_unchanged:x_model.npy",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "input_unchanged:full_dataset_ids.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "input_unchanged:full_model_ids.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "input_unchanged:dataset_nodes.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "input_unchanged:dataset_nodes_merged.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "input_unchanged:models_out_of_snapshot.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "input_unchanged:part-00000.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "input_unchanged:part-00001.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "input_unchanged:part-00002.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "input_unchanged:part-00003.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "input_unchanged:part-00004.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "input_unchanged:part-00005.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "input_unchanged:part-00006.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "input_unchanged:part-00007.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "input_unchanged:part-00008.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "input_unchanged:part-00009.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "input_unchanged:part-00010.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "input_unchanged:part-00011.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "input_unchanged:part-00012.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "input_unchanged:part-00013.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "input_unchanged:part-00014.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "input_unchanged:part-00015.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "input_unchanged:part-00016.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "input_unchanged:part-00017.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "input_unchanged:part-00018.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "input_unchanged:part-00019.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "input_unchanged:part-00020.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "input_unchanged:part-00021.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "input_unchanged:part-00022.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "input_unchanged:part-00023.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "input_unchanged:part-00024.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "input_unchanged:part-00025.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "input_unchanged:part-00026.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "input_unchanged:part-00027.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "input_unchanged:part-00028.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "input_unchanged:part-00029.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "input_unchanged:part-00030.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "input_unchanged:part-00031.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "input_unchanged:part-00032.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "input_unchanged:part-00033.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "input_unchanged:part-00034.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "input_unchanged:part-00035.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "input_unchanged:part-00036.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "input_unchanged:part-00037.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "input_unchanged:part-00038.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "input_unchanged:part-00039.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "input_unchanged:part-00040.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "input_unchanged:part-00041.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "input_unchanged:part-00042.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "input_unchanged:part-00043.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "input_unchanged:part-00044.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "input_unchanged:part-00045.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "input_unchanged:part-00046.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "input_unchanged:part-00047.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "input_unchanged:part-00048.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "input_unchanged:part-00049.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "input_unchanged:part-00050.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "input_unchanged:part-00051.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "input_unchanged:part-00052.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "input_unchanged:part-00053.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "input_unchanged:part-00054.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "input_unchanged:part-00055.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "input_unchanged:part-00056.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "input_unchanged:part-00057.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "input_unchanged:part-00058.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "input_unchanged:part-00059.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "input_unchanged:part-00060.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "input_unchanged:supervision.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "input_unchanged:supervision_conflicts.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "input_unchanged:supervision_merged.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "input_unchanged:supervision_uncapped.parquet",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "input_unchanged:F2_MERGE_REPORT.json",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "input_unchanged:F2_REPORT.json",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    },
+    {
+      "name": "input_unchanged:rf_gold_rules.json",
+      "status": "PASS",
+      "observed": null,
+      "expected": null,
+      "source": null
+    }
+  ],
+  "measurements": {
+    "graph_digest": "0e80b8393846dcc4b9e354218fd5139a906d569125d2e8545e17ccd01612b76c",
+    "model_rows": 3016439,
+    "dataset_task_rows": 18729,
+    "canonical_parts": [
+      {
+        "part": "part-00000.parquet",
+        "rows": 50000
+      },
+      {
+        "part": "part-00001.parquet",
+        "rows": 50000
+      },
+      {
+        "part": "part-00002.parquet",
+        "rows": 50000
+      },
+      {
+        "part": "part-00003.parquet",
+        "rows": 50000
+      },
+      {
+        "part": "part-00004.parquet",
+        "rows": 50000
+      },
+      {
+        "part": "part-00005.parquet",
+        "rows": 50000
+      },
+      {
+        "part": "part-00006.parquet",
+        "rows": 50000
+      },
+      {
+        "part": "part-00007.parquet",
+        "rows": 50000
+      },
+      {
+        "part": "part-00008.parquet",
+        "rows": 50000
+      },
+      {
+        "part": "part-00009.parquet",
+        "rows": 50000
+      },
+      {
+        "part": "part-00010.parquet",
+        "rows": 50000
+      },
+      {
+        "part": "part-00011.parquet",
+        "rows": 50000
+      },
+      {
+        "part": "part-00012.parquet",
+        "rows": 50000
+      },
+      {
+        "part": "part-00013.parquet",
+        "rows": 50000
+      },
+      {
+        "part": "part-00014.parquet",
+        "rows": 50000
+      },
+      {
+        "part": "part-00015.parquet",
+        "rows": 50000
+      },
+      {
+        "part": "part-00016.parquet",
+        "rows": 50000
+      },
+      {
+        "part": "part-00017.parquet",
+        "rows": 50000
+      },
+      {
+        "part": "part-00018.parquet",
+        "rows": 50000
+      },
+      {
+        "part": "part-00019.parquet",
+        "rows": 50000
+      },
+      {
+        "part": "part-00020.parquet",
+        "rows": 50000
+      },
+      {
+        "part": "part-00021.parquet",
+        "rows": 50000
+      },
+      {
+        "part": "part-00022.parquet",
+        "rows": 50000
+      },
+      {
+        "part": "part-00023.parquet",
+        "rows": 50000
+      },
+      {
+        "part": "part-00024.parquet",
+        "rows": 50000
+      },
+      {
+        "part": "part-00025.parquet",
+        "rows": 50000
+      },
+      {
+        "part": "part-00026.parquet",
+        "rows": 50000
+      },
+      {
+        "part": "part-00027.parquet",
+        "rows": 50000
+      },
+      {
+        "part": "part-00028.parquet",
+        "rows": 50000
+      },
+      {
+        "part": "part-00029.parquet",
+        "rows": 50000
+      },
+      {
+        "part": "part-00030.parquet",
+        "rows": 50000
+      },
+      {
+        "part": "part-00031.parquet",
+        "rows": 50000
+      },
+      {
+        "part": "part-00032.parquet",
+        "rows": 50000
+      },
+      {
+        "part": "part-00033.parquet",
+        "rows": 50000
+      },
+      {
+        "part": "part-00034.parquet",
+        "rows": 50000
+      },
+      {
+        "part": "part-00035.parquet",
+        "rows": 50000
+      },
+      {
+        "part": "part-00036.parquet",
+        "rows": 50000
+      },
+      {
+        "part": "part-00037.parquet",
+        "rows": 50000
+      },
+      {
+        "part": "part-00038.parquet",
+        "rows": 50000
+      },
+      {
+        "part": "part-00039.parquet",
+        "rows": 50000
+      },
+      {
+        "part": "part-00040.parquet",
+        "rows": 50000
+      },
+      {
+        "part": "part-00041.parquet",
+        "rows": 50000
+      },
+      {
+        "part": "part-00042.parquet",
+        "rows": 50000
+      },
+      {
+        "part": "part-00043.parquet",
+        "rows": 50000
+      },
+      {
+        "part": "part-00044.parquet",
+        "rows": 50000
+      },
+      {
+        "part": "part-00045.parquet",
+        "rows": 50000
+      },
+      {
+        "part": "part-00046.parquet",
+        "rows": 50000
+      },
+      {
+        "part": "part-00047.parquet",
+        "rows": 50000
+      },
+      {
+        "part": "part-00048.parquet",
+        "rows": 50000
+      },
+      {
+        "part": "part-00049.parquet",
+        "rows": 50000
+      },
+      {
+        "part": "part-00050.parquet",
+        "rows": 50000
+      },
+      {
+        "part": "part-00051.parquet",
+        "rows": 50000
+      },
+      {
+        "part": "part-00052.parquet",
+        "rows": 50000
+      },
+      {
+        "part": "part-00053.parquet",
+        "rows": 50000
+      },
+      {
+        "part": "part-00054.parquet",
+        "rows": 50000
+      },
+      {
+        "part": "part-00055.parquet",
+        "rows": 50000
+      },
+      {
+        "part": "part-00056.parquet",
+        "rows": 50000
+      },
+      {
+        "part": "part-00057.parquet",
+        "rows": 50000
+      },
+      {
+        "part": "part-00058.parquet",
+        "rows": 50000
+      },
+      {
+        "part": "part-00059.parquet",
+        "rows": 50000
+      },
+      {
+        "part": "part-00060.parquet",
+        "rows": 3759
+      }
+    ],
+    "canonical_snapshot_rows": 3003759,
+    "canonical_model_identity_order_sha256_newline": "22942e56d87b3df1ab033aa1bf3dd90c10180a13abecae5e29e54f0f57bb6bde",
+    "historical_appended_rows": 12680,
+    "dataset_root_count": 9341,
+    "canonical_parquet_rows": {
+      "dataset_nodes.parquet": 7944,
+      "dataset_nodes_merged.parquet": 18729,
+      "models_out_of_snapshot.parquet": 12680,
+      "supervision.parquet": 74346,
+      "supervision_conflicts.parquet": 1502,
+      "supervision_merged.parquet": 247803,
+      "supervision_uncapped.parquet": 143478
+    },
+    "supervision_source_counts": {
+      "modellens_v2": 117898,
+      "hf_model_index": 73670,
+      "d0_v1_5": 45992,
+      "hf_effective": 5223,
+      "a_ctrl_2000m": 3670,
+      "diverse_zoo": 1350
+    },
+    "relation_counts": {
+      "model__trained_on__dataset": 247803,
+      "dataset__rev_trained_on__model": 247803,
+      "dataset__similar_to__dataset": 374580,
+      "model__is_base_of__model": 859065,
+      "model__rev_is_base_of__model": 859065
+    },
+    "total_directed_edges": 2588316,
+    "family_vocab_rows": 41056,
+    "unknown_size_percent": 71.92938428391888,
+    "other_family_percent": 13.56092399017517,
+    "matched_cards": 3928,
+    "card_source_counts": {
+      "name_only": 11809,
+      "hf_card": 3621,
+      "name_only_ambiguous": 2463,
+      "name_only_cross_owner_rejected": 529,
+      "hf_card_via_parent": 307
+    },
+    "gold_eligible_nodes": 7859,
+    "original_dataset_stats_nonzero_by_column": {
+      "448": 18729,
+      "449": 18729,
+      "450": 18729,
+      "451": 9434,
+      "452": 9517,
+      "453": 18729,
+      "454": 18729,
+      "455": 7859,
+      "456": 0,
+      "457": 0
+    }
+  },
+  "splits": [
+    {
+      "seed": 0,
+      "eligible_queries": 1476,
+      "candidate_qualified_queries_before_flag": 1558,
+      "query_roots": 730,
+      "root_counts": {
+        "train": 6720,
+        "validation": 438,
+        "test": 2183
+      },
+      "query_ids": {
+        "shape": [
+          1476
+        ],
+        "dtype": "int64",
+        "sha256_c_order_bytes": "cbdea03d2b625052c1a972ce97794a0bce64ff16fb60f65d579d66be815addd1"
+      },
+      "test_positive_pairs": {
+        "shape": [
+          2,
+          49587
+        ],
+        "dtype": "int64",
+        "sha256_c_order_bytes": "8d60e905ac438be991d64501c141297cc9838036c11af8f6b4728573353859d9"
+      },
+      "prior_visible_pairs_ordered": {
+        "shape": [
+          2,
+          198216
+        ],
+        "dtype": "int64",
+        "sha256_c_order_bytes": "a47678ec384bc8d064849e89806f5d0352c2414c0b4c9708ad19b639a887ab88"
+      },
+      "message_edge_counts": {
+        "train": 120955,
+        "validation": 172793,
+        "test": 198216
+      },
+      "positive_label_counts": {
+        "train": 51838,
+        "validation": 25423,
+        "test": 49587
+      },
+      "negative_label_counts": {
+        "train": 51838,
+        "validation": 25423,
+        "test": 49587
+      }
+    },
+    {
+      "seed": 1,
+      "eligible_queries": 1101,
+      "candidate_qualified_queries_before_flag": 1153,
+      "query_roots": 495,
+      "root_counts": {
+        "train": 7178,
+        "validation": 575,
+        "test": 1588
+      },
+      "query_ids": {
+        "shape": [
+          1101
+        ],
+        "dtype": "int64",
+        "sha256_c_order_bytes": "97cdc09a9d17be47e2267570548f5891b40f32524a373adc59ee107a4ee36df8"
+      },
+      "test_positive_pairs": {
+        "shape": [
+          2,
+          50891
+        ],
+        "dtype": "int64",
+        "sha256_c_order_bytes": "5b34fd745cee2fcaf45fe5fb62ad8ea15a268471e34287b37b604d9548d003dc"
+      },
+      "prior_visible_pairs_ordered": {
+        "shape": [
+          2,
+          196912
+        ],
+        "dtype": "int64",
+        "sha256_c_order_bytes": "4f99396ed4290b02f4fccbb0aaedb4fbc440ec18f7aa9dca179adf3efb73d162"
+      },
+      "message_edge_counts": {
+        "train": 120417,
+        "validation": 172024,
+        "test": 196912
+      },
+      "positive_label_counts": {
+        "train": 51607,
+        "validation": 24888,
+        "test": 50891
+      },
+      "negative_label_counts": {
+        "train": 51607,
+        "validation": 24888,
+        "test": 50891
+      }
+    },
+    {
+      "seed": 2,
+      "eligible_queries": 1545,
+      "candidate_qualified_queries_before_flag": 1595,
+      "query_roots": 473,
+      "root_counts": {
+        "train": 6820,
+        "validation": 1058,
+        "test": 1463
+      },
+      "query_ids": {
+        "shape": [
+          1545
+        ],
+        "dtype": "int64",
+        "sha256_c_order_bytes": "2772d4980c69392d11bd38d5a832717f9b338276aa22080affe56ffe98dd3f2b"
+      },
+      "test_positive_pairs": {
+        "shape": [
+          2,
+          51679
+        ],
+        "dtype": "int64",
+        "sha256_c_order_bytes": "ca12a16f62e35140dcf63414f2f51765c8210015466918e5164f499b58529e50"
+      },
+      "prior_visible_pairs_ordered": {
+        "shape": [
+          2,
+          196124
+        ],
+        "dtype": "int64",
+        "sha256_c_order_bytes": "2051657f0416443c99f33eff1a8e0b5f3d358938a9717ff41412f123d7169aae"
+      },
+      "message_edge_counts": {
+        "train": 109046,
+        "validation": 155780,
+        "test": 196124
+      },
+      "positive_label_counts": {
+        "train": 46734,
+        "validation": 40344,
+        "test": 51679
+      },
+      "negative_label_counts": {
+        "train": 46734,
+        "validation": 40344,
+        "test": 51679
+      }
+    }
+  ],
+  "errors": [],
+  "authority": "docs/1M/EVIDENCE_SOURCE_LIBRARY_en.md",
+  "scope": "Frozen inputs and split/query identity; no new retrieval measurements",
+  "started_at_utc": "2026-09-13T00:16:50.929660+00:00",
+  "execution": {
+    "python": "3.13.1 (tags/v3.13.1:0671451, Dec  3 2024, 19:06:28) [MSC v.1942 64 bit (AMD64)]",
+    "executable": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\.venv\\Scripts\\python.exe",
+    "platform": "Windows-11-10.0.22631-SP0",
+    "argv": [
+      "docs/1M/A0_runs/audit/audit_inputs.py"
+    ]
+  },
+  "feature_leakage_state": {
+    "status": "EXPECTED_UNFIXED_ORIGINAL",
+    "zero_in_A0_2": [
+      448,
+      449,
+      450,
+      451,
+      452,
+      453,
+      455
+    ],
+    "preserve": [
+      454,
+      456,
+      457
+    ],
+    "original_inputs_modified": false,
+    "note": "A0.1 verifies the historical input; nonzero performance-derived columns here are the known reason for A0.2."
+  },
+  "query_identity_artifact": {
+    "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\audit\\A0_QUERY_IDENTITY.jsonl",
+    "sha256": "8b81cf2cfc435ee623ceb4c86b7584df81fa67e442472f835cca13e9f27f8be5",
+    "rows": 4122
+  },
+  "script_sha256": "9468996f82e2a793f3a32f2612a5c5607b132a667481fe975e57ee5ee800c8ec",
+  "finished_at_utc": "2026-09-13T00:17:21.555043+00:00",
+  "status": "PASS"
+}

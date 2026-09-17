@@ -1,26 +1,27 @@
-"""model_lake_galaxy.py -- a paper figure built from the frozen 3M-scale artifacts.
+"""model_lake_galaxy.py -- a paper figure built from the A0 3M-scale artifacts.
 
 WHAT THIS DRAWS
     One plate, "The Model Lake", in four registers:
 
-      A  the lake itself: all 3,016,439 trained model embeddings of the frozen
+      A  the lake itself: all 3,016,439 trained model embeddings of the A0
          seed-0 held-out export, laid out once and rendered as a log-density
          nebula, with the model families that own each region named in place.
-         An inset repeats the identical frame showing only the 46,146 models
-         that carry any supervision edge -- 1.53% of the lake is luminous, the
-         rest is reachable through representation alone.
-      B  one cast: the dense top-1,000 pool of a single held-out dataset--task
-         query drawn in the same coordinates, with the ten models the system
-         actually returns and the held-out gold model marked.
+         An inset repeats the identical frame showing only the models that
+         carry any supervision edge -- a small fraction of the lake is
+         luminous, the rest is reachable through representation alone.
+      B  one cast: the 1,000 candidates HNSW returned for a single held-out
+         dataset--task query, drawn in the same coordinates, with the ten
+         models the system actually returned and the held-out gold marked.
       C  rank migration: for every seed-0 query whose gold model reaches the
          pool, its dense rank on the left and its rank after the deterministic
          task-prior rerank on the right.
-      D  the two-stage cascade: 3,016,439 -> 1,000 -> 10, with the archived
-         recall, latency, and gold@10 of each step.
+      D  the two-stage cascade: 3,016,439 -> 1,000 -> 10, with the recall,
+         latency, and gold@10 of each step.
 
-    Nothing here trains, evaluates, or edits anything.  Every number printed on
-    the plate is either read from an archived report or recomputed from the
-    frozen artifacts and checked against the archived value before it is drawn.
+    Nothing here trains, evaluates, or edits anything.  The cast and the ranks
+    are read out of the archived A0 evaluation rather than re-retrieved, and
+    the gold@10 they imply is checked against the archived A0.7 value before
+    anything is drawn.  Only the layout is computed here.
 
 THE LAYOUT, AND WHAT IT IS AND IS NOT
     Model rows are L2-normalised 128-vectors whose covariance is effectively
@@ -63,14 +64,28 @@ for _p in (_REPO_PARENT, _REPO):
         sys.path.insert(0, _p)
 
 # ---------------------------------------------------------------- artifacts --
+# A0: the graph's nodes and edges are the frozen bytes; only the dataset
+# feature matrix changed -- seven performance-derived columns zeroed, recorded
+# with its hashes in graph/A0_FEATURE_REPAIR.json -- so families and lineage
+# carry over unchanged while every representation drawn here is new.
 DATA = r"D:\research\model_lake\data\data1m"
-EXPORT = os.path.join(DATA, "exports_x4", "X4GD_full_s0_e25")
-GRAPH = os.path.join(DATA, "graphs", "hgraph_rf")
-SIDECAR = os.path.join(DATA, "exports_rf", "RF_full_s0_e25", "prior_sidecar_s0.npz")
-POOL = os.path.join(DATA, "metrics_y2", "exact_pool_s0.npz")
+A0 = os.path.join(DATA, "a0_20260912")
+EXPORT = os.path.join(A0, "exports", "A0GD_full_s0_e25")
+GRAPH = os.path.join(A0, "graph")
+SIDECAR = os.path.join(EXPORT, "prior_sidecar_s0.npz")
+# the measured seed-0 evaluation: HNSW top-1,000, the task prior read over
+# exactly those, the fused score, and the ten the system answered with
+HNSW_POOL = os.path.join(A0, "metrics", "a0_hnsw_s0.npz")
+EXACT_POOL = os.path.join(A0, "metrics", "a0_exact_s0.npz")
+A0_REPORT = os.path.abspath(os.path.join(_HERE, "..", "docs", "1M", "A0_runs",
+                                         "A0_7", "results", "A0_REPORT.json"))
+A0_EVAL_REPORT = os.path.join(A0, "metrics", "A0_EVALUATION_REPORT.json")
+# The four-panel plate's C and D panels still print these pre-A0 archives, so
+# they are kept resolvable; `galaxy_render.stage_render` refuses to draw until
+# they are repointed rather than setting A0 water under pre-A0 numbers.
 Y2_REPORT = os.path.abspath(os.path.join(_HERE, "..", "docs", "1M", "Y2_runs", "Y2_REPORT.json"))
 Y4_REPORT = os.path.abspath(os.path.join(_HERE, "..", "docs", "1M", "Y4_runs", "Y4_REPORT.json"))
-CACHE = os.path.join(DATA, "figures", "galaxy_cache")
+CACHE = os.path.join(DATA, "figures", "galaxy_cache_a0")
 OUTDIR = os.path.abspath(os.path.join(_HERE, "..", "docs", "1M", "figures"))
 
 # ------------------------------------------------------------- frozen facts --
@@ -79,7 +94,10 @@ N_QUERIES = 18_729
 N_EVID_EDGES = 247_803
 SPLIT_SEED = 0
 POOL_K = 1_000
-GRAPH_DIGEST = "0e80b8393846dcc4b9e354218fd5139a906d569125d2e8545e17ccd01612b76c"
+RETURN_K = 10
+# the A0 graph, and the frozen graph it was repaired from
+GRAPH_DIGEST = "acddeb93d926efcb636c83d452fe360736a0e6e4ac68cab3f5fef210e7cef5db"
+SOURCE_GRAPH_DIGEST = "0e80b8393846dcc4b9e354218fd5139a906d569125d2e8545e17ccd01612b76c"
 
 # ------------------------------------------------------- projection settings --
 PCA_SAMPLE = 200_000        # rows used to fit the principal subspace
@@ -95,9 +113,17 @@ JITTER = 0.30               # fraction of local anchor spacing
 QUERY_TOPK = 64             # models whose centroid places a query
 RNG_SEED = 20260908
 
-# The query whose cast panel B draws.  Chosen because its gold model sits deep
-# in the dense pool and the prior lifts it to rank 1, and because every model
-# in the returned ten is a recognisable extractive-QA checkpoint.
+# The query whose cast panel B draws: squad / question-answering, one of the
+# 1,476 queries seed 0 scored.  Chosen because it is what the second stage is
+# for -- its gold sits 445th in the pool on cosine alone, and the task prior
+# brings it back first -- and because squad is the benchmark a reader knows.
+#
+# Under A0 six of its ten (olmo-2, layerskip-llama2-70b, gemma-3-4b x4) are
+# general LLMs that the map places in the LLM region, far from the query and
+# the gold in the extractive-QA cluster.  That spread is kept on purpose: it
+# is the measured answer.  The map is laid out by representation, so a disc's
+# distance from the query is not its retrieval distance -- the second of the
+# ten is in fact the closest of them by cosine.
 CASE_QUERY = 15473
 
 # Families named on the map: frozen-vocabulary key -> label drawn on the plate.
@@ -296,78 +322,86 @@ def graph_facts(cache):
 
 
 def rerank_facts(cache):
-    """Recompute the frozen seed-0 rerank and check it against the archive."""
+    """The measured seed-0 answer, read out of the archived A0 evaluation.
+
+    Nothing here is re-retrieved.  `a0_hnsw_s0.npz` holds, for each of the
+    1,476 queries seed 0 scored, the 1,000 ids HNSW returned in cosine order,
+    the task prior read over exactly those ids, the fused score the system
+    ranked by, and the ten ids it answered with.  The only quantity derived
+    here is the held-out gold label, and the gold@10 it implies is checked
+    against the archived A0.7 value before any of it reaches a figure.
+
+    `dense_rank` is where the gold sat in the pool by cosine alone and
+    `fused_rank` where it came back after the task prior; both are 0 when the
+    gold never reached the pool at all.
+    """
     path = os.path.join(cache, "rerank.npz")
     meta_path = os.path.join(cache, "rerank.json")
     if os.path.exists(path) and os.path.exists(meta_path):
-        return np.load(path), json.load(open(meta_path, encoding="utf-8"))
-    from ModelLakeFishing.scale1m.baselines import fixed_tie_break
-    from ModelLakeFishing.scale1m.eval_rf import _prior_tables
-    pool = np.load(POOL)
+        info = json.load(open(meta_path, encoding="utf-8"))
+        # `case_prior` is the prior for one query, so a cache built under a
+        # different CASE_QUERY holds the wrong one -- and nothing downstream
+        # would notice, it would just draw the last case's prior under this
+        # case's name.  Rebuild instead of trusting it.
+        if info.get("case_query") == CASE_QUERY:
+            return np.load(path), info
+        _say("cache holds the rerank for query %s, not %d -- rebuilding"
+             % (info.get("case_query"), CASE_QUERY))
+    pool = np.load(HNSW_POOL, allow_pickle=True)
     queries = pool["query"].astype(np.int64)
     pool_ids = pool["model"].astype(np.int64)
     pool_cos = pool["score"].astype(np.float32)
-    archived_top10 = pool["exact_top10"].astype(np.int64)
-    side = np.load(SIDECAR)
-    task_id = side["task_id"].astype(np.int64)
-    by_task, _by_root, _null = _prior_tables(side)
-    key = fixed_tie_break(N_MODELS)
-    order = np.argsort(key, kind="stable")
-    tie = np.empty(N_MODELS, dtype=np.int64)
-    tie[order] = np.arange(N_MODELS, dtype=np.int64)
+    pool_prior = pool["prior"].astype(np.float32)
+    top10 = pool["top10"].astype(np.int64)
+    fused_rank = pool["gold_position"].astype(np.int32)
+    if pool_ids.shape[1] != POOL_K or top10.shape[1] != RETURN_K:
+        raise AssertionError("archived pool is %s, expected %d candidates and "
+                             "%d returned" % (pool_ids.shape, POOL_K, RETURN_K))
+
     gold_cands = np.load(os.path.join(EXPORT, "gold_cands.npz"))
-
-    def prior_of(q, ids):
-        idx, val = by_task.get(int(task_id[q]), (np.zeros(0, np.int64), np.zeros(0)))
-        out = np.zeros(ids.shape, np.float32)
-        if idx.size:
-            pos = np.searchsorted(idx, ids)
-            cl = np.minimum(pos, idx.size - 1)
-            hit = (pos < idx.size) & (idx[cl] == ids)
-            out[hit] = np.asarray(val, np.float32)[cl[hit]]
-        return out
-
     nq = len(queries)
-    dense_rank = np.zeros(nq, np.int32)     # 0 => gold never reached the pool
-    fused_rank = np.zeros(nq, np.int32)
     gold_id = np.zeros(nq, np.int64)
-    top10 = np.zeros((nq, 10), np.int64)
+    dense_rank = np.zeros(nq, np.int32)
     prior_case = None
-    identical = 0
     for i, q in enumerate(queries):
         q = int(q)
-        ids = pool_ids[i]
-        pri = prior_of(q, ids)
-        fused = (pool_cos[i] + 1.0) * 0.5 + pri
-        ranked = ids[np.lexsort((tie[ids], -fused))]
         cand, acc = gold_cands[str(q)]
         gold = int(cand[int(np.argmax(acc))])
         gold_id[i] = gold
-        top10[i] = ranked[:10]
-        where_d = np.flatnonzero(ids == gold)
-        where_f = np.flatnonzero(ranked == gold)
-        dense_rank[i] = (where_d[0] + 1) if where_d.size else 0
-        fused_rank[i] = (where_f[0] + 1) if where_f.size else 0
-        identical += int(np.array_equal(ranked[:10], archived_top10[i]))
+        where = np.flatnonzero(pool_ids[i] == gold)
+        dense_rank[i] = (where[0] + 1) if where.size else 0
         if q == CASE_QUERY:
-            prior_case = pri.astype(np.float32)
-    got = float(((fused_rank > 0) & (fused_rank <= 10)).mean())
-    y2 = json.load(open(Y2_REPORT, encoding="utf-8"))
-    want = y2["per_seed"]["0"]["rows"]["G_exact1000_task"]["gold@10"]
-    if identical != nq or abs(got - want) > 1e-12:
-        raise AssertionError("rerank does not reproduce the archived seed-0 result: "
-                             "%d/%d identical top-10, gold@10 %.12f vs %.12f"
-                             % (identical, nq, got, want))
-    info = {"n_queries": nq, "gold@10_recomputed": got, "gold@10_archived": want,
-            "top10_identical": identical,
+            prior_case = pool_prior[i].copy()
+    if prior_case is None:
+        raise AssertionError("query %d is not one of the %d queries seed %d "
+                             "scored, so it has no measured answer to draw"
+                             % (CASE_QUERY, nq, SPLIT_SEED))
+
+    # the two ways the archive can be read have to agree: membership of the
+    # returned ten, and the recorded position of the gold in the fused order
+    by_member = float(np.mean([gold_id[i] in set(top10[i].tolist())
+                               for i in range(nq)]))
+    by_rank = float(((fused_rank > 0) & (fused_rank <= RETURN_K)).mean())
+    want = json.load(open(A0_REPORT, encoding="utf-8"))[
+        "native_recomputed"][str(SPLIT_SEED)]["hnsw1000_task_prior"]["gold@10"]
+    if abs(by_member - want) > 1e-12 or abs(by_rank - want) > 1e-12:
+        raise AssertionError("the archived seed-%d answer does not carry the "
+                             "reported gold@10: %.12f by membership, %.12f by "
+                             "recorded position, %.12f reported"
+                             % (SPLIT_SEED, by_member, by_rank, want))
+    info = {"n_queries": nq, "gold@10": want, "case_query": CASE_QUERY,
             "gold_in_pool": float((dense_rank > 0).mean()),
-            "dense_gold_at10": float(((dense_rank > 0) & (dense_rank <= 10)).mean())}
+            "dense_gold_at10": float(((dense_rank > 0)
+                                      & (dense_rank <= RETURN_K)).mean()),
+            "median_fused_rank_if_retrieved":
+                float(np.median(fused_rank[fused_rank > 0])),
+            "source": os.path.basename(HNSW_POOL)}
     np.savez(path, query=queries, pool_ids=pool_ids, pool_cos=pool_cos,
              dense_rank=dense_rank, fused_rank=fused_rank, gold_id=gold_id,
              top10=top10, case_prior=prior_case)
     json.dump(info, open(meta_path, "w", encoding="utf-8"))
-    _say("rerank reproduced: %d/%d top-10 lists identical, gold@10=%.10f"
-         % (identical, nq, got))
+    _say("archived rerank read: %d queries, gold@10=%.10f, gold reaches the "
+         "pool for %.4f of them" % (nq, want, info["gold_in_pool"]))
     return np.load(path), info
 
 

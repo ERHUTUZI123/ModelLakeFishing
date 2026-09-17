@@ -1,0 +1,48 @@
+{
+  "schema_version": "a0.bilingual_literal_review.v1",
+  "created_at_utc": "2026-09-15T02:00:08.162608+00:00",
+  "scope": "Automated literal/structural checks only. Scientific correctness, contextual exceptions and translation accuracy require human/agent review.",
+  "read_only_inputs": true,
+  "link_destination": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M",
+  "status": "AUTOMATED_CHECKS_CLEAR",
+  "inputs": {
+    "en": {
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\EVIDENCE_SOURCE_LIBRARY_en.md",
+      "sha256": "c9c6da659789e346ce733453dff7cc352539c98614bd9d858c32baceb632f0e1",
+      "bytes": 56251
+    },
+    "zh": {
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\EVIDENCE_SOURCE_LIBRARY_zh.md",
+      "sha256": "4a746dfc6a4a1858a24b89f0a8851ddf905523856fae159988576f2c3cb2fa71",
+      "bytes": 53300
+    }
+  },
+  "counts": {
+    "en": {
+      "sections": 35,
+      "tables": 14,
+      "display_math": 42,
+      "inline_ascii_literals": 154,
+      "fenced_commands": 7,
+      "flags": 46,
+      "digests": 10,
+      "links": 113,
+      "prose_numbers": 223
+    },
+    "zh": {
+      "sections": 35,
+      "tables": 14,
+      "display_math": 42,
+      "inline_ascii_literals": 154,
+      "fenced_commands": 7,
+      "flags": 46,
+      "digests": 10,
+      "links": 113,
+      "prose_numbers": 223
+    }
+  },
+  "mismatches": [],
+  "review_flags": [],
+  "broken_links": [],
+  "unclosed_fences": []
+}

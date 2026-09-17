@@ -1,0 +1,101 @@
+{
+  "corpus": "modellens_v2",
+  "raw_provenance": "D:\\research\\model_lake\\data\\modellens_v2\\PROVENANCE.json",
+  "node_model": "(dataset, task)",
+  "corrections_applied": [
+    "#4 @k-aware BOUNDED",
+    "#3 per-(node,metric) scale + garbage drop",
+    "#5a size/family 'unknown'->missing",
+    "#5b popularity from ['models'] ok",
+    "#6 gold_evaluable depth>=10",
+    "dual split units root_a/root_b"
+  ],
+  "counts": {
+    "csv_rows": 1807133,
+    "bounded_valid_obs_pre_scale": 314044,
+    "trained_on_edges": 312986,
+    "scale_dropped": 1058,
+    "nodes": 9603,
+    "unique_datasets": 5568,
+    "unique_roots_b": 3506,
+    "models_canonical": 47242,
+    "models_strict": 30183,
+    "models_with_obs": 30134,
+    "models_with_family": 19927,
+    "models_with_size": 14461,
+    "models_with_popularity": 13666,
+    "lineage_base_assigned": 92,
+    "lineage_edges_in_pool": 42,
+    "gold_nodes_depth10": 1686,
+    "gold_nodes_depth30": 824,
+    "gold_with_desc": 963,
+    "desc_coverage_nodes": 6809
+  },
+  "chosen_metric_top": [
+    [
+      "accuracy",
+      3941
+    ],
+    [
+      "bleu",
+      3351
+    ],
+    [
+      "f1",
+      566
+    ],
+    [
+      "exact_match",
+      413
+    ],
+    [
+      "ndcg@1",
+      163
+    ],
+    [
+      "accuracy_norm",
+      147
+    ],
+    [
+      "rouge1",
+      145
+    ],
+    [
+      "map",
+      133
+    ],
+    [
+      "v_measure",
+      126
+    ],
+    [
+      "map@1",
+      118
+    ],
+    [
+      "ndcg@10",
+      107
+    ],
+    [
+      "cosine_pearson",
+      80
+    ],
+    [
+      "precision",
+      53
+    ],
+    [
+      "ap",
+      34
+    ],
+    [
+      "recall@1",
+      27
+    ]
+  ],
+  "scale_split": {
+    "unit": 183321,
+    "percent": 129665
+  },
+  "runtime_sec": 14.2
+}

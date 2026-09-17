@@ -1,0 +1,229 @@
+{
+  "written_at": "2026-09-06T18:29:49+00:00",
+  "status": "frozen-before-test",
+  "protocol": {
+    "K": 1000,
+    "g0": 0.8888888888888888,
+    "base_beta": 8.0,
+    "shrink_k": 20.0,
+    "temperature": 0.05,
+    "l2": 1.0,
+    "hard_negatives": 50,
+    "folds": 5,
+    "feature_names": [
+      "log_task_models",
+      "log_task_roots",
+      "pool_supported_fraction",
+      "log_top10_support_mean",
+      "prior_std",
+      "prior_top1_top10_margin",
+      "negative_dense_top1_top10_margin"
+    ]
+  },
+  "models": {
+    "0": {
+      "feature_names": [
+        "log_task_models",
+        "log_task_roots",
+        "pool_supported_fraction",
+        "log_top10_support_mean",
+        "prior_std",
+        "prior_top1_top10_margin",
+        "negative_dense_top1_top10_margin"
+      ],
+      "median": [
+        7.255591274253665,
+        5.575949103146316,
+        0.255,
+        2.515039918821843,
+        0.23462766192250475,
+        0.04710632562637329,
+        -0.02809959650039673
+      ],
+      "iqr": [
+        2.2088262207052827,
+        1.3273625827435547,
+        0.4065,
+        1.9769720200948298,
+        0.11455191730518255,
+        0.08798980712890625,
+        0.021064594388008118
+      ],
+      "delta": -0.2585414214292587,
+      "weights": {
+        "log_task_models": 0.02791188341140566,
+        "log_task_roots": 0.10313440312607322,
+        "pool_supported_fraction": 0.0,
+        "log_top10_support_mean": 0.0,
+        "prior_std": 0.0,
+        "prior_top1_top10_margin": 0.0,
+        "negative_dense_top1_top10_margin": 0.04372773309511833
+      },
+      "params": [
+        -0.2585414214292587,
+        0.02791188341140566,
+        0.10313440312607322,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.04372773309511833
+      ],
+      "optimizer": {
+        "success": true,
+        "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+        "iterations": 5,
+        "objective": 2.3320120954588326,
+        "gradient_inf": 0.10298912140699228
+      },
+      "n_fit_queries": 171,
+      "support_thresholds": [
+        6.556778356158042,
+        7.294377299288821
+      ]
+    },
+    "1": {
+      "feature_names": [
+        "log_task_models",
+        "log_task_roots",
+        "pool_supported_fraction",
+        "log_top10_support_mean",
+        "prior_std",
+        "prior_top1_top10_margin",
+        "negative_dense_top1_top10_margin"
+      ],
+      "median": [
+        5.1298987149230735,
+        4.983606621708336,
+        0.068,
+        1.6814243742345008,
+        0.15471716154382997,
+        0.06250295042991638,
+        -0.027694836258888245
+      ],
+      "iqr": [
+        5.5939676086489944,
+        5.06680556556331,
+        0.15425,
+        4.149549836476275,
+        0.1920492908766987,
+        0.5205107927322388,
+        0.018822081387043
+      ],
+      "delta": -0.019126061901061916,
+      "weights": {
+        "log_task_models": 0.0,
+        "log_task_roots": 0.0,
+        "pool_supported_fraction": 0.0,
+        "log_top10_support_mean": 0.0,
+        "prior_std": 0.0,
+        "prior_top1_top10_margin": 0.0007037333834589581,
+        "negative_dense_top1_top10_margin": 0.008229968283234548
+      },
+      "params": [
+        -0.019126061901061916,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0007037333834589581,
+        0.008229968283234548
+      ],
+      "optimizer": {
+        "success": true,
+        "message": "CONVERGENCE: NORM OF PROJECTED GRADIENT <= PGTOL",
+        "iterations": 3,
+        "objective": 0.4173672513680552,
+        "gradient_inf": 0.031038877024344737
+      },
+      "n_fit_queries": 398,
+      "support_thresholds": [
+        1.990420613263485,
+        5.421123024280272
+      ]
+    },
+    "2": {
+      "feature_names": [
+        "log_task_models",
+        "log_task_roots",
+        "pool_supported_fraction",
+        "log_top10_support_mean",
+        "prior_std",
+        "prior_top1_top10_margin",
+        "negative_dense_top1_top10_margin"
+      ],
+      "median": [
+        7.270312886079025,
+        5.556828061699537,
+        0.2155,
+        2.161085214535684,
+        0.21250633217578063,
+        0.05545520782470703,
+        -0.024515017867088318
+      ],
+      "iqr": [
+        3.0475795048772056,
+        2.313396009098261,
+        0.5234999999999999,
+        1.3802626258614918,
+        0.14641951184342636,
+        0.07586944103240967,
+        0.017652064561843872
+      ],
+      "delta": -0.19823854132495886,
+      "weights": {
+        "log_task_models": 0.018974038329616198,
+        "log_task_roots": 0.045295645906077805,
+        "pool_supported_fraction": 0.0,
+        "log_top10_support_mean": 0.0,
+        "prior_std": 0.0,
+        "prior_top1_top10_margin": 0.014339379306040345,
+        "negative_dense_top1_top10_margin": 0.004720161280077091
+      },
+      "params": [
+        -0.19823854132495886,
+        0.018974038329616198,
+        0.045295645906077805,
+        0.0,
+        0.0,
+        0.0,
+        0.014339379306040345,
+        0.004720161280077091
+      ],
+      "optimizer": {
+        "success": true,
+        "message": "CONVERGENCE: NORM OF PROJECTED GRADIENT <= PGTOL",
+        "iterations": 5,
+        "objective": 1.9096011342262595,
+        "gradient_inf": 0.13668703839486293
+      },
+      "n_fit_queries": 352,
+      "support_thresholds": [
+        5.953243334287785,
+        7.596392304064196
+      ]
+    }
+  },
+  "input_sha256": {
+    "z1_report": "fa2ae9c5790aab3e23a9ebd4f4be63d4b799b84fc71568d2798e1244e98b1094",
+    "val_pool_s0": "649b180c38322bdf2f660d26c749e52eb8f10e82a87db442eb28d5a2607570f8",
+    "val_pool_s1": "93c27776d81c0f5d1ba8c83dd5213bdeff1b9680e3d1b473111ab5eaadebe26d",
+    "val_pool_s2": "b8b3988481bce781e7aded95d34fe6ef88977b9b2fe6812f17be8d63ec6c6391"
+  },
+  "validation_summary": {
+    "fixed_per_seed": [
+      0.1642651296829971,
+      0.5948905109489051,
+      0.20081967213114754
+    ],
+    "fixed_mean": 0.31999177092101655,
+    "adaptive_per_seed": [
+      0.16714697406340057,
+      0.5912408759124088,
+      0.20218579234972678
+    ],
+    "adaptive_mean": 0.3201912141085121,
+    "mean_improves": true
+  }
+}

@@ -1,0 +1,163 @@
+{
+  "status": "incomplete",
+  "pid": 24660,
+  "started_at_utc": "2026-09-14T03:05:35.043786+00:00",
+  "execution_host": "local i7-14650HX",
+  "completed_downloads": [
+    "D:\\research\\model_lake\\data\\data1m\\a0_20260912\\exports\\A0GD_full_s0_e25\\z_d.npy",
+    "D:\\research\\model_lake\\data\\data1m\\a0_20260912\\exports\\A0GD_full_s1_e25\\z_d.npy",
+    "D:\\research\\model_lake\\data\\data1m\\a0_20260912\\exports\\A0GD_full_s1_e25\\z_m.npy",
+    "D:\\research\\model_lake\\data\\data1m\\a0_20260912\\exports\\A0GD_full_s2_e25\\z_d.npy",
+    "D:\\research\\model_lake\\data\\data1m\\a0_20260912\\exports\\A0GD_full_s0_e25\\z_m.npy",
+    "D:\\research\\model_lake\\data\\data1m\\a0_20260912\\metrics\\hnsw_a0_s0.bin",
+    "D:\\research\\model_lake\\data\\data1m\\a0_20260912\\exports\\A0GD_full_s2_e25\\z_m.npy",
+    "D:\\research\\model_lake\\data\\data1m\\a0_20260912\\metrics\\hnsw_a0_s1.bin",
+    "D:\\research\\model_lake\\data\\data1m\\a0_20260912\\metrics\\hnsw_a0_s2.bin"
+  ],
+  "steps": {
+    "source_counts": {
+      "command": [
+        "D:\\research\\model_lake\\codes\\ModelLakeFishing\\.venv\\Scripts\\python.exe",
+        "-X",
+        "utf8",
+        "-u",
+        "-B",
+        "-m",
+        "scale1m.a0_source_counts",
+        "--protocol",
+        "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_6\\inputs\\A0_PROTOCOL.linux.json",
+        "--historical-bindings",
+        "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_2\\A0_HISTORICAL_SOURCE_IDENTITY.json",
+        "--out",
+        "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_7\\results\\A0_SOURCE_COUNTS.json",
+        "--run-id",
+        "A0_20260912"
+      ],
+      "pid": 24992,
+      "started_at_utc": "2026-09-14T03:05:35.156774+00:00",
+      "start_monotonic": 16259.9073085,
+      "exit_code": 2,
+      "elapsed_seconds": 431.4029724999982,
+      "elapsed_scope": "Supervisor start-to-join interval, overlapping artifact downloads; not isolated source-recount CPU duration."
+    },
+    "record_template": {
+      "command": [
+        "D:\\research\\model_lake\\codes\\ModelLakeFishing\\.venv\\Scripts\\python.exe",
+        "-X",
+        "utf8",
+        "-u",
+        "-B",
+        "-m",
+        "scale1m.recompute_a0",
+        "--raw",
+        "D:\\research\\model_lake\\data\\data1m\\a0_20260912\\metrics",
+        "--protocol",
+        "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_6\\inputs\\A0_PROTOCOL.linux.json",
+        "--inventory",
+        "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_7\\frozen\\A0_METRIC_INVENTORY.json",
+        "--out",
+        "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_7\\results",
+        "--make-record-template",
+        "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_7\\results\\A0_RECORD_SOURCES.json"
+      ],
+      "pid": 27172,
+      "started_at_utc": "2026-09-14T03:12:46.565390+00:00",
+      "start_monotonic": 16691.3159217,
+      "exit_code": 0,
+      "elapsed_seconds": 40.0156530000022
+    },
+    "recompute": {
+      "command": [
+        "D:\\research\\model_lake\\codes\\ModelLakeFishing\\.venv\\Scripts\\python.exe",
+        "-X",
+        "utf8",
+        "-u",
+        "-B",
+        "-m",
+        "scale1m.recompute_a0",
+        "--raw",
+        "D:\\research\\model_lake\\data\\data1m\\a0_20260912\\metrics",
+        "--protocol",
+        "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_6\\inputs\\A0_PROTOCOL.linux.json",
+        "--inventory",
+        "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_7\\frozen\\A0_METRIC_INVENTORY.json",
+        "--out",
+        "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_7\\results",
+        "--records",
+        "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_7\\results\\A0_RECORD_SOURCES.json",
+        "--source-counts",
+        "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_7\\results\\A0_SOURCE_COUNTS.json"
+      ],
+      "pid": 21676,
+      "started_at_utc": "2026-09-14T03:13:26.587361+00:00",
+      "start_monotonic": 16731.337892,
+      "exit_code": null,
+      "completion_evidence": "CLI log reports incomplete and all report/inventory outputs exist; supplemental checks PASS. Original supervisor ended during turn interruption, so OS exit code and supervision endpoint were not captured.",
+      "expected_cli_exit_from_completed_report": 2
+    },
+    "report_unit_correction": {
+      "command": [
+        "D:\\research\\model_lake\\codes\\ModelLakeFishing\\.venv\\Scripts\\python.exe",
+        "-X",
+        "utf8",
+        "-u",
+        "-B",
+        "-m",
+        "scale1m.recompute_a0",
+        "--raw",
+        "D:/research/model_lake/data/data1m/a0_20260912/metrics",
+        "--protocol",
+        "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_6\\inputs\\A0_PROTOCOL.linux.json",
+        "--inventory",
+        "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_7\\frozen\\A0_METRIC_INVENTORY.json",
+        "--out",
+        "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_7\\results",
+        "--records",
+        "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_7\\results\\A0_RECORD_SOURCES.json",
+        "--source-counts",
+        "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_7\\results\\A0_SOURCE_COUNTS.json"
+      ],
+      "exit_code": 2,
+      "start_ns": 2342239894400,
+      "end_ns": 2434329169700,
+      "seconds": 92.0892753,
+      "started_at_utc": "2026-09-15T01:43:47.489692+00:00",
+      "reader_sha256": "3ce80ac6f066716bef0f8a7731ad6abcb25fb94d3f79f7d9cf9ce5b36cf0c0f9",
+      "scope": "Independent report re-read and unit-contract repair; formal training, embeddings, raw query outputs and measured costs reused by verified hash.",
+      "raw_measurement_values_and_statuses_unchanged": true,
+      "native_quality_rows_identical": true,
+      "measurements_compared": 982
+    }
+  },
+  "phase": "recomputed_and_unit_validated",
+  "updated_at_utc": "2026-09-15T01:45:20.155086+00:00",
+  "implementation_sha256": {
+    "recompute_a0.py": "aaa85bfd4744762d4137eaf7df91a4be8387ce2e4666f28c35a464607b0f4048",
+    "a0_recompute_checks.py": "66379d4abdfd6ff61e155d0300a26ca0aaef1c22b5bdde39288870aecc0133de",
+    "a0_source_counts.py": "ac63ed920008d01c603c44ab2df6142265d4909192cc6d175219af0d4da6dfdb"
+  },
+  "total_downloads": 9,
+  "supplemental_validation": "PASS_WITH_MISSING_SOURCE_EVENTS",
+  "additional_comparisons": 470,
+  "completeness": {
+    "complete": false,
+    "inventory_items": 982,
+    "required_items": 982,
+    "missing": [
+      "frozen_input_audit.model_snapshot_api_pages.shared",
+      "frozen_input_audit.model_snapshot_skipped_duplicates.shared"
+    ],
+    "invalid": [],
+    "status_counts": {
+      "disabled": 3,
+      "missing": 2,
+      "not_applicable": 11,
+      "recomputed": 838,
+      "undefined": 42,
+      "verified": 86
+    },
+    "original_registered_items": 618,
+    "missing_seeds": []
+  },
+  "all_ann_fidelity_passed": true
+}

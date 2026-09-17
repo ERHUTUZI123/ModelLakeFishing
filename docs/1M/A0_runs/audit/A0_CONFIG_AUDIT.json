@@ -1,0 +1,781 @@
+{
+  "stage": "A0.1",
+  "status": "configuration_and_static_behavior_audited",
+  "authority": {
+    "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\EVIDENCE_SOURCE_LIBRARY_en.md",
+    "sha256": "6c7d883734fb9a05ca99c4a8409e366955c86ba2e644bd5328c9ba696ff344cd"
+  },
+  "safe_execution": {
+    "invoked": "scale1m.train_rung.build_config(args) only",
+    "sys_dont_write_bytecode": true,
+    "training_called": false,
+    "model_instantiated": false,
+    "optimizer_instantiated": false,
+    "graph_loaded": false,
+    "historical_metric_files_read": false
+  },
+  "resolved_key_count": 40,
+  "expected_key_count_assumption": {
+    "assumed": 45,
+    "observed": 40,
+    "resolution": "enumerate actual 40 keys; do not manufacture five keys"
+  },
+  "document_mapped_key_count": 32,
+  "implementation_bound_key_count": 8,
+  "build_config_args": {
+    "fanout": true,
+    "sparse_M": true,
+    "contrast_n_neg": 256,
+    "contrast_max_pos_per_dataset": null,
+    "chunked_infer": 50000,
+    "skip_diagnostics": true,
+    "batch_size": null,
+    "lake_gamma": 0.5,
+    "global_n_datasets": 128,
+    "num_layers": null
+  },
+  "resolved_config": {
+    "num_layers": 1,
+    "top_frac": 0.1,
+    "lr": 0.01,
+    "lambda_rank": 1.0,
+    "lambda_contrast": 1.0,
+    "lambda_mse": 0.0,
+    "lambda_uniform": 0.0,
+    "scorer": "dot",
+    "similar_to_mode": "topk_unweighted",
+    "similar_to_k": 10,
+    "edge_aware": true,
+    "weighted_relations": [],
+    "rank_loss": "ranknet",
+    "rank_temperature": 0.1,
+    "rank_min_gap": 0.02,
+    "rank_gap_weighted": false,
+    "separate_heads": false,
+    "grouped": false,
+    "lambda_dm_contrast": 0.0,
+    "dm_temperature": 0.1,
+    "dm_hard_neg_weight": 1.0,
+    "dm_warmup": 0,
+    "early_stop": false,
+    "patience": 0,
+    "lambda_global": 1.0,
+    "global_known_low": true,
+    "global_hard_frac": 0.5,
+    "global_mode": "lake",
+    "lake_alpha": 0.75,
+    "lake_n0": 1.0,
+    "global_n_neg": 256,
+    "batch_size": 1024,
+    "fanout": true,
+    "sparse_M": true,
+    "contrast_n_neg": 256,
+    "contrast_max_pos_per_dataset": null,
+    "infer_chunk": 50000,
+    "skip_diagnostics": true,
+    "lake_gamma": 0.5,
+    "global_n_datasets": 128
+  },
+  "per_key_audit": [
+    {
+      "key": "batch_size",
+      "resolved_value": 1024,
+      "classification": "authoritative_document_mapped",
+      "source_section": "4.7",
+      "document_expected_value": 1024,
+      "matches_document": true,
+      "implementation_behavior": "preserve original resolved value",
+      "status": "verified_document_match"
+    },
+    {
+      "key": "contrast_max_pos_per_dataset",
+      "resolved_value": null,
+      "classification": "implementation_bound_not_published",
+      "source_section": null,
+      "document_expected_value": null,
+      "matches_document": null,
+      "implementation_behavior": "preserve original resolved value",
+      "status": "bound_current_implementation"
+    },
+    {
+      "key": "contrast_n_neg",
+      "resolved_value": 256,
+      "classification": "authoritative_document_mapped",
+      "source_section": "4.7; 6",
+      "document_expected_value": 256,
+      "matches_document": true,
+      "implementation_behavior": "preserve original resolved value",
+      "status": "verified_document_match"
+    },
+    {
+      "key": "dm_hard_neg_weight",
+      "resolved_value": 1.0,
+      "classification": "implementation_bound_not_published",
+      "source_section": null,
+      "document_expected_value": null,
+      "matches_document": null,
+      "implementation_behavior": "inactive because lambda_dm_contrast=0",
+      "status": "bound_current_implementation"
+    },
+    {
+      "key": "dm_temperature",
+      "resolved_value": 0.1,
+      "classification": "implementation_bound_not_published",
+      "source_section": null,
+      "document_expected_value": null,
+      "matches_document": null,
+      "implementation_behavior": "inactive because lambda_dm_contrast=0",
+      "status": "bound_current_implementation"
+    },
+    {
+      "key": "dm_warmup",
+      "resolved_value": 0,
+      "classification": "implementation_bound_not_published",
+      "source_section": null,
+      "document_expected_value": null,
+      "matches_document": null,
+      "implementation_behavior": "inactive because lambda_dm_contrast=0",
+      "status": "bound_current_implementation"
+    },
+    {
+      "key": "early_stop",
+      "resolved_value": false,
+      "classification": "authoritative_document_mapped",
+      "source_section": "4.7",
+      "document_expected_value": false,
+      "matches_document": true,
+      "implementation_behavior": "preserve original resolved value",
+      "status": "verified_document_match"
+    },
+    {
+      "key": "edge_aware",
+      "resolved_value": true,
+      "classification": "authoritative_document_mapped",
+      "source_section": "4.3",
+      "document_expected_value": true,
+      "matches_document": true,
+      "implementation_behavior": "preserve original resolved value",
+      "status": "verified_document_match"
+    },
+    {
+      "key": "fanout",
+      "resolved_value": true,
+      "classification": "authoritative_document_mapped",
+      "source_section": "6 GD command",
+      "document_expected_value": true,
+      "matches_document": true,
+      "implementation_behavior": "preserve original resolved value",
+      "status": "verified_document_match"
+    },
+    {
+      "key": "global_hard_frac",
+      "resolved_value": 0.5,
+      "classification": "implementation_bound_not_published",
+      "source_section": null,
+      "document_expected_value": null,
+      "matches_document": null,
+      "implementation_behavior": "pool-mode setting inactive because global_mode=lake; not active hard-negative mining",
+      "status": "bound_current_implementation"
+    },
+    {
+      "key": "global_known_low",
+      "resolved_value": true,
+      "classification": "implementation_bound_not_published",
+      "source_section": null,
+      "document_expected_value": null,
+      "matches_document": null,
+      "implementation_behavior": "pool-mode setting inactive because global_mode=lake",
+      "status": "bound_current_implementation"
+    },
+    {
+      "key": "global_mode",
+      "resolved_value": "lake",
+      "classification": "authoritative_document_mapped",
+      "source_section": "4.6",
+      "document_expected_value": "lake",
+      "matches_document": true,
+      "implementation_behavior": "preserve original resolved value",
+      "status": "verified_document_match"
+    },
+    {
+      "key": "global_n_datasets",
+      "resolved_value": 128,
+      "classification": "authoritative_document_mapped",
+      "source_section": "4.7; 6",
+      "document_expected_value": 128,
+      "matches_document": true,
+      "implementation_behavior": "preserve original resolved value",
+      "status": "verified_document_match"
+    },
+    {
+      "key": "global_n_neg",
+      "resolved_value": 256,
+      "classification": "authoritative_document_mapped",
+      "source_section": "4.7",
+      "document_expected_value": 256,
+      "matches_document": true,
+      "implementation_behavior": "preserve original resolved value",
+      "status": "verified_document_match"
+    },
+    {
+      "key": "grouped",
+      "resolved_value": false,
+      "classification": "implementation_bound_not_published",
+      "source_section": null,
+      "document_expected_value": null,
+      "matches_document": null,
+      "implementation_behavior": "preserve original resolved value",
+      "status": "bound_current_implementation"
+    },
+    {
+      "key": "infer_chunk",
+      "resolved_value": 50000,
+      "classification": "authoritative_document_mapped",
+      "source_section": "4.7; 6",
+      "document_expected_value": 50000,
+      "matches_document": true,
+      "implementation_behavior": "preserve original resolved value",
+      "status": "verified_document_match"
+    },
+    {
+      "key": "lake_alpha",
+      "resolved_value": 0.75,
+      "classification": "authoritative_document_mapped",
+      "source_section": "4.7",
+      "document_expected_value": 0.75,
+      "matches_document": true,
+      "implementation_behavior": "preserve original resolved value",
+      "status": "verified_document_match"
+    },
+    {
+      "key": "lake_gamma",
+      "resolved_value": 0.5,
+      "classification": "authoritative_document_mapped",
+      "source_section": "4.7; 6",
+      "document_expected_value": 0.5,
+      "matches_document": true,
+      "implementation_behavior": "preserve original resolved value",
+      "status": "verified_document_match"
+    },
+    {
+      "key": "lake_n0",
+      "resolved_value": 1.0,
+      "classification": "authoritative_document_mapped",
+      "source_section": "4.7",
+      "document_expected_value": 1.0,
+      "matches_document": true,
+      "implementation_behavior": "preserve original resolved value",
+      "status": "verified_document_match"
+    },
+    {
+      "key": "lambda_contrast",
+      "resolved_value": 1.0,
+      "classification": "authoritative_document_mapped",
+      "source_section": "4.7",
+      "document_expected_value": 1.0,
+      "matches_document": true,
+      "implementation_behavior": "preserve original resolved value",
+      "status": "verified_document_match"
+    },
+    {
+      "key": "lambda_dm_contrast",
+      "resolved_value": 0.0,
+      "classification": "authoritative_document_mapped",
+      "source_section": "4.7",
+      "document_expected_value": 0.0,
+      "matches_document": true,
+      "implementation_behavior": "preserve original resolved value",
+      "status": "verified_document_match"
+    },
+    {
+      "key": "lambda_global",
+      "resolved_value": 1.0,
+      "classification": "authoritative_document_mapped",
+      "source_section": "4.7",
+      "document_expected_value": 1.0,
+      "matches_document": true,
+      "implementation_behavior": "preserve original resolved value",
+      "status": "verified_document_match"
+    },
+    {
+      "key": "lambda_mse",
+      "resolved_value": 0.0,
+      "classification": "authoritative_document_mapped",
+      "source_section": "4.7",
+      "document_expected_value": 0.0,
+      "matches_document": true,
+      "implementation_behavior": "preserve original resolved value",
+      "status": "verified_document_match"
+    },
+    {
+      "key": "lambda_rank",
+      "resolved_value": 1.0,
+      "classification": "authoritative_document_mapped",
+      "source_section": "4.7",
+      "document_expected_value": 1.0,
+      "matches_document": true,
+      "implementation_behavior": "preserve original resolved value",
+      "status": "verified_document_match"
+    },
+    {
+      "key": "lambda_uniform",
+      "resolved_value": 0.0,
+      "classification": "authoritative_document_mapped",
+      "source_section": "4.7",
+      "document_expected_value": 0.0,
+      "matches_document": true,
+      "implementation_behavior": "preserve original resolved value",
+      "status": "verified_document_match"
+    },
+    {
+      "key": "lr",
+      "resolved_value": 0.01,
+      "classification": "authoritative_document_mapped",
+      "source_section": "4.7",
+      "document_expected_value": 0.01,
+      "matches_document": true,
+      "implementation_behavior": "preserve original resolved value",
+      "status": "verified_document_match"
+    },
+    {
+      "key": "num_layers",
+      "resolved_value": 1,
+      "classification": "authoritative_document_mapped",
+      "source_section": "4.7",
+      "document_expected_value": 1,
+      "matches_document": true,
+      "implementation_behavior": "preserve original resolved value",
+      "status": "verified_document_match"
+    },
+    {
+      "key": "patience",
+      "resolved_value": 0,
+      "classification": "implementation_bound_not_published",
+      "source_section": null,
+      "document_expected_value": null,
+      "matches_document": null,
+      "implementation_behavior": "inactive because early_stop=False",
+      "status": "bound_current_implementation"
+    },
+    {
+      "key": "rank_gap_weighted",
+      "resolved_value": false,
+      "classification": "authoritative_document_mapped",
+      "source_section": "4.4 formula",
+      "document_expected_value": false,
+      "matches_document": true,
+      "implementation_behavior": "preserve original resolved value",
+      "status": "verified_document_match"
+    },
+    {
+      "key": "rank_loss",
+      "resolved_value": "ranknet",
+      "classification": "authoritative_document_mapped",
+      "source_section": "4.4",
+      "document_expected_value": "ranknet",
+      "matches_document": true,
+      "implementation_behavior": "preserve original resolved value",
+      "status": "verified_document_match"
+    },
+    {
+      "key": "rank_min_gap",
+      "resolved_value": 0.02,
+      "classification": "authoritative_document_mapped",
+      "source_section": "4.7",
+      "document_expected_value": 0.02,
+      "matches_document": true,
+      "implementation_behavior": "preserve original resolved value",
+      "status": "verified_document_match"
+    },
+    {
+      "key": "rank_temperature",
+      "resolved_value": 0.1,
+      "classification": "authoritative_document_mapped",
+      "source_section": "4.7",
+      "document_expected_value": 0.1,
+      "matches_document": true,
+      "implementation_behavior": "preserve original resolved value",
+      "status": "verified_document_match"
+    },
+    {
+      "key": "scorer",
+      "resolved_value": "dot",
+      "classification": "authoritative_document_mapped",
+      "source_section": "1; 4.4",
+      "document_expected_value": "dot",
+      "matches_document": true,
+      "implementation_behavior": "preserve original resolved value",
+      "status": "verified_document_match"
+    },
+    {
+      "key": "separate_heads",
+      "resolved_value": false,
+      "classification": "authoritative_document_mapped",
+      "source_section": "4.3; 4.7",
+      "document_expected_value": false,
+      "matches_document": true,
+      "implementation_behavior": "preserve original resolved value",
+      "status": "verified_document_match"
+    },
+    {
+      "key": "similar_to_k",
+      "resolved_value": 10,
+      "classification": "authoritative_document_mapped",
+      "source_section": "3.6",
+      "document_expected_value": 10,
+      "matches_document": true,
+      "implementation_behavior": "preserve original resolved value",
+      "status": "verified_document_match"
+    },
+    {
+      "key": "similar_to_mode",
+      "resolved_value": "topk_unweighted",
+      "classification": "authoritative_document_mapped",
+      "source_section": "3.6",
+      "document_expected_value": "topk_unweighted",
+      "matches_document": true,
+      "implementation_behavior": "preserve original resolved value",
+      "status": "verified_document_match"
+    },
+    {
+      "key": "skip_diagnostics",
+      "resolved_value": true,
+      "classification": "authoritative_document_mapped",
+      "source_section": "6 GD command",
+      "document_expected_value": true,
+      "matches_document": true,
+      "implementation_behavior": "preserve original resolved value",
+      "status": "verified_document_match"
+    },
+    {
+      "key": "sparse_M",
+      "resolved_value": true,
+      "classification": "authoritative_document_mapped",
+      "source_section": "6 GD command",
+      "document_expected_value": true,
+      "matches_document": true,
+      "implementation_behavior": "preserve original resolved value",
+      "status": "verified_document_match"
+    },
+    {
+      "key": "top_frac",
+      "resolved_value": 0.1,
+      "classification": "authoritative_document_mapped",
+      "source_section": "4.5",
+      "document_expected_value": 0.1,
+      "matches_document": true,
+      "implementation_behavior": "preserve original resolved value",
+      "status": "verified_document_match"
+    },
+    {
+      "key": "weighted_relations",
+      "resolved_value": [],
+      "classification": "authoritative_document_mapped",
+      "source_section": "4.3",
+      "document_expected_value": [],
+      "matches_document": true,
+      "implementation_behavior": "preserve original resolved value",
+      "status": "verified_document_match"
+    }
+  ],
+  "all_document_mapped_values_match": true,
+  "doc_linked_config_identity_checks": [
+    {
+      "seed": 0,
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\X4_runs\\X4GD_full_s0_e25\\metadata\\resolved_config.json",
+      "sha256": "0d15d42ad5f16afde85d1cdf2e362ec3b7ae240082ba6a3cb3ec9c3a97fe8b54",
+      "resolved_key_count": 40,
+      "role": "English evidence 4.7 explicit link: implementation identity cross-check only; not an alternate historical fact/metric source",
+      "exact_config_equal": true,
+      "differences": [],
+      "command_args_excluding_paths": {
+        "rung": "full",
+        "seed": 0,
+        "epochs": 25,
+        "batch_size": null,
+        "device": null,
+        "resume": null,
+        "ckpt_every": 5,
+        "ckpt_keep": 3,
+        "expect_n": null,
+        "fanout": true,
+        "sparse_M": true,
+        "contrast_n_neg": 256,
+        "contrast_max_pos_per_dataset": null,
+        "chunked_infer": 50000,
+        "skip_diagnostics": true,
+        "lake_gamma": 0.5,
+        "global_n_datasets": 128
+      },
+      "new_num_layers_cli_default": null,
+      "note": "Current parser additionally exposes num_layers=None; absent old CLI key has no effect on unchanged resolved num_layers=1."
+    },
+    {
+      "seed": 1,
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\X4_runs\\X4GD_full_s1_e25\\metadata\\resolved_config.json",
+      "sha256": "d6bb6e35a7ea3251245e7597b4c2d7c76196b2d4a7ebfb0976a2afa288e09787",
+      "resolved_key_count": 40,
+      "role": "English evidence 4.7 explicit link: implementation identity cross-check only; not an alternate historical fact/metric source",
+      "exact_config_equal": true,
+      "differences": [],
+      "command_args_excluding_paths": {
+        "rung": "full",
+        "seed": 1,
+        "epochs": 25,
+        "batch_size": null,
+        "device": null,
+        "resume": null,
+        "ckpt_every": 5,
+        "ckpt_keep": 3,
+        "expect_n": null,
+        "fanout": true,
+        "sparse_M": true,
+        "contrast_n_neg": 256,
+        "contrast_max_pos_per_dataset": null,
+        "chunked_infer": 50000,
+        "skip_diagnostics": true,
+        "lake_gamma": 0.5,
+        "global_n_datasets": 128
+      },
+      "new_num_layers_cli_default": null,
+      "note": "Current parser additionally exposes num_layers=None; absent old CLI key has no effect on unchanged resolved num_layers=1."
+    },
+    {
+      "seed": 2,
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\X4_runs\\X4GD_full_s2_e25\\metadata\\resolved_config.json",
+      "sha256": "7fbed9bb9f38e5d4a9d72f90dba924b309644703ef42e5c593e581382b722998",
+      "resolved_key_count": 40,
+      "role": "English evidence 4.7 explicit link: implementation identity cross-check only; not an alternate historical fact/metric source",
+      "exact_config_equal": true,
+      "differences": [],
+      "command_args_excluding_paths": {
+        "rung": "full",
+        "seed": 2,
+        "epochs": 25,
+        "batch_size": null,
+        "device": null,
+        "resume": null,
+        "ckpt_every": 5,
+        "ckpt_keep": 3,
+        "expect_n": null,
+        "fanout": true,
+        "sparse_M": true,
+        "contrast_n_neg": 256,
+        "contrast_max_pos_per_dataset": null,
+        "chunked_infer": 50000,
+        "skip_diagnostics": true,
+        "lake_gamma": 0.5,
+        "global_n_datasets": 128
+      },
+      "new_num_layers_cli_default": null,
+      "note": "Current parser additionally exposes num_layers=None; absent old CLI key has no effect on unchanged resolved num_layers=1."
+    }
+  ],
+  "runtime_static_bindings": {
+    "train_signature_defaults": {
+      "epochs": 40,
+      "lr": 0.01,
+      "lambda_mse": 0.0,
+      "lambda_rank": 1.0,
+      "lambda_contrast": 1.0,
+      "lambda_uniform": 0.0,
+      "rank_margin": 0.05,
+      "p": 0.3,
+      "p_lineage": 0.05,
+      "num_neighbors": [
+        10,
+        10
+      ],
+      "batch_size": 128,
+      "device": null,
+      "rank_loss": "hinge",
+      "rank_temperature": 0.1,
+      "rank_min_gap": 0.0,
+      "rank_gap_weighted": false,
+      "val_data": null,
+      "val_lookup": null,
+      "patience": 0,
+      "eval_every": 1,
+      "lambda_dm_contrast": 0.0,
+      "dm_temperature": 0.1,
+      "dm_top_frac": 0.1,
+      "global_ctx": null,
+      "zpush_ctx": null,
+      "fanout": false,
+      "contrast_n_neg": null,
+      "contrast_max_pos_per_dataset": null,
+      "resume_state": null,
+      "history0": null,
+      "on_epoch_end": null
+    },
+    "contrastive_loss_sampled_signature_defaults": {
+      "temperature": 0.2,
+      "hard_neg_weight": 2.0,
+      "n_neg": 256,
+      "generator": null
+    },
+    "global_lake_loss_signature_defaults": {
+      "temperature": 0.1,
+      "n_neg": 64,
+      "n_datasets": 16,
+      "hard_sets": null,
+      "n_hard": 16,
+      "pos_ipw": null,
+      "generator": null,
+      "return_stats": false
+    },
+    "optimizer": {
+      "constructor": "torch.optim.Adam(model+scorer parameters, lr=lr)",
+      "source": "stage2TrainGraphSAGE/train.py:97",
+      "current_torch_version": "2.12.0+cu126",
+      "current_library_signature_defaults": {
+        "lr": 0.001,
+        "betas": [
+          0.9,
+          0.999
+        ],
+        "eps": 1e-08,
+        "weight_decay": 0,
+        "amsgrad": false,
+        "foreach": null,
+        "maximize": false,
+        "capturable": false,
+        "differentiable": false,
+        "fused": null,
+        "decoupled_weight_decay": false
+      },
+      "classification": "Adam/lr authoritative 4.7; other defaults bound to current installed library, not historical claims; recheck actual execution host"
+    },
+    "initialization_seed": {
+      "value": 0,
+      "source": "stage2TrainGraphSAGE/top1_audit.py INIT_SEED",
+      "classification": "authoritative 4.7"
+    },
+    "edge_dropout": {
+      "ordinary": 0.3,
+      "lineage": 0.05,
+      "source": "train signature; ablation does not override",
+      "classification": "authoritative 4.7 and static implementation agreement"
+    },
+    "tie_break": {
+      "source": "scale1m/baselines.py:20; scale1m/eval_y2.py:83",
+      "algorithm": "uint64(mappedID * 11400714819323198485 + 0xD1B54A32D192ED03), modulo 2^64; argsort-stable gives unique tie ranks; smaller wins",
+      "rng_seed": null,
+      "classification": "implementation-bound fixed bijection; there is no RNG seed to guess"
+    },
+    "calibration_queries": {
+      "source": "scale1m/eval_y2.py:710",
+      "selection": "exact_pool.query IDs from same eligible held-out set",
+      "record_ids_and_hash_required": true
+    },
+    "timing": {
+      "sources": [
+        "scale1m/eval_y2.py:759",
+        "scale1m/eval_y4.py:453"
+      ],
+      "warmup_count": "min(50, n_queries)",
+      "timed_repetitions_per_query": 1,
+      "hnsw_query_threads": 1,
+      "quantiles": "numpy.percentile(...,50/95) default method; local current default linear",
+      "timer": "time.perf_counter_ns; differences / 1e6 milliseconds",
+      "classification": "static original implementation binding, not unpublished historical measurement"
+    },
+    "hnsw_random_seed": {
+      "value": null,
+      "source": "scale1m/eval_y2.py init_index omits random_seed",
+      "classification": "library default; bind actual hnswlib version/default before A0.3; no index instantiated in audit"
+    },
+    "chunked_inference_check": {
+      "source": "scale1m/export_rf.py:241-252",
+      "max_abs_delta_strictly_less_than": 1e-05,
+      "scope": "original verification subgraph of min(verify_nodes,N) models with full dataset side",
+      "classification": "implementation-bound numerical tolerance referenced but not numerically specified by evidence 4.8"
+    },
+    "active_epoch_loss_fields": [
+      "rank",
+      "contrast",
+      "global",
+      "total"
+    ],
+    "epoch_loss_aggregation": "arithmetic mean of per-batch parts values (train.py:247)",
+    "native_scorer_fields": [
+      "n_queries",
+      "gold@1",
+      "gold-gap@1",
+      "gold@10",
+      "gold-gap@10",
+      "top3@10",
+      "median_gold_rank",
+      "n_roots",
+      "root_gold@1",
+      "root_gold@10",
+      "root_top3@10",
+      "root_gold-gap@10"
+    ],
+    "native_pool_additional_fields": [
+      "N",
+      "median_rank_over_N",
+      "vs_random",
+      "gold_in_first_stage@1000",
+      "median_gold_rank_if_retrieved"
+    ],
+    "bounded_pool_rank_policy": "median_gold_rank/median_rank_over_N/vs_random explicitly None in _pool_metrics; conditional median only, no fabricated full-lake rank"
+  },
+  "code_bindings": [
+    {
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\scale1m\\train_rung.py",
+      "sha256": "c3892bf5ce601739733e35ed4743b5e7f1508330c2b7dac8912d445ce15eff26"
+    },
+    {
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\scale\\export_ours.py",
+      "sha256": "acb5c7e86ecc29f639e35b34e7a8b5b57493e42f11f36cf4a2f54f71bce2191d"
+    },
+    {
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\stage2TrainGraphSAGE\\ablation.py",
+      "sha256": "379727edc85c6108819dbf58ccebb422af23e60f656491e4ffe395a13504e3e4"
+    },
+    {
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\stage2TrainGraphSAGE\\train.py",
+      "sha256": "d43ce6f2b16d29242fc6548da133f8a73715eca83f60b5fc97e09ba16d42bc32"
+    },
+    {
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\stage2TrainGraphSAGE\\losses.py",
+      "sha256": "c9b35119ac64471352dbc75da372a3b065d60f8b630b3954ed45c94711392b9c"
+    },
+    {
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\stage2TrainGraphSAGE\\top1_audit.py",
+      "sha256": "07827745390fda59fd252b4f593530fa6fe1b5fd3539924d6176bfdd829e9084"
+    },
+    {
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\scale1m\\eval_y2.py",
+      "sha256": "cb207da05f4b85cede3b1cb395e1686f112cb49b040ea2813af191ca957a095e"
+    },
+    {
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\scale1m\\eval_y4.py",
+      "sha256": "1a4f9580108b2b20e79fa55e9ba49732e70a72ca299a71c383e8673b27f4bd43"
+    },
+    {
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\scale1m\\baselines.py",
+      "sha256": "418291ff154f9d7b3bb0c4ddfcbb93bc416fe48ecae9c68f5e71e06fb0ef9b20"
+    },
+    {
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\scale\\global_metrics.py",
+      "sha256": "330c5daf63142660267ed8d97bb9bb389d5c15729a6d983579a8e69154dd0e3c"
+    },
+    {
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\scale1m\\export_rf.py",
+      "sha256": "935b3d9ef30c64ccb4f33530bd540b2795662cab7f19fd63035a8b0f6bdaff65"
+    }
+  ],
+  "future_A0_2_cli": {
+    "prepare_a0_graph": "not implemented at A0.1 audit",
+    "train_rung --smoke-only": "not implemented",
+    "eval_y2 --protocol a0": "not implemented"
+  },
+  "remaining_execution_bindings": [
+    "actual formal execution host software defaults",
+    "actual new graph digest after A0.2",
+    "actual split/calibration query ID hashes",
+    "new effective config after A0.2 adaptations, checked identical in training recipe"
+  ]
+}

@@ -1,0 +1,31 @@
+{
+  "schema": "a0.source_manifest.v1",
+  "stage": "A0.4",
+  "status": "complete",
+  "authority": {
+    "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\EVIDENCE_SOURCE_LIBRARY_en.md",
+    "sha256": "6c7d883734fb9a05ca99c4a8409e366955c86ba2e644bd5328c9ba696ff344cd",
+    "bytes": 51538
+  },
+  "A0_2": {
+    "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_2\\A0_2_MANIFEST.json",
+    "sha256": "455a1b45b48dd00358e562db545c02788089e252f6d501dc6d51de09ca79fca3",
+    "bytes": 17329
+  },
+  "A0_3": {
+    "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_3_watgpu\\MANIFEST.json",
+    "sha256": "80528533e048f2efff2be9be9df887794e27a685b0be79c37aaf4afc02500ffe",
+    "bytes": 14114
+  },
+  "A0_4": {
+    "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_4\\MANIFEST.json",
+    "sha256": "d0d3bcd7fe13e44cc3fd53146cb0d0a1bc4f1a0d416f2d9558d9bf957043d88a",
+    "bytes": 2177
+  },
+  "previous_stage_manifest": {
+    "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_4\\frozen\\A0_SOURCE_MANIFEST.json",
+    "sha256": "cc2e0c52bed14fe6f544b5deb8c5941fabbd8f1a2881bb17e1961ff5379db6ba",
+    "bytes": 1240
+  },
+  "later_stages": "A0.5-A0.7 pending"
+}

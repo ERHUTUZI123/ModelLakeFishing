@@ -1,0 +1,1326 @@
+{
+  "job_array": 1539537,
+  "sacct": "1539537_0|COMPLETED|0:0|01:05:42|\n1539537_0.batch|COMPLETED|0:0|01:05:42|38966244K\n1539537_0.extern|COMPLETED|0:0|01:05:42|256K\n1539537_1|COMPLETED|0:0|01:06:19|\n1539537_1.batch|COMPLETED|0:0|01:06:19|34961820K\n1539537_1.extern|COMPLETED|0:0|01:06:20|256K\n1539537_2|COMPLETED|0:0|01:00:22|\n1539537_2.batch|COMPLETED|0:0|01:00:22|37171796K\n1539537_2.extern|COMPLETED|0:0|01:00:22|256K\n",
+  "queue": "",
+  "seeds": [
+    {
+      "seed": 0,
+      "run": "/u801/x98liu/model_lake/runs/A0_20260912/A0GD_full_s0_e25",
+      "epochs_saved": 25,
+      "state": "COMPLETED",
+      "reason": "",
+      "exit_code": "0:0",
+      "elapsed": "01:05:42",
+      "maxrss": "",
+      "native": {
+        "schema": "a0.run_records.v1",
+        "a0": {
+          "protocol": "a0",
+          "run_id": "A0_20260912",
+          "seed": 0,
+          "graph_digest": "acddeb93d926efcb636c83d452fe360736a0e6e4ac68cab3f5fef210e7cef5db",
+          "checkpoint_sha256": "9ee3415caf361e0ed50126c0d7992eb0989284282ebee8ed097addc6375650fb"
+        },
+        "formal_run_name": "A0GD_full_s0_e25",
+        "epochs": 25,
+        "initialization_seed": 0,
+        "resolved_config": {
+          "num_layers": 1,
+          "top_frac": 0.1,
+          "lr": 0.01,
+          "lambda_rank": 1.0,
+          "lambda_contrast": 1.0,
+          "lambda_mse": 0.0,
+          "lambda_uniform": 0.0,
+          "scorer": "dot",
+          "similar_to_mode": "topk_unweighted",
+          "similar_to_k": 10,
+          "edge_aware": true,
+          "weighted_relations": [],
+          "rank_loss": "ranknet",
+          "rank_temperature": 0.1,
+          "rank_min_gap": 0.02,
+          "rank_gap_weighted": false,
+          "separate_heads": false,
+          "grouped": false,
+          "lambda_dm_contrast": 0.0,
+          "dm_temperature": 0.1,
+          "dm_hard_neg_weight": 1.0,
+          "dm_warmup": 0,
+          "early_stop": false,
+          "patience": 0,
+          "lambda_global": 1.0,
+          "global_known_low": true,
+          "global_hard_frac": 0.5,
+          "global_mode": "lake",
+          "lake_alpha": 0.75,
+          "lake_n0": 1.0,
+          "global_n_neg": 256,
+          "batch_size": 1024,
+          "fanout": true,
+          "sparse_M": true,
+          "contrast_n_neg": 256,
+          "contrast_max_pos_per_dataset": null,
+          "infer_chunk": 50000,
+          "skip_diagnostics": true,
+          "lake_gamma": 0.5,
+          "global_n_datasets": 128
+        },
+        "history": [
+          {
+            "rank": 0.9471790019203635,
+            "contrast": 5.483843924952488,
+            "global": 16.623089996038697,
+            "total": 23.054112901874618
+          },
+          {
+            "rank": 0.890787193588182,
+            "contrast": 5.3685597531935745,
+            "global": 15.033534910164628,
+            "total": 21.29288194693771
+          },
+          {
+            "rank": 0.7775735457738241,
+            "contrast": 5.1433680478264305,
+            "global": 13.9128012750663,
+            "total": 19.83374292710248
+          },
+          {
+            "rank": 0.7406680560579487,
+            "contrast": 4.769770771849389,
+            "global": 13.397321121365417,
+            "total": 18.907760096531288
+          },
+          {
+            "rank": 0.7505860059869056,
+            "contrast": 4.492325614480412,
+            "global": 12.873485097698136,
+            "total": 18.11639669829724
+          },
+          {
+            "rank": 0.7356470975221372,
+            "contrast": 4.30907241970885,
+            "global": 12.570555612152697,
+            "total": 17.61527510250316
+          },
+          {
+            "rank": 0.6997746229171753,
+            "contrast": 4.265067147273643,
+            "global": 12.342730540855259,
+            "total": 17.30757215911267
+          },
+          {
+            "rank": 0.68306085116723,
+            "contrast": 4.1904709572885555,
+            "global": 12.120197146546607,
+            "total": 16.993729161281212
+          },
+          {
+            "rank": 0.6763605580610388,
+            "contrast": 4.116072636024625,
+            "global": 11.999142422395593,
+            "total": 16.791575674917183
+          },
+          {
+            "rank": 0.6673369244033215,
+            "contrast": 4.063076725193098,
+            "global": 11.868562361773323,
+            "total": 16.598976097854912
+          },
+          {
+            "rank": 0.6600012323435616,
+            "contrast": 4.0283846621419865,
+            "global": 11.78486104105033,
+            "total": 16.47324696709128
+          },
+          {
+            "rank": 0.6521966492428499,
+            "contrast": 3.9973127514708278,
+            "global": 11.730684429991479,
+            "total": 16.380193803824632
+          },
+          {
+            "rank": 0.621024407008115,
+            "contrast": 3.9719620311961457,
+            "global": 11.681970222323548,
+            "total": 16.27495677798402
+          },
+          {
+            "rank": 0.6423937152413761,
+            "contrast": 3.9294967230628517,
+            "global": 11.651985673343434,
+            "total": 16.223876242544137
+          },
+          {
+            "rank": 0.6282056698612138,
+            "contrast": 3.9145564939461504,
+            "global": 11.504906261668486,
+            "total": 16.04766828873578
+          },
+          {
+            "rank": 0.6388117752823175,
+            "contrast": 3.8778219971002317,
+            "global": 11.505418122983446,
+            "total": 16.022051904715745
+          },
+          {
+            "rank": 0.6177738238783443,
+            "contrast": 3.8685032339657055,
+            "global": 11.406626589158002,
+            "total": 15.892903701931823
+          },
+          {
+            "rank": 0.609276748755399,
+            "contrast": 3.8530162315742644,
+            "global": 11.418125171287388,
+            "total": 15.880418122983446
+          },
+          {
+            "rank": 0.6210864028509926,
+            "contrast": 3.8344020563013412,
+            "global": 11.371916247349159,
+            "total": 15.827404714098163
+          },
+          {
+            "rank": 0.6044807954161775,
+            "contrast": 3.8190083877713072,
+            "global": 11.266831098818312,
+            "total": 15.690320145850087
+          },
+          {
+            "rank": 0.5931586518007166,
+            "contrast": 3.79672656807245,
+            "global": 11.291801882725135,
+            "total": 15.681687130647546
+          },
+          {
+            "rank": 0.5923459757776821,
+            "contrast": 3.780975341796875,
+            "global": 11.232941814497405,
+            "total": 15.606263179405063
+          },
+          {
+            "rank": 0.5998419610893025,
+            "contrast": 3.7705609284195245,
+            "global": 11.18609043196136,
+            "total": 15.556493291667863
+          },
+          {
+            "rank": 0.5816922333894992,
+            "contrast": 3.764905466752894,
+            "global": 11.194195429484049,
+            "total": 15.540793082293343
+          },
+          {
+            "rank": 0.5768575048914143,
+            "contrast": 3.7487324452867696,
+            "global": 11.210791961819519,
+            "total": 15.536381814994064
+          }
+        ],
+        "train_segments": [
+          {
+            "start_ns": 878970350650076,
+            "end_ns": 882845973757589,
+            "status": "returned",
+            "start_epoch": 0,
+            "resume_checkpoint": null,
+            "started_at": "2026-09-13T02:37:15+00:00",
+            "clock": "time.perf_counter_ns",
+            "runtime_environment": {
+              "captured_at": "2026-09-13T02:37:15+00:00",
+              "hostname": "watgpu308",
+              "platform": "Linux-6.17.0-35-generic-x86_64-with-glibc2.35",
+              "python": "3.11.4",
+              "python_executable": "/dev/shm/mlf-a04-x98liu-1539538.fX1hkJ/mlf/bin/python",
+              "torch": "2.12.0+cu130",
+              "cuda_runtime": "13.0",
+              "cuda_available": true,
+              "gpu_name": "NVIDIA L40S",
+              "gpu_total_memory_bytes": 47667740672,
+              "cpu_count": 32,
+              "processor": "x86_64"
+            },
+            "end_epoch": 25
+          }
+        ],
+        "created_at": "2026-09-13T02:37:15+00:00",
+        "runtime_environment": {
+          "captured_at": "2026-09-13T02:37:15+00:00",
+          "hostname": "watgpu308",
+          "platform": "Linux-6.17.0-35-generic-x86_64-with-glibc2.35",
+          "python": "3.11.4",
+          "python_executable": "/dev/shm/mlf-a04-x98liu-1539538.fX1hkJ/mlf/bin/python",
+          "torch": "2.12.0+cu130",
+          "cuda_runtime": "13.0",
+          "cuda_available": true,
+          "gpu_name": "NVIDIA L40S",
+          "gpu_total_memory_bytes": 47667740672,
+          "cpu_count": 32,
+          "processor": "x86_64"
+        },
+        "runtime_environment_scope": "current invocation; each train segment retains the environment observed for its own invocation",
+        "status": "complete",
+        "timing_scope": "driver segment around native train_eval_one: setup, training with epoch checkpoints, existing post-training test/full evaluation, and the segment-start log write",
+        "peak_process_rss_scope": "OS process lifetime high-water mark; cumulative maximum across recorded process segments",
+        "peak_process_rss_observed_max_bytes": 35096985600,
+        "peak_process_rss_complete": true,
+        "peak_process_rss_bytes": 35096985600,
+        "peak_process_rss_unavailable_reason": null,
+        "peak_gpu_allocated_bytes": 40746042880,
+        "peak_gpu_unavailable_reason": null,
+        "timing_complete": true,
+        "updated_at": "2026-09-13T03:41:50+00:00",
+        "checkpoint_path": "/u801/x98liu/model_lake/runs/A0_20260912/A0GD_full_s0_e25/ckpt/checkpoint_epoch_24.pt",
+        "mechanism_gate": {
+          "epochs": 25,
+          "loss_first": 23.054112901874618,
+          "loss_last": 15.536381814994064,
+          "loss_descended": true,
+          "no_nan": true,
+          "size_embedding_moved": true,
+          "family_embedding_moved": true,
+          "passed": true
+        }
+      },
+      "validation": {
+        "status": "PASS",
+        "seed": 0,
+        "epochs": 25,
+        "checkpoint_epoch": 24,
+        "checkpoint_sha256": "9ee3415caf361e0ed50126c0d7992eb0989284282ebee8ed097addc6375650fb",
+        "config_keys_equal": 40,
+        "graph_sha256": "acddeb93d926efcb636c83d452fe360736a0e6e4ac68cab3f5fef210e7cef5db",
+        "loss_first": 23.054112901874618,
+        "loss_last": 15.536381814994064,
+        "mechanism_gate": {
+          "epochs": 25,
+          "loss_first": 23.054112901874618,
+          "loss_last": 15.536381814994064,
+          "loss_descended": true,
+          "no_nan": true,
+          "size_embedding_moved": true,
+          "family_embedding_moved": true,
+          "passed": true
+        },
+        "resource_report": {
+          "returncode": 0,
+          "elapsed_seconds": 3896.417783465935,
+          "sampled_peak_process_tree_rss_bytes": 33638547456,
+          "os_child_maxrss_bytes": 35096985600,
+          "sampled_peak_gpu_process_memory_mib": 45192,
+          "sampling_seconds": 2,
+          "rss_scope": "Linux process-tree sampled sum plus OS direct-child high-water mark",
+          "gpu_scope": "nvidia-smi sampled process memory; exact PyTorch allocation peak in A0_RUN_RECORDS.json",
+          "run": "/u801/x98liu/model_lake/runs/A0_20260912/A0GD_full_s0_e25"
+        },
+        "run": "/u801/x98liu/model_lake/runs/A0_20260912/A0GD_full_s0_e25"
+      },
+      "resources": {
+        "returncode": 0,
+        "elapsed_seconds": 3896.417783465935,
+        "sampled_peak_process_tree_rss_bytes": 33638547456,
+        "os_child_maxrss_bytes": 35096985600,
+        "sampled_peak_gpu_process_memory_mib": 45192,
+        "sampling_seconds": 2,
+        "rss_scope": "Linux process-tree sampled sum plus OS direct-child high-water mark",
+        "gpu_scope": "nvidia-smi sampled process memory; exact PyTorch allocation peak in A0_RUN_RECORDS.json",
+        "run": "/u801/x98liu/model_lake/runs/A0_20260912/A0GD_full_s0_e25"
+      },
+      "config": {
+        "utc_time": "2026-09-13T02:37:11+00:00",
+        "run_id": "A0GD_full_s0_e25",
+        "slurm_job_id": "1539538",
+        "hostname": "watgpu308",
+        "python": "3.11.4",
+        "torch": "2.12.0+cu130",
+        "cuda_runtime": "13.0",
+        "cuda_available": true,
+        "gpu_name": "NVIDIA L40S",
+        "gpu_total_gb": 44.39,
+        "partition": "ALL",
+        "account": "school_group",
+        "command": "/u801/x98liu/model_lake/a0_formal_20260913/ModelLakeFishing/scale1m/train_rung.py --rung full --graph /u801/x98liu/model_lake/data1m/a0_20260912/graph --out /u801/x98liu/model_lake/runs/A0_20260912/A0GD_full_s0_e25 --seed 0 --epochs 25 --family-vocab /u801/x98liu/model_lake/data1m/feats_rf/family_vocab.csv --fanout --sparse-M --contrast-n-neg 256 --chunked-infer 50000 --skip-diagnostics --lake-gamma 0.5 --global-n-datasets 128",
+        "git_head": "not-a-git-repo",
+        "git_status": "not-a-git-repo",
+        "git_tracked_dirty": null,
+        "graph": "/u801/x98liu/model_lake/data1m/a0_20260912/graph",
+        "graph_sha256": "acddeb93d926efcb636c83d452fe360736a0e6e4ac68cab3f5fef210e7cef5db",
+        "args": {
+          "rung": "full",
+          "graph": "/u801/x98liu/model_lake/data1m/a0_20260912/graph",
+          "out": "/u801/x98liu/model_lake/runs/A0_20260912/A0GD_full_s0_e25",
+          "seed": 0,
+          "epochs": 25,
+          "batch_size": null,
+          "device": null,
+          "resume": null,
+          "ckpt_every": 5,
+          "ckpt_keep": 3,
+          "family_vocab": "/u801/x98liu/model_lake/data1m/feats_rf/family_vocab.csv",
+          "expect_n": null,
+          "fanout": true,
+          "sparse_M": true,
+          "contrast_n_neg": 256,
+          "contrast_max_pos_per_dataset": null,
+          "chunked_infer": 50000,
+          "skip_diagnostics": true,
+          "smoke_only": false,
+          "lake_gamma": 0.5,
+          "global_n_datasets": 128,
+          "num_layers": null
+        },
+        "resolved_config": {
+          "num_layers": 1,
+          "top_frac": 0.1,
+          "lr": 0.01,
+          "lambda_rank": 1.0,
+          "lambda_contrast": 1.0,
+          "lambda_mse": 0.0,
+          "lambda_uniform": 0.0,
+          "scorer": "dot",
+          "similar_to_mode": "topk_unweighted",
+          "similar_to_k": 10,
+          "edge_aware": true,
+          "weighted_relations": [],
+          "rank_loss": "ranknet",
+          "rank_temperature": 0.1,
+          "rank_min_gap": 0.02,
+          "rank_gap_weighted": false,
+          "separate_heads": false,
+          "grouped": false,
+          "lambda_dm_contrast": 0.0,
+          "dm_temperature": 0.1,
+          "dm_hard_neg_weight": 1.0,
+          "dm_warmup": 0,
+          "early_stop": false,
+          "patience": 0,
+          "lambda_global": 1.0,
+          "global_known_low": true,
+          "global_hard_frac": 0.5,
+          "global_mode": "lake",
+          "lake_alpha": 0.75,
+          "lake_n0": 1.0,
+          "global_n_neg": 256,
+          "batch_size": 1024,
+          "fanout": true,
+          "sparse_M": true,
+          "contrast_n_neg": 256,
+          "contrast_max_pos_per_dataset": null,
+          "infer_chunk": 50000,
+          "skip_diagnostics": true,
+          "lake_gamma": 0.5,
+          "global_n_datasets": 128
+        }
+      },
+      "last_loss": 15.536381814994064,
+      "train_tail": [
+        "  wallclock 3875.6s | peak GPU 37.948 GB | epochs 25",
+        "  loss 23.0541 -> 15.5364 | descended True | no NaN True",
+        "  mechanism gate: PASS",
+        "  ckpt checkpoint_epoch_24.pt",
+        "  -> /u801/x98liu/model_lake/runs/A0_20260912/A0GD_full_s0_e25"
+      ],
+      "slurm_tail": [
+        "[env] selected /dev/shm: available=520057508K env=3944622K",
+        "[env] 2.12.0+cu130 NVIDIA L40S 47667740672 pyg_lib True",
+        "{\"returncode\": 0, \"elapsed_seconds\": 3896.417783465935, \"sampled_peak_process_tree_rss_bytes\": 33638547456, \"os_child_maxrss_bytes\": 35096985600, \"sampled_peak_gpu_process_memory_mib\": 45192, \"sampling_seconds\": 2, \"rss_scope\": \"Linux process-tree sampled sum plus OS direct-child high-water mark\", \"gpu_scope\": \"nvidia-smi sampled process memory; exact PyTorch allocation peak in A0_RUN_RECORDS.json\", \"run\": \"/u801/x98liu/model_lake/runs/A0_20260912/A0GD_full_s0_e25\"}"
+      ],
+      "run_sha256": {
+        "A0_RUN_RECORDS.json": "81adb0fd3714b7e16303a97b655f4b3841a70ed36710e8322c1da8ae773ba72b",
+        "MANIFEST.json": "0605e684f8d7b1af079837741e3afa696f5f433d2950874c7620d548e37e9675",
+        "metadata/resolved_config.json": "decd30bd89fcef9b6e075b1743368bc69e2dc8dbcdef0d6dbdc9d8b47c2ae456",
+        "ckpt/checkpoint_epoch_19.pt": "c7617c9351dfd6992c9c561fbc9fbbb09e3fb40a2e5d2f073d4df642ffd589bf",
+        "ckpt/checkpoint_epoch_24.pt": "9ee3415caf361e0ed50126c0d7992eb0989284282ebee8ed097addc6375650fb",
+        "ckpt/last.pt": "9ee3415caf361e0ed50126c0d7992eb0989284282ebee8ed097addc6375650fb",
+        "ckpt/checkpoint_epoch_14.pt": "86ca0dc95d189096dbcf7d569e788d1ec127d331f30733e34f6e50397cae88a3",
+        "ckpt/best.pt": "c9ac7ae9a3781feded3b41620c3297a9a6d955fa5dcaf26111f97b4e2585a2a1",
+        "ckpt/family_vocab.csv": "00d304df9bd72acb2c2c1ca5b84ed0dc9d4adb0cbc9f098f32a9e62109d24005",
+        "metrics/train_history.json": "d925da0f8fd0688a9a219d2e0468f0ff0a934122d092f47008a3f7df5a7ff4fb",
+        "stdout/train.log": "fc9c53a7a63292b407596503a74fb4c3646150f2162c17b744aa6660a1d34677"
+      },
+      "local_delivery": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_4\\delivery_s0",
+      "local_hash_validation": "PASS"
+    },
+    {
+      "seed": 1,
+      "run": "/u801/x98liu/model_lake/runs/A0_20260912/A0GD_full_s1_e25",
+      "epochs_saved": 25,
+      "state": "COMPLETED",
+      "reason": "",
+      "exit_code": "0:0",
+      "elapsed": "01:06:19",
+      "maxrss": "",
+      "native": {
+        "schema": "a0.run_records.v1",
+        "a0": {
+          "protocol": "a0",
+          "run_id": "A0_20260912",
+          "seed": 1,
+          "graph_digest": "acddeb93d926efcb636c83d452fe360736a0e6e4ac68cab3f5fef210e7cef5db",
+          "checkpoint_sha256": "576db197c5d1429341a0b7d0fb35b98bbdcddda80b127a7414ceaba927123994"
+        },
+        "formal_run_name": "A0GD_full_s1_e25",
+        "epochs": 25,
+        "initialization_seed": 0,
+        "resolved_config": {
+          "num_layers": 1,
+          "top_frac": 0.1,
+          "lr": 0.01,
+          "lambda_rank": 1.0,
+          "lambda_contrast": 1.0,
+          "lambda_mse": 0.0,
+          "lambda_uniform": 0.0,
+          "scorer": "dot",
+          "similar_to_mode": "topk_unweighted",
+          "similar_to_k": 10,
+          "edge_aware": true,
+          "weighted_relations": [],
+          "rank_loss": "ranknet",
+          "rank_temperature": 0.1,
+          "rank_min_gap": 0.02,
+          "rank_gap_weighted": false,
+          "separate_heads": false,
+          "grouped": false,
+          "lambda_dm_contrast": 0.0,
+          "dm_temperature": 0.1,
+          "dm_hard_neg_weight": 1.0,
+          "dm_warmup": 0,
+          "early_stop": false,
+          "patience": 0,
+          "lambda_global": 1.0,
+          "global_known_low": true,
+          "global_hard_frac": 0.5,
+          "global_mode": "lake",
+          "lake_alpha": 0.75,
+          "lake_n0": 1.0,
+          "global_n_neg": 256,
+          "batch_size": 1024,
+          "fanout": true,
+          "sparse_M": true,
+          "contrast_n_neg": 256,
+          "contrast_max_pos_per_dataset": null,
+          "infer_chunk": 50000,
+          "skip_diagnostics": true,
+          "lake_gamma": 0.5,
+          "global_n_datasets": 128
+        },
+        "history": [
+          {
+            "rank": 0.98905402655695,
+            "contrast": 5.482948452818627,
+            "global": 16.861732838200588,
+            "total": 23.33373540990493
+          },
+          {
+            "rank": 0.8815210075939403,
+            "contrast": 5.291289815715715,
+            "global": 15.462947116178626,
+            "total": 21.635757895076978
+          },
+          {
+            "rank": 0.8263457405800912,
+            "contrast": 4.877833553389007,
+            "global": 14.12415999992221,
+            "total": 19.828339258829754
+          },
+          {
+            "rank": 0.8150642736285341,
+            "contrast": 4.521643517064113,
+            "global": 13.382257555045333,
+            "total": 18.71896541819853
+          },
+          {
+            "rank": 0.747542701515497,
+            "contrast": 4.314055311913584,
+            "global": 12.88875233893301,
+            "total": 17.950350293926164
+          },
+          {
+            "rank": 0.7236077808866314,
+            "contrast": 4.194382985432942,
+            "global": 12.592610396590887,
+            "total": 17.510601081100166
+          },
+          {
+            "rank": 0.7145564579496196,
+            "contrast": 4.111161073048909,
+            "global": 12.483441951228123,
+            "total": 17.309159372367112
+          },
+          {
+            "rank": 0.713580717643102,
+            "contrast": 4.040256383372288,
+            "global": 12.277355212791294,
+            "total": 17.031192255955116
+          },
+          {
+            "rank": 0.6765590602276372,
+            "contrast": 3.9858781917422426,
+            "global": 12.1064333635218,
+            "total": 16.768870634191178
+          },
+          {
+            "rank": 0.6920054940616384,
+            "contrast": 3.9149491646710564,
+            "global": 12.088375203749713,
+            "total": 16.695329927930644
+          },
+          {
+            "rank": 0.65999163015216,
+            "contrast": 3.9005399545033774,
+            "global": 11.965283057268929,
+            "total": 16.525814692179363
+          },
+          {
+            "rank": 0.6724538540138918,
+            "contrast": 3.8854283211277982,
+            "global": 11.831177243999406,
+            "total": 16.389059347264908
+          },
+          {
+            "rank": 0.6534274898323358,
+            "contrast": 3.8382335550644817,
+            "global": 11.855391782872816,
+            "total": 16.347052779852174
+          },
+          {
+            "rank": 0.655590364746019,
+            "contrast": 3.8071918721292533,
+            "global": 11.730520491506539,
+            "total": 16.193302678126916
+          },
+          {
+            "rank": 0.664190785557616,
+            "contrast": 3.7929876879149793,
+            "global": 11.69429038552677,
+            "total": 16.151468669666965
+          },
+          {
+            "rank": 0.6567827533273136,
+            "contrast": 3.773439173604928,
+            "global": 11.643713539721919,
+            "total": 16.073935452629538
+          },
+          {
+            "rank": 0.6642758279454475,
+            "contrast": 3.785893033532535,
+            "global": 11.647798725202971,
+            "total": 16.097967596615064
+          },
+          {
+            "rank": 0.6326892399320415,
+            "contrast": 3.7781800242031323,
+            "global": 11.55811321034151,
+            "total": 15.968982490838743
+          },
+          {
+            "rank": 0.6406110729656967,
+            "contrast": 3.760416138405893,
+            "global": 11.619057804930444,
+            "total": 16.020084848590926
+          },
+          {
+            "rank": 0.6494543821203942,
+            "contrast": 3.743932326634725,
+            "global": 11.557874997456869,
+            "total": 15.9512617447797
+          },
+          {
+            "rank": 0.6211662754124286,
+            "contrast": 3.757715851652856,
+            "global": 11.467398793089624,
+            "total": 15.846281032936245
+          },
+          {
+            "rank": 0.6149413673316731,
+            "contrast": 3.734387107923919,
+            "global": 11.447949858272777,
+            "total": 15.797278292038861
+          },
+          {
+            "rank": 0.6166302906531914,
+            "contrast": 3.7256081197776045,
+            "global": 11.47139674541997,
+            "total": 15.813635152928969
+          },
+          {
+            "rank": 0.6179022689660391,
+            "contrast": 3.7144772445454315,
+            "global": 11.511101947111243,
+            "total": 15.843481475231695
+          },
+          {
+            "rank": 0.6115212855385799,
+            "contrast": 3.711298044990091,
+            "global": 11.507290615754968,
+            "total": 15.830109988941865
+          }
+        ],
+        "train_segments": [
+          {
+            "start_ns": 882931044479744,
+            "end_ns": 886843039910445,
+            "status": "returned",
+            "start_epoch": 0,
+            "resume_checkpoint": null,
+            "started_at": "2026-09-13T03:43:15+00:00",
+            "clock": "time.perf_counter_ns",
+            "runtime_environment": {
+              "captured_at": "2026-09-13T03:43:15+00:00",
+              "hostname": "watgpu308",
+              "platform": "Linux-6.17.0-35-generic-x86_64-with-glibc2.35",
+              "python": "3.11.4",
+              "python_executable": "/dev/shm/mlf-a04-x98liu-1539567.ln48ni/mlf/bin/python",
+              "torch": "2.12.0+cu130",
+              "cuda_runtime": "13.0",
+              "cuda_available": true,
+              "gpu_name": "NVIDIA L40S",
+              "gpu_total_memory_bytes": 47667740672,
+              "cpu_count": 32,
+              "processor": "x86_64"
+            },
+            "end_epoch": 25
+          }
+        ],
+        "created_at": "2026-09-13T03:43:15+00:00",
+        "runtime_environment": {
+          "captured_at": "2026-09-13T03:43:15+00:00",
+          "hostname": "watgpu308",
+          "platform": "Linux-6.17.0-35-generic-x86_64-with-glibc2.35",
+          "python": "3.11.4",
+          "python_executable": "/dev/shm/mlf-a04-x98liu-1539567.ln48ni/mlf/bin/python",
+          "torch": "2.12.0+cu130",
+          "cuda_runtime": "13.0",
+          "cuda_available": true,
+          "gpu_name": "NVIDIA L40S",
+          "gpu_total_memory_bytes": 47667740672,
+          "cpu_count": 32,
+          "processor": "x86_64"
+        },
+        "runtime_environment_scope": "current invocation; each train segment retains the environment observed for its own invocation",
+        "status": "complete",
+        "timing_scope": "driver segment around native train_eval_one: setup, training with epoch checkpoints, existing post-training test/full evaluation, and the segment-start log write",
+        "peak_process_rss_scope": "OS process lifetime high-water mark; cumulative maximum across recorded process segments",
+        "peak_process_rss_observed_max_bytes": 35048878080,
+        "peak_process_rss_complete": true,
+        "peak_process_rss_bytes": 35048878080,
+        "peak_process_rss_unavailable_reason": null,
+        "peak_gpu_allocated_bytes": 40764269568,
+        "peak_gpu_unavailable_reason": null,
+        "timing_complete": true,
+        "updated_at": "2026-09-13T04:48:27+00:00",
+        "checkpoint_path": "/u801/x98liu/model_lake/runs/A0_20260912/A0GD_full_s1_e25/ckpt/checkpoint_epoch_24.pt",
+        "mechanism_gate": {
+          "epochs": 25,
+          "loss_first": 23.33373540990493,
+          "loss_last": 15.830109988941865,
+          "loss_descended": true,
+          "no_nan": true,
+          "size_embedding_moved": true,
+          "family_embedding_moved": true,
+          "passed": true
+        }
+      },
+      "validation": {
+        "status": "PASS",
+        "seed": 1,
+        "epochs": 25,
+        "checkpoint_epoch": 24,
+        "checkpoint_sha256": "576db197c5d1429341a0b7d0fb35b98bbdcddda80b127a7414ceaba927123994",
+        "config_keys_equal": 40,
+        "graph_sha256": "acddeb93d926efcb636c83d452fe360736a0e6e4ac68cab3f5fef210e7cef5db",
+        "loss_first": 23.33373540990493,
+        "loss_last": 15.830109988941865,
+        "mechanism_gate": {
+          "epochs": 25,
+          "loss_first": 23.33373540990493,
+          "loss_last": 15.830109988941865,
+          "loss_descended": true,
+          "no_nan": true,
+          "size_embedding_moved": true,
+          "family_embedding_moved": true,
+          "passed": true
+        },
+        "resource_report": {
+          "returncode": 0,
+          "elapsed_seconds": 3930.6951474490343,
+          "sampled_peak_process_tree_rss_bytes": 35051380736,
+          "os_child_maxrss_bytes": 35048878080,
+          "sampled_peak_gpu_process_memory_mib": 45200,
+          "sampling_seconds": 2,
+          "rss_scope": "Linux process-tree sampled sum plus OS direct-child high-water mark",
+          "gpu_scope": "nvidia-smi sampled process memory; exact PyTorch allocation peak in A0_RUN_RECORDS.json",
+          "run": "/u801/x98liu/model_lake/runs/A0_20260912/A0GD_full_s1_e25"
+        },
+        "run": "/u801/x98liu/model_lake/runs/A0_20260912/A0GD_full_s1_e25"
+      },
+      "resources": {
+        "returncode": 0,
+        "elapsed_seconds": 3930.6951474490343,
+        "sampled_peak_process_tree_rss_bytes": 35051380736,
+        "os_child_maxrss_bytes": 35048878080,
+        "sampled_peak_gpu_process_memory_mib": 45200,
+        "sampling_seconds": 2,
+        "rss_scope": "Linux process-tree sampled sum plus OS direct-child high-water mark",
+        "gpu_scope": "nvidia-smi sampled process memory; exact PyTorch allocation peak in A0_RUN_RECORDS.json",
+        "run": "/u801/x98liu/model_lake/runs/A0_20260912/A0GD_full_s1_e25"
+      },
+      "config": {
+        "utc_time": "2026-09-13T03:43:11+00:00",
+        "run_id": "A0GD_full_s1_e25",
+        "slurm_job_id": "1539567",
+        "hostname": "watgpu308",
+        "python": "3.11.4",
+        "torch": "2.12.0+cu130",
+        "cuda_runtime": "13.0",
+        "cuda_available": true,
+        "gpu_name": "NVIDIA L40S",
+        "gpu_total_gb": 44.39,
+        "partition": "ALL",
+        "account": "school_group",
+        "command": "/u801/x98liu/model_lake/a0_formal_20260913/ModelLakeFishing/scale1m/train_rung.py --rung full --graph /u801/x98liu/model_lake/data1m/a0_20260912/graph --out /u801/x98liu/model_lake/runs/A0_20260912/A0GD_full_s1_e25 --seed 1 --epochs 25 --family-vocab /u801/x98liu/model_lake/data1m/feats_rf/family_vocab.csv --fanout --sparse-M --contrast-n-neg 256 --chunked-infer 50000 --skip-diagnostics --lake-gamma 0.5 --global-n-datasets 128",
+        "git_head": "not-a-git-repo",
+        "git_status": "not-a-git-repo",
+        "git_tracked_dirty": null,
+        "graph": "/u801/x98liu/model_lake/data1m/a0_20260912/graph",
+        "graph_sha256": "acddeb93d926efcb636c83d452fe360736a0e6e4ac68cab3f5fef210e7cef5db",
+        "args": {
+          "rung": "full",
+          "graph": "/u801/x98liu/model_lake/data1m/a0_20260912/graph",
+          "out": "/u801/x98liu/model_lake/runs/A0_20260912/A0GD_full_s1_e25",
+          "seed": 1,
+          "epochs": 25,
+          "batch_size": null,
+          "device": null,
+          "resume": null,
+          "ckpt_every": 5,
+          "ckpt_keep": 3,
+          "family_vocab": "/u801/x98liu/model_lake/data1m/feats_rf/family_vocab.csv",
+          "expect_n": null,
+          "fanout": true,
+          "sparse_M": true,
+          "contrast_n_neg": 256,
+          "contrast_max_pos_per_dataset": null,
+          "chunked_infer": 50000,
+          "skip_diagnostics": true,
+          "smoke_only": false,
+          "lake_gamma": 0.5,
+          "global_n_datasets": 128,
+          "num_layers": null
+        },
+        "resolved_config": {
+          "num_layers": 1,
+          "top_frac": 0.1,
+          "lr": 0.01,
+          "lambda_rank": 1.0,
+          "lambda_contrast": 1.0,
+          "lambda_mse": 0.0,
+          "lambda_uniform": 0.0,
+          "scorer": "dot",
+          "similar_to_mode": "topk_unweighted",
+          "similar_to_k": 10,
+          "edge_aware": true,
+          "weighted_relations": [],
+          "rank_loss": "ranknet",
+          "rank_temperature": 0.1,
+          "rank_min_gap": 0.02,
+          "rank_gap_weighted": false,
+          "separate_heads": false,
+          "grouped": false,
+          "lambda_dm_contrast": 0.0,
+          "dm_temperature": 0.1,
+          "dm_hard_neg_weight": 1.0,
+          "dm_warmup": 0,
+          "early_stop": false,
+          "patience": 0,
+          "lambda_global": 1.0,
+          "global_known_low": true,
+          "global_hard_frac": 0.5,
+          "global_mode": "lake",
+          "lake_alpha": 0.75,
+          "lake_n0": 1.0,
+          "global_n_neg": 256,
+          "batch_size": 1024,
+          "fanout": true,
+          "sparse_M": true,
+          "contrast_n_neg": 256,
+          "contrast_max_pos_per_dataset": null,
+          "infer_chunk": 50000,
+          "skip_diagnostics": true,
+          "lake_gamma": 0.5,
+          "global_n_datasets": 128
+        }
+      },
+      "last_loss": 15.830109988941865,
+      "train_tail": [
+        "  wallclock 3912.0s | peak GPU 37.965 GB | epochs 25",
+        "  loss 23.3337 -> 15.8301 | descended True | no NaN True",
+        "  mechanism gate: PASS",
+        "  ckpt checkpoint_epoch_24.pt",
+        "  -> /u801/x98liu/model_lake/runs/A0_20260912/A0GD_full_s1_e25"
+      ],
+      "slurm_tail": [
+        "[env] selected /dev/shm: available=520057508K env=3944622K",
+        "[env] 2.12.0+cu130 NVIDIA L40S 47667740672 pyg_lib True",
+        "{\"returncode\": 0, \"elapsed_seconds\": 3930.6951474490343, \"sampled_peak_process_tree_rss_bytes\": 35051380736, \"os_child_maxrss_bytes\": 35048878080, \"sampled_peak_gpu_process_memory_mib\": 45200, \"sampling_seconds\": 2, \"rss_scope\": \"Linux process-tree sampled sum plus OS direct-child high-water mark\", \"gpu_scope\": \"nvidia-smi sampled process memory; exact PyTorch allocation peak in A0_RUN_RECORDS.json\", \"run\": \"/u801/x98liu/model_lake/runs/A0_20260912/A0GD_full_s1_e25\"}"
+      ],
+      "run_sha256": {
+        "A0_RUN_RECORDS.json": "4978533cb5e843aceee4ebdb86daa28b0f94a537850903ab0d328be2d59dd7ce",
+        "MANIFEST.json": "a1233633e8fd41804beb8e4b17bde0d80e28d722f35d3b9a29a04f26924feb55",
+        "metadata/resolved_config.json": "19078447b99b77ad9ec20659e70f1de1987f402a9e8cb96f7c852c28c3d597b8",
+        "metrics/train_history.json": "f264b003ff8b4887698db11c8e1cd39500674d2bd48677fd8c042c2707ec8c9b",
+        "ckpt/best.pt": "20fe1d0c5848aac078231b1bee8145edf93db7ecf2f9abdb284f5e45b02421bf",
+        "ckpt/checkpoint_epoch_14.pt": "16bdea18021492d28315a82e7d519f846644e2cc5cfb1b4e604335956872ac20",
+        "ckpt/last.pt": "576db197c5d1429341a0b7d0fb35b98bbdcddda80b127a7414ceaba927123994",
+        "ckpt/checkpoint_epoch_24.pt": "576db197c5d1429341a0b7d0fb35b98bbdcddda80b127a7414ceaba927123994",
+        "ckpt/family_vocab.csv": "00d304df9bd72acb2c2c1ca5b84ed0dc9d4adb0cbc9f098f32a9e62109d24005",
+        "ckpt/checkpoint_epoch_19.pt": "0ca2dbe3a4f0e31f62a973e3ab77154b66b45152d5430be835873b4b45aa02b2",
+        "stdout/train.log": "6bcb77f79429bc13211d12642666d47cf04d34867572ac531d0609ed9615215c"
+      },
+      "local_delivery": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_4\\delivery_s1",
+      "local_hash_validation": "PASS"
+    },
+    {
+      "seed": 2,
+      "run": "/u801/x98liu/model_lake/runs/A0_20260912/A0GD_full_s2_e25",
+      "epochs_saved": 25,
+      "state": "COMPLETED",
+      "reason": "",
+      "exit_code": "0:0",
+      "elapsed": "01:00:22",
+      "maxrss": "",
+      "native": {
+        "schema": "a0.run_records.v1",
+        "a0": {
+          "protocol": "a0",
+          "run_id": "A0_20260912",
+          "seed": 2,
+          "graph_digest": "acddeb93d926efcb636c83d452fe360736a0e6e4ac68cab3f5fef210e7cef5db",
+          "checkpoint_sha256": "9a090d58fd889b730299af226135fbb6727de5998a9fc133b9eaeb58138eb6f8"
+        },
+        "formal_run_name": "A0GD_full_s2_e25",
+        "epochs": 25,
+        "initialization_seed": 0,
+        "resolved_config": {
+          "num_layers": 1,
+          "top_frac": 0.1,
+          "lr": 0.01,
+          "lambda_rank": 1.0,
+          "lambda_contrast": 1.0,
+          "lambda_mse": 0.0,
+          "lambda_uniform": 0.0,
+          "scorer": "dot",
+          "similar_to_mode": "topk_unweighted",
+          "similar_to_k": 10,
+          "edge_aware": true,
+          "weighted_relations": [],
+          "rank_loss": "ranknet",
+          "rank_temperature": 0.1,
+          "rank_min_gap": 0.02,
+          "rank_gap_weighted": false,
+          "separate_heads": false,
+          "grouped": false,
+          "lambda_dm_contrast": 0.0,
+          "dm_temperature": 0.1,
+          "dm_hard_neg_weight": 1.0,
+          "dm_warmup": 0,
+          "early_stop": false,
+          "patience": 0,
+          "lambda_global": 1.0,
+          "global_known_low": true,
+          "global_hard_frac": 0.5,
+          "global_mode": "lake",
+          "lake_alpha": 0.75,
+          "lake_n0": 1.0,
+          "global_n_neg": 256,
+          "batch_size": 1024,
+          "fanout": true,
+          "sparse_M": true,
+          "contrast_n_neg": 256,
+          "contrast_max_pos_per_dataset": null,
+          "infer_chunk": 50000,
+          "skip_diagnostics": true,
+          "lake_gamma": 0.5,
+          "global_n_datasets": 128
+        },
+        "history": [
+          {
+            "rank": 0.9529668053855067,
+            "contrast": 5.485581263251927,
+            "global": 16.86241867231286,
+            "total": 23.30096667745839
+          },
+          {
+            "rank": 0.8118981408036273,
+            "contrast": 5.366431111874788,
+            "global": 15.731296560038691,
+            "total": 21.909625716831375
+          },
+          {
+            "rank": 0.7622265297433605,
+            "contrast": 5.050471036330514,
+            "global": 14.338751253874406,
+            "total": 20.1514487473861
+          },
+          {
+            "rank": 0.7622173933879189,
+            "contrast": 4.747211715449458,
+            "global": 13.664332908132803,
+            "total": 19.173762072687563
+          },
+          {
+            "rank": 0.7050951991392218,
+            "contrast": 4.4721737737241,
+            "global": 13.279236855714217,
+            "total": 18.456505941308063
+          },
+          {
+            "rank": 0.7005789487258248,
+            "contrast": 4.280635159948598,
+            "global": 12.94651746749878,
+            "total": 17.927731596905254
+          },
+          {
+            "rank": 0.6642772924640904,
+            "contrast": 4.165724505548892,
+            "global": 12.623847982157832,
+            "total": 17.45384991687277
+          },
+          {
+            "rank": 0.6556244051974752,
+            "contrast": 4.0867284018060435,
+            "global": 12.482392394024393,
+            "total": 17.22474525285804
+          },
+          {
+            "rank": 0.6515479308107625,
+            "contrast": 4.036574332610421,
+            "global": 12.3278343781181,
+            "total": 17.015956671341605
+          },
+          {
+            "rank": 0.6347433030605316,
+            "contrast": 3.971611712289893,
+            "global": 12.134502742601478,
+            "total": 16.74085762189782
+          },
+          {
+            "rank": 0.6119967070610627,
+            "contrast": 3.9339718922324804,
+            "global": 12.061251018358314,
+            "total": 16.60721957165262
+          },
+          {
+            "rank": 0.6036716122990069,
+            "contrast": 3.912208987318951,
+            "global": 11.881892432337223,
+            "total": 16.39777316217837
+          },
+          {
+            "rank": 0.6062154348777689,
+            "contrast": 3.8674973249435425,
+            "global": 12.061889109404191,
+            "total": 16.535601781762164
+          },
+          {
+            "rank": 0.5952724445125331,
+            "contrast": 3.841491901356241,
+            "global": 11.884546736012334,
+            "total": 16.321311059205428
+          },
+          {
+            "rank": 0.591118195782537,
+            "contrast": 3.8149623197057974,
+            "global": 11.82055715892626,
+            "total": 16.226637736610744
+          },
+          {
+            "rank": 0.5810423817323602,
+            "contrast": 3.7977123312328174,
+            "global": 11.696978880011518,
+            "total": 16.07573368238366
+          },
+          {
+            "rank": 0.5795016256363495,
+            "contrast": 3.7814605495204097,
+            "global": 11.77104383966197,
+            "total": 16.132006043973178
+          },
+          {
+            "rank": 0.5777872463931208,
+            "contrast": 3.761080731516299,
+            "global": 11.697604428166928,
+            "total": 16.036472403484844
+          },
+          {
+            "rank": 0.5755643805731898,
+            "contrast": 3.7376229763031006,
+            "global": 11.665206888447637,
+            "total": 15.97839411445286
+          },
+          {
+            "rank": 0.5599346588487211,
+            "contrast": 3.7394580530083696,
+            "global": 11.537470838297969,
+            "total": 15.83686351776123
+          },
+          {
+            "rank": 0.5686260869969493,
+            "contrast": 3.7255306503047114,
+            "global": 11.522932322128959,
+            "total": 15.817089039346445
+          },
+          {
+            "rank": 0.5355582004008086,
+            "contrast": 3.7003616042759107,
+            "global": 11.50350450432819,
+            "total": 15.739424394524615
+          },
+          {
+            "rank": 0.5469594241484351,
+            "contrast": 3.693915475969729,
+            "global": 11.444464870121168,
+            "total": 15.685339741084887
+          },
+          {
+            "rank": 0.5627218983743502,
+            "contrast": 3.688040209853131,
+            "global": 11.454501048378322,
+            "total": 15.705263137817383
+          },
+          {
+            "rank": 0.5533872104209402,
+            "contrast": 3.6645981436190396,
+            "global": 11.395347533018693,
+            "total": 15.61333299719769
+          }
+        ],
+        "train_segments": [
+          {
+            "start_ns": 886910516899135,
+            "end_ns": 890479742812178,
+            "status": "returned",
+            "start_epoch": 0,
+            "resume_checkpoint": null,
+            "started_at": "2026-09-13T04:49:35+00:00",
+            "clock": "time.perf_counter_ns",
+            "runtime_environment": {
+              "captured_at": "2026-09-13T04:49:35+00:00",
+              "hostname": "watgpu308",
+              "platform": "Linux-6.17.0-35-generic-x86_64-with-glibc2.35",
+              "python": "3.11.4",
+              "python_executable": "/dev/shm/mlf-a04-x98liu-1539537.apFRJO/mlf/bin/python",
+              "torch": "2.12.0+cu130",
+              "cuda_runtime": "13.0",
+              "cuda_available": true,
+              "gpu_name": "NVIDIA L40S",
+              "gpu_total_memory_bytes": 47667740672,
+              "cpu_count": 32,
+              "processor": "x86_64"
+            },
+            "end_epoch": 25
+          }
+        ],
+        "created_at": "2026-09-13T04:49:35+00:00",
+        "runtime_environment": {
+          "captured_at": "2026-09-13T04:49:35+00:00",
+          "hostname": "watgpu308",
+          "platform": "Linux-6.17.0-35-generic-x86_64-with-glibc2.35",
+          "python": "3.11.4",
+          "python_executable": "/dev/shm/mlf-a04-x98liu-1539537.apFRJO/mlf/bin/python",
+          "torch": "2.12.0+cu130",
+          "cuda_runtime": "13.0",
+          "cuda_available": true,
+          "gpu_name": "NVIDIA L40S",
+          "gpu_total_memory_bytes": 47667740672,
+          "cpu_count": 32,
+          "processor": "x86_64"
+        },
+        "runtime_environment_scope": "current invocation; each train segment retains the environment observed for its own invocation",
+        "status": "complete",
+        "timing_scope": "driver segment around native train_eval_one: setup, training with epoch checkpoints, existing post-training test/full evaluation, and the segment-start log write",
+        "peak_process_rss_scope": "OS process lifetime high-water mark; cumulative maximum across recorded process segments",
+        "peak_process_rss_observed_max_bytes": 35309973504,
+        "peak_process_rss_complete": true,
+        "peak_process_rss_bytes": 35309973504,
+        "peak_process_rss_unavailable_reason": null,
+        "peak_gpu_allocated_bytes": 40728464896,
+        "peak_gpu_unavailable_reason": null,
+        "timing_complete": true,
+        "updated_at": "2026-09-13T05:49:04+00:00",
+        "checkpoint_path": "/u801/x98liu/model_lake/runs/A0_20260912/A0GD_full_s2_e25/ckpt/checkpoint_epoch_24.pt",
+        "mechanism_gate": {
+          "epochs": 25,
+          "loss_first": 23.30096667745839,
+          "loss_last": 15.61333299719769,
+          "loss_descended": true,
+          "no_nan": true,
+          "size_embedding_moved": true,
+          "family_embedding_moved": true,
+          "passed": true
+        }
+      },
+      "validation": {
+        "status": "PASS",
+        "seed": 2,
+        "epochs": 25,
+        "checkpoint_epoch": 24,
+        "checkpoint_sha256": "9a090d58fd889b730299af226135fbb6727de5998a9fc133b9eaeb58138eb6f8",
+        "config_keys_equal": 40,
+        "graph_sha256": "acddeb93d926efcb636c83d452fe360736a0e6e4ac68cab3f5fef210e7cef5db",
+        "loss_first": 23.30096667745839,
+        "loss_last": 15.61333299719769,
+        "mechanism_gate": {
+          "epochs": 25,
+          "loss_first": 23.30096667745839,
+          "loss_last": 15.61333299719769,
+          "loss_descended": true,
+          "no_nan": true,
+          "size_embedding_moved": true,
+          "family_embedding_moved": true,
+          "passed": true
+        },
+        "resource_report": {
+          "returncode": 0,
+          "elapsed_seconds": 3586.519433122012,
+          "sampled_peak_process_tree_rss_bytes": 35312025600,
+          "os_child_maxrss_bytes": 35309973504,
+          "sampled_peak_gpu_process_memory_mib": 45176,
+          "sampling_seconds": 2,
+          "rss_scope": "Linux process-tree sampled sum plus OS direct-child high-water mark",
+          "gpu_scope": "nvidia-smi sampled process memory; exact PyTorch allocation peak in A0_RUN_RECORDS.json",
+          "run": "/u801/x98liu/model_lake/runs/A0_20260912/A0GD_full_s2_e25"
+        },
+        "run": "/u801/x98liu/model_lake/runs/A0_20260912/A0GD_full_s2_e25"
+      },
+      "resources": {
+        "returncode": 0,
+        "elapsed_seconds": 3586.519433122012,
+        "sampled_peak_process_tree_rss_bytes": 35312025600,
+        "os_child_maxrss_bytes": 35309973504,
+        "sampled_peak_gpu_process_memory_mib": 45176,
+        "sampling_seconds": 2,
+        "rss_scope": "Linux process-tree sampled sum plus OS direct-child high-water mark",
+        "gpu_scope": "nvidia-smi sampled process memory; exact PyTorch allocation peak in A0_RUN_RECORDS.json",
+        "run": "/u801/x98liu/model_lake/runs/A0_20260912/A0GD_full_s2_e25"
+      },
+      "config": {
+        "utc_time": "2026-09-13T04:49:30+00:00",
+        "run_id": "A0GD_full_s2_e25",
+        "slurm_job_id": "1539537",
+        "hostname": "watgpu308",
+        "python": "3.11.4",
+        "torch": "2.12.0+cu130",
+        "cuda_runtime": "13.0",
+        "cuda_available": true,
+        "gpu_name": "NVIDIA L40S",
+        "gpu_total_gb": 44.39,
+        "partition": "ALL",
+        "account": "school_group",
+        "command": "/u801/x98liu/model_lake/a0_formal_20260913/ModelLakeFishing/scale1m/train_rung.py --rung full --graph /u801/x98liu/model_lake/data1m/a0_20260912/graph --out /u801/x98liu/model_lake/runs/A0_20260912/A0GD_full_s2_e25 --seed 2 --epochs 25 --family-vocab /u801/x98liu/model_lake/data1m/feats_rf/family_vocab.csv --fanout --sparse-M --contrast-n-neg 256 --chunked-infer 50000 --skip-diagnostics --lake-gamma 0.5 --global-n-datasets 128",
+        "git_head": "not-a-git-repo",
+        "git_status": "not-a-git-repo",
+        "git_tracked_dirty": null,
+        "graph": "/u801/x98liu/model_lake/data1m/a0_20260912/graph",
+        "graph_sha256": "acddeb93d926efcb636c83d452fe360736a0e6e4ac68cab3f5fef210e7cef5db",
+        "args": {
+          "rung": "full",
+          "graph": "/u801/x98liu/model_lake/data1m/a0_20260912/graph",
+          "out": "/u801/x98liu/model_lake/runs/A0_20260912/A0GD_full_s2_e25",
+          "seed": 2,
+          "epochs": 25,
+          "batch_size": null,
+          "device": null,
+          "resume": null,
+          "ckpt_every": 5,
+          "ckpt_keep": 3,
+          "family_vocab": "/u801/x98liu/model_lake/data1m/feats_rf/family_vocab.csv",
+          "expect_n": null,
+          "fanout": true,
+          "sparse_M": true,
+          "contrast_n_neg": 256,
+          "contrast_max_pos_per_dataset": null,
+          "chunked_infer": 50000,
+          "skip_diagnostics": true,
+          "smoke_only": false,
+          "lake_gamma": 0.5,
+          "global_n_datasets": 128,
+          "num_layers": null
+        },
+        "resolved_config": {
+          "num_layers": 1,
+          "top_frac": 0.1,
+          "lr": 0.01,
+          "lambda_rank": 1.0,
+          "lambda_contrast": 1.0,
+          "lambda_mse": 0.0,
+          "lambda_uniform": 0.0,
+          "scorer": "dot",
+          "similar_to_mode": "topk_unweighted",
+          "similar_to_k": 10,
+          "edge_aware": true,
+          "weighted_relations": [],
+          "rank_loss": "ranknet",
+          "rank_temperature": 0.1,
+          "rank_min_gap": 0.02,
+          "rank_gap_weighted": false,
+          "separate_heads": false,
+          "grouped": false,
+          "lambda_dm_contrast": 0.0,
+          "dm_temperature": 0.1,
+          "dm_hard_neg_weight": 1.0,
+          "dm_warmup": 0,
+          "early_stop": false,
+          "patience": 0,
+          "lambda_global": 1.0,
+          "global_known_low": true,
+          "global_hard_frac": 0.5,
+          "global_mode": "lake",
+          "lake_alpha": 0.75,
+          "lake_n0": 1.0,
+          "global_n_neg": 256,
+          "batch_size": 1024,
+          "fanout": true,
+          "sparse_M": true,
+          "contrast_n_neg": 256,
+          "contrast_max_pos_per_dataset": null,
+          "infer_chunk": 50000,
+          "skip_diagnostics": true,
+          "lake_gamma": 0.5,
+          "global_n_datasets": 128
+        }
+      },
+      "last_loss": 15.61333299719769,
+      "train_tail": [
+        "  wallclock 3569.2s | peak GPU 37.931 GB | epochs 25",
+        "  loss 23.3010 -> 15.6133 | descended True | no NaN True",
+        "  mechanism gate: PASS",
+        "  ckpt checkpoint_epoch_24.pt",
+        "  -> /u801/x98liu/model_lake/runs/A0_20260912/A0GD_full_s2_e25"
+      ],
+      "slurm_tail": [
+        "[env] selected /dev/shm: available=520057508K env=3944622K",
+        "[env] 2.12.0+cu130 NVIDIA L40S 47667740672 pyg_lib True",
+        "{\"returncode\": 0, \"elapsed_seconds\": 3586.519433122012, \"sampled_peak_process_tree_rss_bytes\": 35312025600, \"os_child_maxrss_bytes\": 35309973504, \"sampled_peak_gpu_process_memory_mib\": 45176, \"sampling_seconds\": 2, \"rss_scope\": \"Linux process-tree sampled sum plus OS direct-child high-water mark\", \"gpu_scope\": \"nvidia-smi sampled process memory; exact PyTorch allocation peak in A0_RUN_RECORDS.json\", \"run\": \"/u801/x98liu/model_lake/runs/A0_20260912/A0GD_full_s2_e25\"}"
+      ],
+      "run_sha256": {
+        "A0_RUN_RECORDS.json": "da5cfff51f0a25dfdfdd26f6c25176703dfcb3259365990de9c8f17938890e0b",
+        "MANIFEST.json": "da10ea712d219ee5ba2fb09d61847c7f3ddd285d8c520e65f6aefd50cc9e48b6",
+        "stdout/train.log": "42dbd3b4363701706f59c9ba9be3002a1d1b61954b868ccd42a57251f43b1cba",
+        "ckpt/family_vocab.csv": "00d304df9bd72acb2c2c1ca5b84ed0dc9d4adb0cbc9f098f32a9e62109d24005",
+        "ckpt/checkpoint_epoch_14.pt": "a98067fc4c492bbad40607404a80747b7d04ca906d133717253e15cfc7bc71eb",
+        "ckpt/checkpoint_epoch_24.pt": "9a090d58fd889b730299af226135fbb6727de5998a9fc133b9eaeb58138eb6f8",
+        "ckpt/last.pt": "9a090d58fd889b730299af226135fbb6727de5998a9fc133b9eaeb58138eb6f8",
+        "ckpt/best.pt": "a530547ad981cef4ab56e7e282010b85f679858544f88ea00f0cdc170820370d",
+        "ckpt/checkpoint_epoch_19.pt": "95fe2ba2c8d24c50613be07b78ff6610ae2f221e7d3630c9a067a44ccb9ee7d6",
+        "metrics/train_history.json": "401247cc878322cd3cb6a3e09b5398fc7e919fc76af8d6b02af857c6ec11cced",
+        "metadata/resolved_config.json": "543d8ac3990795c89403f5a2a0a50c566381f360f6d13067c6486fd678240d32"
+      },
+      "local_delivery": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_4\\delivery_s2",
+      "local_hash_validation": "PASS"
+    }
+  ],
+  "checked_at_utc": "2026-09-13T23:19:51.252530+00:00",
+  "stage_status": "complete"
+}

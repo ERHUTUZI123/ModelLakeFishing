@@ -1,0 +1,16 @@
+usage: build_prior_sidecar.py [-h] (--graph GRAPH | --graph-store GRAPH_STORE)
+                              --export EXPORT [--split-seed SPLIT_SEED]
+                              [--task-nodes TASK_NODES] [--out OUT]
+
+options:
+  -h, --help            show this help message and exit
+  --graph GRAPH         single-file .pt checkpoint
+  --graph-store GRAPH_STORE
+                        scale1m.graph_store directory
+  --export EXPORT
+  --split-seed SPLIT_SEED
+                        restrict the sidecar to train+val edges of this split
+  --task-nodes TASK_NODES
+                        parquet with node/task columns, used when the graph's
+                        task_type_id is degenerate
+  --out OUT

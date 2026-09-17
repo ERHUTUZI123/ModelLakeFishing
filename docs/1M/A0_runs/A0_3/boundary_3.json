@@ -1,0 +1,59 @@
+{
+  "stage": "A0.3",
+  "operation": "boundary",
+  "argv": [
+    "D:\\research\\model_lake\\codes\\ModelLakeFishing\\.venv\\Scripts\\python.exe",
+    "-X",
+    "utf8",
+    "-B",
+    "-m",
+    "pytest",
+    "scale1m/tests/test_a03_information_boundary.py",
+    "-q",
+    "--junitxml=D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_3\\boundary_3.xml"
+  ],
+  "cwd": "D:\\research\\model_lake\\codes\\ModelLakeFishing",
+  "pid": 7900,
+  "returncode": 0,
+  "elapsed_seconds": 14.040227800000139,
+  "peak_process_working_set_bytes": 4259840,
+  "samples": [
+    {
+      "seconds": 0.0046542999989469536,
+      "rss": 2318336,
+      "available_ram": 4831907840
+    },
+    {
+      "seconds": 2.012608699998964,
+      "rss": 4259840,
+      "available_ram": 4246859776
+    },
+    {
+      "seconds": 4.017360400001053,
+      "rss": 4259840,
+      "available_ram": 4214292480
+    },
+    {
+      "seconds": 6.021790399998281,
+      "rss": 4259840,
+      "available_ram": 4128550912
+    },
+    {
+      "seconds": 8.026031900000817,
+      "rss": 4259840,
+      "available_ram": 3963064320
+    },
+    {
+      "seconds": 10.03089899999759,
+      "rss": 4259840,
+      "available_ram": 3970318336
+    },
+    {
+      "seconds": 12.035542999998142,
+      "rss": 4259840,
+      "available_ram": 3824365568
+    }
+  ],
+  "finished_at_utc": "2026-09-13T01:50:11.720389+00:00",
+  "log_sha256": "05fa6819f28a72ecbb9beabadb7ba7610401e23a885b8a582c698279b545d19c"
+}

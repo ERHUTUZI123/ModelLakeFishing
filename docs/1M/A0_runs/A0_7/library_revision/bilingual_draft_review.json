@@ -1,0 +1,617 @@
+{
+  "schema_version": "a0.bilingual_literal_review.v1",
+  "created_at_utc": "2026-09-15T01:53:29.439252+00:00",
+  "scope": "Automated literal/structural checks only. Scientific correctness, contextual exceptions and translation accuracy require human/agent review.",
+  "read_only_inputs": true,
+  "link_destination": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M",
+  "status": "REVIEW_REQUIRED",
+  "inputs": {
+    "en": {
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_7\\library_revision\\EVIDENCE_SOURCE_LIBRARY_en.draft.md",
+      "sha256": "f594b221ddd9fea26bfa27723fede969bba8250c6cb30cfeedc8a708e2f51c71",
+      "bytes": 56121
+    },
+    "zh": {
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_7\\library_revision\\EVIDENCE_SOURCE_LIBRARY_zh.draft.md",
+      "sha256": "cfec65b758b13a5c87e5ae360826227dc7fa116769e4dabf04dd42b187b0cf24",
+      "bytes": 53100
+    }
+  },
+  "counts": {
+    "en": {
+      "sections": 35,
+      "tables": 14,
+      "display_math": 42,
+      "inline_ascii_literals": 154,
+      "fenced_commands": 7,
+      "flags": 46,
+      "digests": 10,
+      "links": 113,
+      "prose_numbers": 201
+    },
+    "zh": {
+      "sections": 35,
+      "tables": 14,
+      "display_math": 42,
+      "inline_ascii_literals": 154,
+      "fenced_commands": 7,
+      "flags": 46,
+      "digests": 10,
+      "links": 113,
+      "prose_numbers": 210
+    }
+  },
+  "mismatches": [
+    {
+      "check": "inline_ascii_literals",
+      "en_count": 154,
+      "zh_count": 154,
+      "differences": [
+        {
+          "change": "insert",
+          "en_range": [
+            14,
+            14
+          ],
+          "zh_range": [
+            14,
+            15
+          ],
+          "en": [],
+          "zh": [
+            "scale1m/hf_canonicalize.py"
+          ]
+        },
+        {
+          "change": "delete",
+          "en_range": [
+            17,
+            18
+          ],
+          "zh_range": [
+            18,
+            18
+          ],
+          "en": [
+            "scale1m/hf_canonicalize.py"
+          ],
+          "zh": []
+        },
+        {
+          "change": "insert",
+          "en_range": [
+            33,
+            33
+          ],
+          "zh_range": [
+            33,
+            34
+          ],
+          "en": [],
+          "zh": [
+            "scale1m/canonicalize_rf.py"
+          ]
+        },
+        {
+          "change": "delete",
+          "en_range": [
+            34,
+            35
+          ],
+          "zh_range": [
+            35,
+            35
+          ],
+          "en": [
+            "scale1m/canonicalize_rf.py"
+          ],
+          "zh": []
+        },
+        {
+          "change": "insert",
+          "en_range": [
+            75,
+            75
+          ],
+          "zh_range": [
+            75,
+            76
+          ],
+          "en": [],
+          "zh": [
+            "stage2TrainGraphSAGE/graph_surgery.py"
+          ]
+        },
+        {
+          "change": "delete",
+          "en_range": [
+            76,
+            77
+          ],
+          "zh_range": [
+            77,
+            77
+          ],
+          "en": [
+            "stage2TrainGraphSAGE/graph_surgery.py"
+          ],
+          "zh": []
+        },
+        {
+          "change": "insert",
+          "en_range": [
+            82,
+            82
+          ],
+          "zh_range": [
+            82,
+            83
+          ],
+          "en": [],
+          "zh": [
+            "stage2TrainGraphSAGE/model.py"
+          ]
+        },
+        {
+          "change": "delete",
+          "en_range": [
+            83,
+            84
+          ],
+          "zh_range": [
+            84,
+            84
+          ],
+          "en": [
+            "stage2TrainGraphSAGE/model.py"
+          ],
+          "zh": []
+        },
+        {
+          "change": "insert",
+          "en_range": [
+            86,
+            86
+          ],
+          "zh_range": [
+            86,
+            87
+          ],
+          "en": [],
+          "zh": [
+            "stage2TrainGraphSAGE/edge_aware.py"
+          ]
+        },
+        {
+          "change": "delete",
+          "en_range": [
+            88,
+            89
+          ],
+          "zh_range": [
+            89,
+            89
+          ],
+          "en": [
+            "stage2TrainGraphSAGE/edge_aware.py"
+          ],
+          "zh": []
+        },
+        {
+          "change": "delete",
+          "en_range": [
+            93,
+            94
+          ],
+          "zh_range": [
+            93,
+            93
+          ],
+          "en": [
+            "contrastive_loss_sampled"
+          ],
+          "zh": []
+        },
+        {
+          "change": "insert",
+          "en_range": [
+            96,
+            96
+          ],
+          "zh_range": [
+            95,
+            97
+          ],
+          "en": [],
+          "zh": [
+            "contrastive_loss_sampled",
+            "stage2TrainGraphSAGE/losses.py"
+          ]
+        },
+        {
+          "change": "delete",
+          "en_range": [
+            98,
+            99
+          ],
+          "zh_range": [
+            99,
+            99
+          ],
+          "en": [
+            "stage2TrainGraphSAGE/losses.py"
+          ],
+          "zh": []
+        }
+      ]
+    },
+    {
+      "check": "prose_numbers",
+      "en_count": 201,
+      "zh_count": 210,
+      "differences": [
+        {
+          "change": "insert",
+          "en_range": [
+            20,
+            20
+          ],
+          "zh_range": [
+            20,
+            21
+          ],
+          "en": [],
+          "zh": [
+            "0.3174"
+          ]
+        },
+        {
+          "change": "insert",
+          "en_range": [
+            33,
+            33
+          ],
+          "zh_range": [
+            34,
+            35
+          ],
+          "en": [],
+          "zh": [
+            "18,729"
+          ]
+        },
+        {
+          "change": "delete",
+          "en_range": [
+            34,
+            35
+          ],
+          "zh_range": [
+            36,
+            36
+          ],
+          "en": [
+            "18,729"
+          ],
+          "zh": []
+        },
+        {
+          "change": "delete",
+          "en_range": [
+            36,
+            37
+          ],
+          "zh_range": [
+            37,
+            37
+          ],
+          "en": [
+            "2"
+          ],
+          "zh": []
+        },
+        {
+          "change": "insert",
+          "en_range": [
+            45,
+            45
+          ],
+          "zh_range": [
+            45,
+            46
+          ],
+          "en": [],
+          "zh": [
+            "0"
+          ]
+        },
+        {
+          "change": "delete",
+          "en_range": [
+            66,
+            67
+          ],
+          "zh_range": [
+            67,
+            67
+          ],
+          "en": [
+            "10"
+          ],
+          "zh": []
+        },
+        {
+          "change": "insert",
+          "en_range": [
+            70,
+            70
+          ],
+          "zh_range": [
+            70,
+            71
+          ],
+          "en": [],
+          "zh": [
+            "10"
+          ]
+        },
+        {
+          "change": "replace",
+          "en_range": [
+            76,
+            77
+          ],
+          "zh_range": [
+            77,
+            78
+          ],
+          "en": [
+            "13.561"
+          ],
+          "zh": [
+            "13.561%"
+          ]
+        },
+        {
+          "change": "insert",
+          "en_range": [
+            93,
+            93
+          ],
+          "zh_range": [
+            94,
+            95
+          ],
+          "en": [],
+          "zh": [
+            "4"
+          ]
+        },
+        {
+          "change": "insert",
+          "en_range": [
+            94,
+            94
+          ],
+          "zh_range": [
+            96,
+            97
+          ],
+          "en": [],
+          "zh": [
+            "384"
+          ]
+        },
+        {
+          "change": "delete",
+          "en_range": [
+            95,
+            96
+          ],
+          "zh_range": [
+            98,
+            98
+          ],
+          "en": [
+            "384"
+          ],
+          "zh": []
+        },
+        {
+          "change": "replace",
+          "en_range": [
+            100,
+            101
+          ],
+          "zh_range": [
+            102,
+            103
+          ],
+          "en": [
+            "3"
+          ],
+          "zh": [
+            "3.5"
+          ]
+        },
+        {
+          "change": "insert",
+          "en_range": [
+            107,
+            107
+          ],
+          "zh_range": [
+            109,
+            110
+          ],
+          "en": [],
+          "zh": [
+            "30%"
+          ]
+        },
+        {
+          "change": "insert",
+          "en_range": [
+            117,
+            117
+          ],
+          "zh_range": [
+            120,
+            121
+          ],
+          "en": [],
+          "zh": [
+            "1"
+          ]
+        },
+        {
+          "change": "insert",
+          "en_range": [
+            131,
+            131
+          ],
+          "zh_range": [
+            135,
+            136
+          ],
+          "en": [],
+          "zh": [
+            "0"
+          ]
+        },
+        {
+          "change": "replace",
+          "en_range": [
+            153,
+            154
+          ],
+          "zh_range": [
+            158,
+            159
+          ],
+          "en": [
+            "5"
+          ],
+          "zh": [
+            "5,000"
+          ]
+        },
+        {
+          "change": "insert",
+          "en_range": [
+            156,
+            156
+          ],
+          "zh_range": [
+            161,
+            164
+          ],
+          "en": [],
+          "zh": [
+            "0",
+            "1",
+            "2"
+          ]
+        },
+        {
+          "change": "replace",
+          "en_range": [
+            159,
+            160
+          ],
+          "zh_range": [
+            167,
+            168
+          ],
+          "en": [
+            "0"
+          ],
+          "zh": [
+            "2,198"
+          ]
+        },
+        {
+          "change": "delete",
+          "en_range": [
+            161,
+            162
+          ],
+          "zh_range": [
+            169,
+            169
+          ],
+          "en": [
+            "2,198"
+          ],
+          "zh": []
+        },
+        {
+          "change": "insert",
+          "en_range": [
+            165,
+            165
+          ],
+          "zh_range": [
+            172,
+            173
+          ],
+          "en": [],
+          "zh": [
+            "0.22135922330097088"
+          ]
+        },
+        {
+          "change": "insert",
+          "en_range": [
+            181,
+            181
+          ],
+          "zh_range": [
+            189,
+            190
+          ],
+          "en": [],
+          "zh": [
+            "18,729"
+          ]
+        },
+        {
+          "change": "delete",
+          "en_range": [
+            182,
+            183
+          ],
+          "zh_range": [
+            191,
+            191
+          ],
+          "en": [
+            "18,729"
+          ],
+          "zh": []
+        },
+        {
+          "change": "replace",
+          "en_range": [
+            184,
+            185
+          ],
+          "zh_range": [
+            192,
+            194
+          ],
+          "en": [
+            "13.561"
+          ],
+          "zh": [
+            "13.561%",
+            "0"
+          ]
+        }
+      ]
+    }
+  ],
+  "review_flags": [],
+  "broken_links": [],
+  "unclosed_fences": []
+}

@@ -1,0 +1,27 @@
+{
+  "schema": "a0.source_manifest.v1",
+  "stage": "A0.3",
+  "status": "blocked",
+  "created_at_utc": "2026-09-13T01:59:29.670637+00:00",
+  "authority": {
+    "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\EVIDENCE_SOURCE_LIBRARY_en.md",
+    "sha256": "6c7d883734fb9a05ca99c4a8409e366955c86ba2e644bd5328c9ba696ff344cd",
+    "bytes": 51538
+  },
+  "previous_stage_manifest": {
+    "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_3\\frozen\\A0_SOURCE_MANIFEST.json",
+    "sha256": "bff3c88efd44c2e1ca5e4522177f8d1995ab5da846327e2d3b089a5df007eaab",
+    "bytes": 10311
+  },
+  "A0_2": {
+    "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_2\\A0_2_MANIFEST.json",
+    "sha256": "455a1b45b48dd00358e562db545c02788089e252f6d501dc6d51de09ca79fca3",
+    "bytes": 17329
+  },
+  "A0_3": {
+    "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_3\\A0_3_MANIFEST.json",
+    "sha256": "c61abbda0b14e8703d936754867791aa58ec75d7e2f826b87cc91d9df8046dc9",
+    "bytes": 8744
+  },
+  "later_stages": "A0.3 smoke blocked by CUDA OOM; A0.4-A0.7 pending. No formal training or retrieval results."
+}

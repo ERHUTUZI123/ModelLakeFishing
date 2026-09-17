@@ -227,6 +227,17 @@ def place_labels(peaks, extent, blocked=(), min_sep=0.085, margin=0.045,
 
 # ================================================================== the plate =
 def stage_render(cache, outdir, dpi=460):
+    # Panels C and D still print the Y2/Y4 archive, while the cache A and B
+    # are laid out from is now A0.  Drawing them on one plate would put A0
+    # water under pre-A0 numbers, which is the kind of quiet mismatch the rest
+    # of this file is written to prevent.  `lake_ab` is the figure that has
+    # been moved over; this one needs its C and D repointed first.
+    raise SystemExit(
+        "the four-panel plate is not on A0 yet: A and B would be laid out "
+        "from %s while C and D still print the Y2/Y4 archive.  Repoint them "
+        "at %s first, or render lake_ab, which is on A0."
+        % (os.path.basename(G.CACHE), os.path.basename(G.A0_REPORT)))
+
     _style()
     os.makedirs(outdir, exist_ok=True)
 

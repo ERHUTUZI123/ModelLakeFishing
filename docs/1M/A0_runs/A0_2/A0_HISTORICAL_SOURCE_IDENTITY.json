@@ -1,0 +1,1353 @@
+{
+  "schema": "a0.historical_source_identity.v1",
+  "stage": "A0.2",
+  "status": "PASS",
+  "started_at_utc": "2026-09-13T01:21:54.863899+00:00",
+  "finished_at_utc": "2026-09-13T01:24:03.912049+00:00",
+  "authority": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\EVIDENCE_SOURCE_LIBRARY_en.md",
+  "scope": "Read-only current-file SHA256 and structural identity capture of the five historical graph inputs selected by the A0.1 frozen merge script. No merge, canonicalization, training, or metric publication executed.",
+  "files": [
+    {
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\stage1BuildTransferGraph\\hgraph_ml_v2.pt",
+      "sha256": "e6ae2dfeb59779f4cb0242a08bf90d6628699e90a9a648048b799d9cc7d71cda",
+      "source_key": "modellens_v2",
+      "priority": 0,
+      "before": {
+        "size_bytes": 91994343,
+        "mtime_ns": 1784818404583058000,
+        "inode": 844424931158692
+      },
+      "after": {
+        "size_bytes": 91994343,
+        "mtime_ns": 1784818404583058000,
+        "inode": 844424931158692
+      },
+      "actual_counts": {
+        "models": 30183,
+        "dataset_nodes": 9603,
+        "edges": 312986,
+        "attr_min": 0.0,
+        "attr_max": 1.0,
+        "attr_mean": 0.5001400113105774,
+        "physical_endpoint_distinct_pairs": 312986,
+        "physical_endpoint_duplicate_edges": 0,
+        "normalized_identity_distinct_pairs": 308180,
+        "normalized_identity_duplicate_edges": 4806,
+        "normalized_model_ids_unique": 30183,
+        "normalized_dataset_ids_unique": 9531
+      },
+      "tensor_bindings": {
+        "trained_on_edge_index": {
+          "shape": [
+            2,
+            312986
+          ],
+          "dtype": "int64",
+          "bytes_sha256": "3151b123c1beaee51ad36fd8b7dffa961c5027d34547772156c7e307b9b381e3"
+        },
+        "trained_on_edge_attr": {
+          "shape": [
+            312986
+          ],
+          "dtype": "float32",
+          "bytes_sha256": "72e2cfa86c788f6f4972e6d7d5c4473a0efa92b7b0bcba2a3df25d228e4ea114"
+        }
+      },
+      "source_selection_proof": {
+        "frozen_archive": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\frozen\\implementation_snapshot.tar.gz",
+        "member": "scale1m/merge_supervision.py",
+        "member_sha256": "16ca109418132291d5515cf7cca37a0e0c63134b35adc5134ab019907b644287",
+        "assignment": "SOURCES",
+        "line": 58,
+        "entry": [
+          "modellens_v2",
+          "hgraph_ml_v2.pt",
+          0
+        ]
+      },
+      "prior_sha256_binding": {
+        "available": true,
+        "expected_sha256": "e6ae2dfeb59779f4cb0242a08bf90d6628699e90a9a648048b799d9cc7d71cda",
+        "matches": true,
+        "source": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\stage1BuildTransferGraph\\artifacts\\modellens_v2_lake\\ml_graph_report.json"
+      },
+      "F2_MERGE_REPORT_comparison": {
+        "models": {
+          "actual": 30183,
+          "historical": 30183
+        },
+        "dataset_nodes": {
+          "actual": 9603,
+          "historical": 9603
+        },
+        "edges": {
+          "actual": 312986,
+          "historical": 312986
+        },
+        "attr_min": {
+          "actual_rounded4": 0.0,
+          "historical": 0.0
+        },
+        "attr_max": {
+          "actual_rounded4": 1.0,
+          "historical": 1.0
+        }
+      },
+      "historical_sources_comparison": {
+        "models": {
+          "actual": 30183,
+          "historical": 30183
+        },
+        "datasets": {
+          "actual": 9603,
+          "historical": 9603
+        },
+        "edges": {
+          "actual": 312986,
+          "historical": 312986
+        },
+        "distinct_pairs": {
+          "actual": 308180,
+          "historical": 308180,
+          "definition": "normalized_identity_pairs"
+        },
+        "duplicate_edges": {
+          "actual": 4806,
+          "historical": 4806,
+          "definition": "normalized_identity_pairs"
+        },
+        "attr_min": {
+          "actual": 0.0,
+          "historical": 0.0
+        },
+        "attr_max": {
+          "actual": 1.0,
+          "historical": 1.0
+        },
+        "attr_mean": {
+          "actual": 0.5001,
+          "historical": 0.5001
+        }
+      },
+      "pair_count_definition": "Physical endpoint pairs use mappedID integers; historical distinct_pairs comparison uses lower(strip(model string)), lower(strip(serialized dataset string)). These definitions differ for ModelLens case-variant dataset-node names.",
+      "after_pair_recheck": {
+        "size_bytes": 91994343,
+        "mtime_ns": 1784818404583058000,
+        "inode": 844424931158692
+      }
+    },
+    {
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\stage1BuildTransferGraph\\hgraph_d05_nocontent.pt",
+      "sha256": "3f9f794eecac5bd8823363be5f9fb2699b86bf94e2a03f1ba6652a26ac08bf37",
+      "source_key": "d0_v1_5",
+      "priority": 1,
+      "before": {
+        "size_bytes": 27279225,
+        "mtime_ns": 1784583171185806700,
+        "inode": 2533274790933972
+      },
+      "after": {
+        "size_bytes": 27279225,
+        "mtime_ns": 1784583171185806700,
+        "inode": 2533274790933972
+      },
+      "actual_counts": {
+        "models": 10234,
+        "dataset_nodes": 1514,
+        "edges": 55140,
+        "attr_min": 0.0,
+        "attr_max": 1.0,
+        "attr_mean": 0.698847770690918,
+        "physical_endpoint_distinct_pairs": 55140,
+        "physical_endpoint_duplicate_edges": 0,
+        "normalized_identity_distinct_pairs": 55140,
+        "normalized_identity_duplicate_edges": 0,
+        "normalized_model_ids_unique": 10234,
+        "normalized_dataset_ids_unique": 1514
+      },
+      "tensor_bindings": {
+        "trained_on_edge_index": {
+          "shape": [
+            2,
+            55140
+          ],
+          "dtype": "int64",
+          "bytes_sha256": "cbe7db42f8754361e7897737d3d870ae81c73c2f44814c0dbe7ec40ff86e5768"
+        },
+        "trained_on_edge_attr": {
+          "shape": [
+            55140
+          ],
+          "dtype": "float32",
+          "bytes_sha256": "4fdb1a401a6f98b4e30c513f00a9618f1bca9e988fc97100e02fe505e7b997bc"
+        }
+      },
+      "source_selection_proof": {
+        "frozen_archive": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\frozen\\implementation_snapshot.tar.gz",
+        "member": "scale1m/merge_supervision.py",
+        "member_sha256": "16ca109418132291d5515cf7cca37a0e0c63134b35adc5134ab019907b644287",
+        "assignment": "SOURCES",
+        "line": 58,
+        "entry": [
+          "d0_v1_5",
+          "hgraph_d05_nocontent.pt",
+          1
+        ]
+      },
+      "prior_sha256_binding": {
+        "available": false,
+        "expected_sha256": null,
+        "matches": null,
+        "source": null
+      },
+      "F2_MERGE_REPORT_comparison": {
+        "models": {
+          "actual": 10234,
+          "historical": 10234
+        },
+        "dataset_nodes": {
+          "actual": 1514,
+          "historical": 1514
+        },
+        "edges": {
+          "actual": 55140,
+          "historical": 55140
+        },
+        "attr_min": {
+          "actual_rounded4": 0.0,
+          "historical": 0.0
+        },
+        "attr_max": {
+          "actual_rounded4": 1.0,
+          "historical": 1.0
+        }
+      },
+      "historical_sources_comparison": {
+        "models": {
+          "actual": 10234,
+          "historical": 10234
+        },
+        "datasets": {
+          "actual": 1514,
+          "historical": 1514
+        },
+        "edges": {
+          "actual": 55140,
+          "historical": 55140
+        },
+        "distinct_pairs": {
+          "actual": 55140,
+          "historical": 55140,
+          "definition": "normalized_identity_pairs"
+        },
+        "duplicate_edges": {
+          "actual": 0,
+          "historical": 0,
+          "definition": "normalized_identity_pairs"
+        },
+        "attr_min": {
+          "actual": 0.0,
+          "historical": 0.0
+        },
+        "attr_max": {
+          "actual": 1.0,
+          "historical": 1.0
+        },
+        "attr_mean": {
+          "actual": 0.6988,
+          "historical": 0.6988
+        }
+      },
+      "pair_count_definition": "Physical endpoint pairs use mappedID integers; historical distinct_pairs comparison uses lower(strip(model string)), lower(strip(serialized dataset string)). These definitions differ for ModelLens case-variant dataset-node names.",
+      "after_pair_recheck": {
+        "size_bytes": 27279225,
+        "mtime_ns": 1784583171185806700,
+        "inode": 2533274790933972
+      }
+    },
+    {
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\stage1BuildTransferGraph\\hgraph_A_ctrl_2000m_xm0_xd0.pt",
+      "sha256": "d3a6195795925cd329d2ed6e1516ab8d007e900b3542bf327743679d9b3bb4fc",
+      "source_key": "a_ctrl_2000m",
+      "priority": 2,
+      "before": {
+        "size_bytes": 4466701,
+        "mtime_ns": 1783096726665745700,
+        "inode": 1970324837729464
+      },
+      "after": {
+        "size_bytes": 4466701,
+        "mtime_ns": 1783096726665745700,
+        "inode": 1970324837729464
+      },
+      "actual_counts": {
+        "models": 2000,
+        "dataset_nodes": 102,
+        "edges": 9305,
+        "attr_min": 0.0,
+        "attr_max": 1.0,
+        "attr_mean": 0.6270288228988647,
+        "physical_endpoint_distinct_pairs": 9305,
+        "physical_endpoint_duplicate_edges": 0,
+        "normalized_identity_distinct_pairs": 9305,
+        "normalized_identity_duplicate_edges": 0,
+        "normalized_model_ids_unique": 2000,
+        "normalized_dataset_ids_unique": 102
+      },
+      "tensor_bindings": {
+        "trained_on_edge_index": {
+          "shape": [
+            2,
+            9305
+          ],
+          "dtype": "int64",
+          "bytes_sha256": "cb6ffed693c8f6ed71d2720f75873c5f753bb262eb0291684da9388ca88451ce"
+        },
+        "trained_on_edge_attr": {
+          "shape": [
+            9305
+          ],
+          "dtype": "float32",
+          "bytes_sha256": "faef951a13287ffeaadaac152f79f44f60640af7413e327f7f39775ad2233b5b"
+        }
+      },
+      "source_selection_proof": {
+        "frozen_archive": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\frozen\\implementation_snapshot.tar.gz",
+        "member": "scale1m/merge_supervision.py",
+        "member_sha256": "16ca109418132291d5515cf7cca37a0e0c63134b35adc5134ab019907b644287",
+        "assignment": "SOURCES",
+        "line": 58,
+        "entry": [
+          "a_ctrl_2000m",
+          "hgraph_A_ctrl_2000m_xm0_xd0.pt",
+          2
+        ]
+      },
+      "prior_sha256_binding": {
+        "available": false,
+        "expected_sha256": null,
+        "matches": null,
+        "source": null
+      },
+      "F2_MERGE_REPORT_comparison": {
+        "models": {
+          "actual": 2000,
+          "historical": 2000
+        },
+        "dataset_nodes": {
+          "actual": 102,
+          "historical": 102
+        },
+        "edges": {
+          "actual": 9305,
+          "historical": 9305
+        },
+        "attr_min": {
+          "actual_rounded4": 0.0,
+          "historical": 0.0
+        },
+        "attr_max": {
+          "actual_rounded4": 1.0,
+          "historical": 1.0
+        }
+      },
+      "historical_sources_comparison": {
+        "models": {
+          "actual": 2000,
+          "historical": 2000
+        },
+        "datasets": {
+          "actual": 102,
+          "historical": 102
+        },
+        "edges": {
+          "actual": 9305,
+          "historical": 9305
+        },
+        "distinct_pairs": {
+          "actual": 9305,
+          "historical": 9305,
+          "definition": "normalized_identity_pairs"
+        },
+        "duplicate_edges": {
+          "actual": 0,
+          "historical": 0,
+          "definition": "normalized_identity_pairs"
+        },
+        "attr_min": {
+          "actual": 0.0,
+          "historical": 0.0
+        },
+        "attr_max": {
+          "actual": 1.0,
+          "historical": 1.0
+        },
+        "attr_mean": {
+          "actual": 0.627,
+          "historical": 0.627
+        }
+      },
+      "pair_count_definition": "Physical endpoint pairs use mappedID integers; historical distinct_pairs comparison uses lower(strip(model string)), lower(strip(serialized dataset string)). These definitions differ for ModelLens case-variant dataset-node names.",
+      "after_pair_recheck": {
+        "size_bytes": 4466701,
+        "mtime_ns": 1783096726665745700,
+        "inode": 1970324837729464
+      }
+    },
+    {
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\stage1BuildTransferGraph\\hgraph_hf_effective_2000m_v2_xm0_xd0.pt",
+      "sha256": "a13b6d6bc4e629b44d6d07ed973a5c8a7539b4595424d37799f0ff26b3469510",
+      "source_key": "hf_effective",
+      "priority": 3,
+      "before": {
+        "size_bytes": 4451941,
+        "mtime_ns": 1783096726331240400,
+        "inode": 2251799814440025
+      },
+      "after": {
+        "size_bytes": 4451941,
+        "mtime_ns": 1783096726331240400,
+        "inode": 2251799814440025
+      },
+      "actual_counts": {
+        "models": 2000,
+        "dataset_nodes": 96,
+        "edges": 9403,
+        "attr_min": 0.0,
+        "attr_max": 1.0,
+        "attr_mean": 0.6671004295349121,
+        "physical_endpoint_distinct_pairs": 9403,
+        "physical_endpoint_duplicate_edges": 0,
+        "normalized_identity_distinct_pairs": 9403,
+        "normalized_identity_duplicate_edges": 0,
+        "normalized_model_ids_unique": 2000,
+        "normalized_dataset_ids_unique": 96
+      },
+      "tensor_bindings": {
+        "trained_on_edge_index": {
+          "shape": [
+            2,
+            9403
+          ],
+          "dtype": "int64",
+          "bytes_sha256": "a58f8a475b8f2f61e377ff26dddd1b4f5a7111c025748e258991ff552703e397"
+        },
+        "trained_on_edge_attr": {
+          "shape": [
+            9403
+          ],
+          "dtype": "float32",
+          "bytes_sha256": "d23d1e554cb3bdd24c32c17087de6627b86593625b50958af90e568c57413179"
+        }
+      },
+      "source_selection_proof": {
+        "frozen_archive": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\frozen\\implementation_snapshot.tar.gz",
+        "member": "scale1m/merge_supervision.py",
+        "member_sha256": "16ca109418132291d5515cf7cca37a0e0c63134b35adc5134ab019907b644287",
+        "assignment": "SOURCES",
+        "line": 58,
+        "entry": [
+          "hf_effective",
+          "hgraph_hf_effective_2000m_v2_xm0_xd0.pt",
+          3
+        ]
+      },
+      "prior_sha256_binding": {
+        "available": false,
+        "expected_sha256": null,
+        "matches": null,
+        "source": null
+      },
+      "F2_MERGE_REPORT_comparison": {
+        "models": {
+          "actual": 2000,
+          "historical": 2000
+        },
+        "dataset_nodes": {
+          "actual": 96,
+          "historical": 96
+        },
+        "edges": {
+          "actual": 9403,
+          "historical": 9403
+        },
+        "attr_min": {
+          "actual_rounded4": 0.0,
+          "historical": 0.0
+        },
+        "attr_max": {
+          "actual_rounded4": 1.0,
+          "historical": 1.0
+        }
+      },
+      "historical_sources_comparison": {
+        "models": {
+          "actual": 2000,
+          "historical": 2000
+        },
+        "datasets": {
+          "actual": 96,
+          "historical": 96
+        },
+        "edges": {
+          "actual": 9403,
+          "historical": 9403
+        },
+        "distinct_pairs": {
+          "actual": 9403,
+          "historical": 9403,
+          "definition": "normalized_identity_pairs"
+        },
+        "duplicate_edges": {
+          "actual": 0,
+          "historical": 0,
+          "definition": "normalized_identity_pairs"
+        },
+        "attr_min": {
+          "actual": 0.0,
+          "historical": 0.0
+        },
+        "attr_max": {
+          "actual": 1.0,
+          "historical": 1.0
+        },
+        "attr_mean": {
+          "actual": 0.6671,
+          "historical": 0.6671
+        }
+      },
+      "pair_count_definition": "Physical endpoint pairs use mappedID integers; historical distinct_pairs comparison uses lower(strip(model string)), lower(strip(serialized dataset string)). These definitions differ for ModelLens case-variant dataset-node names.",
+      "after_pair_recheck": {
+        "size_bytes": 4451941,
+        "mtime_ns": 1783096726331240400,
+        "inode": 2251799814440025
+      }
+    },
+    {
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\stage1BuildTransferGraph\\hgraph_diverse_xd0.pt",
+      "sha256": "e53dae9928cfeb69446ebe5b1aebf3ec49d365cb05d69a4c39f2404813abbfba",
+      "source_key": "diverse_zoo",
+      "priority": 4,
+      "before": {
+        "size_bytes": 949389,
+        "mtime_ns": 1781980092807599500,
+        "inode": 4785074604930897
+      },
+      "after": {
+        "size_bytes": 949389,
+        "mtime_ns": 1781980092807599500,
+        "inode": 4785074604930897
+      },
+      "actual_counts": {
+        "models": 306,
+        "dataset_nodes": 24,
+        "edges": 1646,
+        "attr_min": 0.6020408163265306,
+        "attr_max": 1.0,
+        "attr_mean": 0.8571219737225508,
+        "physical_endpoint_distinct_pairs": 1350,
+        "physical_endpoint_duplicate_edges": 296,
+        "normalized_identity_distinct_pairs": 1350,
+        "normalized_identity_duplicate_edges": 296,
+        "normalized_model_ids_unique": 306,
+        "normalized_dataset_ids_unique": 24
+      },
+      "tensor_bindings": {
+        "trained_on_edge_index": {
+          "shape": [
+            2,
+            1646
+          ],
+          "dtype": "int64",
+          "bytes_sha256": "6ad189f4bcc3748e002bc38b5fdbecaf0fe17037722b03d2513fd86574b97ea1"
+        },
+        "trained_on_edge_attr": {
+          "shape": [
+            1646
+          ],
+          "dtype": "float64",
+          "bytes_sha256": "62e73180cb1ca8d83b5512094ffff2c871aa321681e5c87512022c6c97c6d2b2"
+        }
+      },
+      "source_selection_proof": {
+        "frozen_archive": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\frozen\\implementation_snapshot.tar.gz",
+        "member": "scale1m/merge_supervision.py",
+        "member_sha256": "16ca109418132291d5515cf7cca37a0e0c63134b35adc5134ab019907b644287",
+        "assignment": "SOURCES",
+        "line": 58,
+        "entry": [
+          "diverse_zoo",
+          "hgraph_diverse_xd0.pt",
+          4
+        ]
+      },
+      "prior_sha256_binding": {
+        "available": false,
+        "expected_sha256": null,
+        "matches": null,
+        "source": null
+      },
+      "F2_MERGE_REPORT_comparison": {
+        "models": {
+          "actual": 306,
+          "historical": 306
+        },
+        "dataset_nodes": {
+          "actual": 24,
+          "historical": 24
+        },
+        "edges": {
+          "actual": 1646,
+          "historical": 1646
+        },
+        "attr_min": {
+          "actual_rounded4": 0.602,
+          "historical": 0.602
+        },
+        "attr_max": {
+          "actual_rounded4": 1.0,
+          "historical": 1.0
+        }
+      },
+      "historical_sources_comparison": {
+        "models": {
+          "actual": 306,
+          "historical": 306
+        },
+        "datasets": {
+          "actual": 24,
+          "historical": 24
+        },
+        "edges": {
+          "actual": 1646,
+          "historical": 1646
+        },
+        "distinct_pairs": {
+          "actual": 1350,
+          "historical": 1350,
+          "definition": "normalized_identity_pairs"
+        },
+        "duplicate_edges": {
+          "actual": 296,
+          "historical": 296,
+          "definition": "normalized_identity_pairs"
+        },
+        "attr_min": {
+          "actual": 0.602,
+          "historical": 0.602
+        },
+        "attr_max": {
+          "actual": 1.0,
+          "historical": 1.0
+        },
+        "attr_mean": {
+          "actual": 0.8571,
+          "historical": 0.8571
+        }
+      },
+      "pair_count_definition": "Physical endpoint pairs use mappedID integers; historical distinct_pairs comparison uses lower(strip(model string)), lower(strip(serialized dataset string)). These definitions differ for ModelLens case-variant dataset-node names.",
+      "after_pair_recheck": {
+        "size_bytes": 949389,
+        "mtime_ns": 1781980092807599500,
+        "inode": 4785074604930897
+      }
+    }
+  ],
+  "reference_bindings": [
+    {
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\EVIDENCE_SOURCE_LIBRARY_en.md",
+      "sha256": "6c7d883734fb9a05ca99c4a8409e366955c86ba2e644bd5328c9ba696ff344cd",
+      "stat": {
+        "size_bytes": 51538,
+        "mtime_ns": 1788881510399760600,
+        "inode": 10133099162695714
+      },
+      "role": "sole_factual_authority"
+    },
+    {
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\F2_runs\\historical_sources.json",
+      "sha256": "6521f18d6888d40151342a1e574c522f28fdeebe826bb43b4b142f8dad3c0bb5",
+      "stat": {
+        "size_bytes": 6338,
+        "mtime_ns": 1787237483056449000,
+        "inode": 3377699721068092
+      },
+      "role": "historical_provenance_comparison_only"
+    },
+    {
+      "path": "D:\\research\\model_lake\\data\\data1m\\rf\\F2_MERGE_REPORT.json",
+      "sha256": "1d27d672ff3470cd71410b09cd077c929d75f01b03bc9abdcc48b9fa85dd0d67",
+      "stat": {
+        "size_bytes": 2367,
+        "mtime_ns": 1787238572352379000,
+        "inode": 4503599627910722
+      },
+      "role": "historical_provenance_comparison_only"
+    },
+    {
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\stage1BuildTransferGraph\\artifacts\\modellens_v2_lake\\ml_graph_report.json",
+      "sha256": "0c3083c68c7328d617cf2433f9eb9fd3614e8545f4666badc5711b74d79d783c",
+      "stat": {
+        "size_bytes": 493,
+        "mtime_ns": 1784818404674325500,
+        "inode": 562949954448037
+      },
+      "role": "historical_provenance_comparison_only"
+    },
+    {
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\scale\\P1\\artifacts\\ml_graph_report.json",
+      "sha256": "0c3083c68c7328d617cf2433f9eb9fd3614e8545f4666badc5711b74d79d783c",
+      "stat": {
+        "size_bytes": 493,
+        "mtime_ns": 1784818558780750200,
+        "inode": 562949954448041
+      },
+      "role": "historical_provenance_comparison_only"
+    },
+    {
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\frozen\\implementation_snapshot.tar.gz",
+      "sha256": "2346b250a4e2f8f263d8d15c7f55933c52a7d23b2891e1b33fc079b72ae90279",
+      "stat": {
+        "size_bytes": 597025,
+        "mtime_ns": 1789257933351185600,
+        "inode": 4222124651204026
+      },
+      "role": "historical_provenance_comparison_only"
+    },
+    {
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\audit\\A0_INPUT_AUDIT.json",
+      "sha256": "a1ebf3745aef4e2e4c828a366d9900cf238bf5bec9991682dcf1077d0a5f4248",
+      "stat": {
+        "size_bytes": 126878,
+        "mtime_ns": 1789258641545450300,
+        "inode": 4785074604625378
+      },
+      "role": "historical_provenance_comparison_only"
+    }
+  ],
+  "checks": [
+    {
+      "name": "five_sources_from_A01_frozen_merge_script",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "name": "F2_merge_report_matches_A01_bound_report",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "name": "ML_primary_and_archived_report_sha_agree",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "name": "modellens_v2:source_table_dimensions",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "name": "modellens_v2:model_row_ids",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "name": "modellens_v2:dataset_row_ids",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "name": "modellens_v2:edge_endpoints_and_attr_finite",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "name": "modellens_v2:merge_reference:models",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "name": "modellens_v2:merge_reference:dataset_nodes",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "name": "modellens_v2:merge_reference:edges",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "name": "modellens_v2:merge_reference:attr_min",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "name": "modellens_v2:merge_reference:attr_max",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "name": "modellens_v2:historical_source_reference:models",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "name": "modellens_v2:historical_source_reference:datasets",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "name": "modellens_v2:historical_source_reference:edges",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "name": "modellens_v2:historical_source_reference:distinct_pairs",
+      "status": "PASS",
+      "detail": {
+        "actual": 308180,
+        "historical": 308180,
+        "definition": "normalized_identity_pairs"
+      }
+    },
+    {
+      "name": "modellens_v2:historical_source_reference:duplicate_edges",
+      "status": "PASS",
+      "detail": {
+        "actual": 4806,
+        "historical": 4806,
+        "definition": "normalized_identity_pairs"
+      }
+    },
+    {
+      "name": "modellens_v2:historical_source_reference:attr_min",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "name": "modellens_v2:historical_source_reference:attr_max",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "name": "modellens_v2:historical_source_reference:attr_mean",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "name": "modellens_v2:independent_prior_full_sha256",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "name": "modellens_v2:no_mutation_during_read",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "name": "d0_v1_5:source_table_dimensions",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "name": "d0_v1_5:model_row_ids",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "name": "d0_v1_5:dataset_row_ids",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "name": "d0_v1_5:edge_endpoints_and_attr_finite",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "name": "d0_v1_5:merge_reference:models",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "name": "d0_v1_5:merge_reference:dataset_nodes",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "name": "d0_v1_5:merge_reference:edges",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "name": "d0_v1_5:merge_reference:attr_min",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "name": "d0_v1_5:merge_reference:attr_max",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "name": "d0_v1_5:historical_source_reference:models",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "name": "d0_v1_5:historical_source_reference:datasets",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "name": "d0_v1_5:historical_source_reference:edges",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "name": "d0_v1_5:historical_source_reference:distinct_pairs",
+      "status": "PASS",
+      "detail": {
+        "actual": 55140,
+        "historical": 55140,
+        "definition": "normalized_identity_pairs"
+      }
+    },
+    {
+      "name": "d0_v1_5:historical_source_reference:duplicate_edges",
+      "status": "PASS",
+      "detail": {
+        "actual": 0,
+        "historical": 0,
+        "definition": "normalized_identity_pairs"
+      }
+    },
+    {
+      "name": "d0_v1_5:historical_source_reference:attr_min",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "name": "d0_v1_5:historical_source_reference:attr_max",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "name": "d0_v1_5:historical_source_reference:attr_mean",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "name": "d0_v1_5:no_mutation_during_read",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "name": "a_ctrl_2000m:source_table_dimensions",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "name": "a_ctrl_2000m:model_row_ids",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "name": "a_ctrl_2000m:dataset_row_ids",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "name": "a_ctrl_2000m:edge_endpoints_and_attr_finite",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "name": "a_ctrl_2000m:merge_reference:models",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "name": "a_ctrl_2000m:merge_reference:dataset_nodes",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "name": "a_ctrl_2000m:merge_reference:edges",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "name": "a_ctrl_2000m:merge_reference:attr_min",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "name": "a_ctrl_2000m:merge_reference:attr_max",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "name": "a_ctrl_2000m:historical_source_reference:models",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "name": "a_ctrl_2000m:historical_source_reference:datasets",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "name": "a_ctrl_2000m:historical_source_reference:edges",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "name": "a_ctrl_2000m:historical_source_reference:distinct_pairs",
+      "status": "PASS",
+      "detail": {
+        "actual": 9305,
+        "historical": 9305,
+        "definition": "normalized_identity_pairs"
+      }
+    },
+    {
+      "name": "a_ctrl_2000m:historical_source_reference:duplicate_edges",
+      "status": "PASS",
+      "detail": {
+        "actual": 0,
+        "historical": 0,
+        "definition": "normalized_identity_pairs"
+      }
+    },
+    {
+      "name": "a_ctrl_2000m:historical_source_reference:attr_min",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "name": "a_ctrl_2000m:historical_source_reference:attr_max",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "name": "a_ctrl_2000m:historical_source_reference:attr_mean",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "name": "a_ctrl_2000m:no_mutation_during_read",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "name": "hf_effective:source_table_dimensions",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "name": "hf_effective:model_row_ids",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "name": "hf_effective:dataset_row_ids",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "name": "hf_effective:edge_endpoints_and_attr_finite",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "name": "hf_effective:merge_reference:models",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "name": "hf_effective:merge_reference:dataset_nodes",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "name": "hf_effective:merge_reference:edges",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "name": "hf_effective:merge_reference:attr_min",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "name": "hf_effective:merge_reference:attr_max",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "name": "hf_effective:historical_source_reference:models",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "name": "hf_effective:historical_source_reference:datasets",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "name": "hf_effective:historical_source_reference:edges",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "name": "hf_effective:historical_source_reference:distinct_pairs",
+      "status": "PASS",
+      "detail": {
+        "actual": 9403,
+        "historical": 9403,
+        "definition": "normalized_identity_pairs"
+      }
+    },
+    {
+      "name": "hf_effective:historical_source_reference:duplicate_edges",
+      "status": "PASS",
+      "detail": {
+        "actual": 0,
+        "historical": 0,
+        "definition": "normalized_identity_pairs"
+      }
+    },
+    {
+      "name": "hf_effective:historical_source_reference:attr_min",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "name": "hf_effective:historical_source_reference:attr_max",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "name": "hf_effective:historical_source_reference:attr_mean",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "name": "hf_effective:no_mutation_during_read",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "name": "diverse_zoo:source_table_dimensions",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "name": "diverse_zoo:model_row_ids",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "name": "diverse_zoo:dataset_row_ids",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "name": "diverse_zoo:edge_endpoints_and_attr_finite",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "name": "diverse_zoo:merge_reference:models",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "name": "diverse_zoo:merge_reference:dataset_nodes",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "name": "diverse_zoo:merge_reference:edges",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "name": "diverse_zoo:merge_reference:attr_min",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "name": "diverse_zoo:merge_reference:attr_max",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "name": "diverse_zoo:historical_source_reference:models",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "name": "diverse_zoo:historical_source_reference:datasets",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "name": "diverse_zoo:historical_source_reference:edges",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "name": "diverse_zoo:historical_source_reference:distinct_pairs",
+      "status": "PASS",
+      "detail": {
+        "actual": 1350,
+        "historical": 1350,
+        "definition": "normalized_identity_pairs"
+      }
+    },
+    {
+      "name": "diverse_zoo:historical_source_reference:duplicate_edges",
+      "status": "PASS",
+      "detail": {
+        "actual": 296,
+        "historical": 296,
+        "definition": "normalized_identity_pairs"
+      }
+    },
+    {
+      "name": "diverse_zoo:historical_source_reference:attr_min",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "name": "diverse_zoo:historical_source_reference:attr_max",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "name": "diverse_zoo:historical_source_reference:attr_mean",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "name": "diverse_zoo:no_mutation_during_read",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "name": "modellens_v2:sha_and_stat_unchanged_on_pair_definition_recheck",
+      "status": "PASS"
+    },
+    {
+      "name": "d0_v1_5:sha_and_stat_unchanged_on_pair_definition_recheck",
+      "status": "PASS"
+    },
+    {
+      "name": "a_ctrl_2000m:sha_and_stat_unchanged_on_pair_definition_recheck",
+      "status": "PASS"
+    },
+    {
+      "name": "hf_effective:sha_and_stat_unchanged_on_pair_definition_recheck",
+      "status": "PASS"
+    },
+    {
+      "name": "diverse_zoo:sha_and_stat_unchanged_on_pair_definition_recheck",
+      "status": "PASS"
+    }
+  ],
+  "historical_sha256_binding": {
+    "matched_sources": [
+      "modellens_v2"
+    ],
+    "prior_sha_not_yet_found": [
+      "d0_v1_5",
+      "a_ctrl_2000m",
+      "hf_effective",
+      "diverse_zoo"
+    ],
+    "interpretation": "Matching historical counts establishes structural consistency, not historical byte identity. All five actual file hashes are newly bound here; only the listed independently hash-bound sources have prior full-hash proof."
+  },
+  "required_next_gate": "Before accepting any recomputed merge counters, rerun frozen merge rules from these hash-bound inputs plus the A0.1 bound snapshot-side uncapped supervision, and compare all resulting canonical edge/node/conflict tables with frozen outputs. Use freshly computed counters only; historical numbers above are reference comparisons, never substitute measurements.",
+  "comparison_revision": {
+    "initial_artifact_sha256": "4839550bbfed061362f6790c563d03f1ab239f634d73412ba47474f2c36a7f98",
+    "initial_failed_comparisons": [
+      {
+        "name": "modellens_v2:historical_source_reference:distinct_pairs",
+        "status": "FAIL",
+        "detail": null
+      },
+      {
+        "name": "modellens_v2:historical_source_reference:duplicate_edges",
+        "status": "FAIL",
+        "detail": null
+      }
+    ],
+    "finding": "ModelLens has 9603 physical dataset rows and 9531 unique lowercased serialized dataset identifiers. Its 312986 physical endpoint pairs become 308180 normalized-identity pairs; historical duplicate_edges=4806 uses the latter definition. This is a definition mismatch in the initial review comparison, not an input byte discrepancy.",
+    "resolution": "Recomputed normalized identity pairs for all five sources from actual files; all historical pair/duplicate comparisons match. Physical counts remain separately recorded.",
+    "rechecks": [
+      {
+        "name": "modellens_v2:historical_source_reference:distinct_pairs",
+        "actual": 308180,
+        "historical": 308180
+      },
+      {
+        "name": "modellens_v2:historical_source_reference:duplicate_edges",
+        "actual": 4806,
+        "historical": 4806
+      },
+      {
+        "name": "d0_v1_5:historical_source_reference:distinct_pairs",
+        "actual": 55140,
+        "historical": 55140
+      },
+      {
+        "name": "d0_v1_5:historical_source_reference:duplicate_edges",
+        "actual": 0,
+        "historical": 0
+      },
+      {
+        "name": "a_ctrl_2000m:historical_source_reference:distinct_pairs",
+        "actual": 9305,
+        "historical": 9305
+      },
+      {
+        "name": "a_ctrl_2000m:historical_source_reference:duplicate_edges",
+        "actual": 0,
+        "historical": 0
+      },
+      {
+        "name": "hf_effective:historical_source_reference:distinct_pairs",
+        "actual": 9403,
+        "historical": 9403
+      },
+      {
+        "name": "hf_effective:historical_source_reference:duplicate_edges",
+        "actual": 0,
+        "historical": 0
+      },
+      {
+        "name": "diverse_zoo:historical_source_reference:distinct_pairs",
+        "actual": 1350,
+        "historical": 1350
+      },
+      {
+        "name": "diverse_zoo:historical_source_reference:duplicate_edges",
+        "actual": 296,
+        "historical": 296
+      }
+    ],
+    "updated_at_utc": "2026-09-13T01:24:03.912035+00:00"
+  },
+  "prior_hash_search": {
+    "scope": [
+      "docs/**/*.json|md|txt|csv",
+      "stage1BuildTransferGraph/**/*.json|md|txt|csv"
+    ],
+    "method": "rg searched all four actual full SHA256 strings after hashing; only this newly created report matched. Earlier filename search identified independent ModelLens prior SHA reports.",
+    "not_proven": "No claim is made that historical hashes do not exist outside the searched locations."
+  },
+  "initial_measurement_elapsed_seconds": 8.401044199999887,
+  "review_elapsed_wall_seconds": 129.04815
+}

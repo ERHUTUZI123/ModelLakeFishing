@@ -1,0 +1,243 @@
+{
+  "status": "PASS",
+  "reviewed_at_utc": "2026-09-15T01:58:42.946181+00:00",
+  "scope": "Read-only independent bilingual method semantics against A0.1–A0.7 and formal bound implementation; drafts unmodified by reviewer.",
+  "sha256": {
+    "en": "c9c6da659789e346ce733453dff7cc352539c98614bd9d858c32baceb632f0e1",
+    "zh": "4a746dfc6a4a1858a24b89f0a8851ddf905523856fae159988576f2c3cb2fa71"
+  },
+  "drafts": [
+    {
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_7\\library_revision\\EVIDENCE_SOURCE_LIBRARY_en.draft.md",
+      "sha256": "c9c6da659789e346ce733453dff7cc352539c98614bd9d858c32baceb632f0e1"
+    },
+    {
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_7\\library_revision\\EVIDENCE_SOURCE_LIBRARY_zh.draft.md",
+      "sha256": "4a746dfc6a4a1858a24b89f0a8851ddf905523856fae159988576f2c3cb2fa71"
+    }
+  ],
+  "checks": [
+    {
+      "name": "display_math_equal",
+      "passed": true,
+      "detail": {
+        "en_blocks": 42,
+        "zh_blocks": 42
+      }
+    },
+    {
+      "name": "fenced_code_equal",
+      "passed": true,
+      "detail": {
+        "en_blocks": 7,
+        "zh_blocks": 7
+      }
+    },
+    {
+      "name": "explicit_zero_based_columns",
+      "passed": true,
+      "detail": "A0 columns 448–453 and 455 are zero-based indices; shape remains 458."
+    },
+    {
+      "name": "scope_zeroing_wording",
+      "passed": true,
+      "detail": "Clarified zeroing rather than removing physical dimensions."
+    },
+    {
+      "name": "actual_export_ladder_file",
+      "passed": true,
+      "detail": "Exact A0.5 producer argument, with unchanged 50000 chunk."
+    },
+    {
+      "name": "dataset_feature_policy",
+      "passed": true,
+      "detail": {
+        "review_type": "manual EN/ZH and bound-code semantic review",
+        "conclusion": "Seven identified performance-derived columns zeroed for all 18729 nodes. Frozen name/card columns and log1p(root_node_count) retained; reserved columns remain zero; 458D schema and 486D pre-projection input retained."
+      }
+    },
+    {
+      "name": "minilm_composition_and_model_projection",
+      "passed": true,
+      "detail": {
+        "review_type": "manual EN/ZH and bound-code semantic review",
+        "conclusion": "Model descriptor includes cleaned name, family words and known-size phrase; 384D MiniLM plus 64D name hashes; discrete size/family add 16D each:448->480->128. Dataset descriptors include task/card categories/tags/description and learned16/8/4 tables:458->486->128."
+      }
+    },
+    {
+      "name": "categorical_task_and_prior_task_are_distinct",
+      "passed": true,
+      "detail": {
+        "review_type": "manual EN/ZH and bound-code semantic review",
+        "conclusion": "Constant dataset task/class/arity IDs do not imply one task-prior group. Prior derives2198 groups from normalized canonical task strings."
+      }
+    },
+    {
+      "name": "relation_gates_and_weights",
+      "passed": true,
+      "detail": {
+        "review_type": "manual EN/ZH and bound-code semantic review",
+        "conclusion": "One layer with per-relation self/neighbour projections, self bias, scalar gates initialized1, unweighted neighbor mean under weighted_relations=[], shared128D head and L2 output. Edge values remain labels/prior inputs and similarity-topology selectors."
+      }
+    },
+    {
+      "name": "ranknet_and_model_contrastive",
+      "passed": true,
+      "detail": {
+        "review_type": "manual EN/ZH and bound-code semantic review",
+        "conclusion": "RankNet averages valid retained pairs per dataset then valid datasets, gap.02/temp.1/cap256 and half hard-pair selection. Model contrastive positives are shared top performers, sampled256 IDs with replacement, self/positives removed, lineage negative denominator weight2, temp.2."
+      }
+    },
+    {
+      "name": "degree_proposal_and_logq",
+      "passed": true,
+      "detail": {
+        "review_type": "manual EN/ZH and bound-code semantic review",
+        "conclusion": "Train-visible model degree includes only training positive edges; q=.5 smoothed(deg+1)^.75 +.5 uniform over deg>0. Global loss samples128 positive-bearing datasets,256 model IDs with replacement, removes positives, uses negative logits score/.1-logq. Implemented denominator is stated without unsupported unbiasedness claim."
+      }
+    },
+    {
+      "name": "train_validation_test_message_graphs",
+      "passed": true,
+      "detail": {
+        "review_type": "manual EN/ZH and bound-code semantic review",
+        "conclusion": "Training messages exclude disjoint30% supervision, validation uses all train, test/evaluation uses train+validation, held-out forward+reverse performance edges absent. Root is split unit; binary negatives avoid complete positive pairs."
+      }
+    },
+    {
+      "name": "prior_visibility_and_formula",
+      "passed": true,
+      "detail": {
+        "review_type": "manual EN/ZH and bound-code semantic review",
+        "conclusion": "Sidecar visible edges198216/196912/196124 include train+validation only; every scored test root absent, including own node and siblings. n>0 prior=(sum+.5*5)/(n+5), no evidence prior0, fusion=(cos+1)/2+prior over1000 candidates, top10 returned."
+      }
+    },
+    {
+      "name": "gold_labels_and_retrieval_ties",
+      "passed": true,
+      "detail": {
+        "review_type": "manual EN/ZH and bound-code semantic review",
+        "conclusion": "Gold label uses first argmax in frozen candidate order; retrieval tie key is separate fixed label-free permutation. Rank formula includes equal-score tie ordering; bounded pool positions conditional on gold entry do not imply full-lake ranks."
+      }
+    },
+    {
+      "name": "full_and_evaluation_embeddings",
+      "passed": true,
+      "detail": {
+        "review_type": "manual EN/ZH and bound-code semantic review",
+        "conclusion": "Reported indexes use z_m_eval/z_d_eval only; full-message vector arrays are separate exports. A0.5 norm/finite/128D/row/order/gold identity checks and chunk tolerance preserved."
+      }
+    },
+    {
+      "name": "transductive_scope",
+      "passed": true,
+      "detail": {
+        "review_type": "manual EN/ZH and bound-code semantic review",
+        "conclusion": "Frozen node population, text metadata and topology remain visible; evaluation supports performance-edge-held-out historical ranking recovery. Never-seen-node ingestion, downstream model execution, and unobserved pair performance require separate evidence. Targeted seven-channel repair is not a universal no-leakage claim."
+      }
+    },
+    {
+      "name": "commands_and_calibration",
+      "passed": true,
+      "detail": {
+        "review_type": "manual EN/ZH and bound-code semantic review",
+        "conclusion": "Train25epochs, chunk50000, batch1024 through frozen config; exact->hnsw->finalize all3seeds. K1000 return10, M32 efconstruction200 buildthreads8, grid1000/1500/2000/3000/5000 firstrecall>=.99, querychunk16 modelchunk50000 and --protocol a0 unchanged."
+      }
+    },
+    {
+      "name": "timing_cost_and_completeness_scope",
+      "passed": true,
+      "detail": {
+        "review_type": "manual EN/ZH and bound-code semantic review",
+        "conclusion": "Formal Linux308/L40S exact plus hostCPU HNSW, local4060/i7 separateverification. One timedpass/seed, querythread1, warmup50. Paired per-query ns percentiles, mean of seedpercentiles. Sharedexact interval and indexbuild not double-counted. Two missing historicaleventcounts preserve completeness=false."
+      }
+    },
+    {
+      "name": "provenance_and_report_unit_correction",
+      "passed": true,
+      "detail": {
+        "review_type": "manual EN/ZH and bound-code semantic review",
+        "conclusion": "Original authority and formal code retained immutable with REPLAY_PATH_MAP; independent reportingreader separately versioned. Scientific fractions unchanged; percent presentation corrected at inventory boundary. Git metadata explicitly not-a-git-repo."
+      }
+    }
+  ],
+  "frozen_method_source_bindings": [
+    {
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_7\\library_revision\\frozen_checkout\\ModelLakeFishing\\scale1m\\build_graph_rf.py",
+      "sha256": "f8093240518b6ca26c0ddaf8b3c6e28fcd66dad320063df1919244ff1d3ceb02"
+    },
+    {
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_7\\library_revision\\frozen_checkout\\ModelLakeFishing\\scale1m\\prepare_a0_graph.py",
+      "sha256": "f5ab4d36a65f6659137c627e2d7d3726d189bfd3b1883ff2424fecdabed00d18"
+    },
+    {
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_7\\library_revision\\frozen_checkout\\ModelLakeFishing\\scale1m\\embed_lake_rf.py",
+      "sha256": "219c136fa77fa821ca35066a08910285fa2b985901c59fc7e24e8b7afd40031b"
+    },
+    {
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_7\\library_revision\\frozen_checkout\\ModelLakeFishing\\scale1m\\dataset_descriptor.py",
+      "sha256": "6d6f5653b10b8e58aa2eb76b06d98d80b213e8a36c5a43e39b70d99afdc92d7d"
+    },
+    {
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_7\\library_revision\\frozen_checkout\\ModelLakeFishing\\scale\\modellens_build_graph.py",
+      "sha256": "30cd7a022cd94f0cf46f73e18e356b3c7e4542e3c7307b8eebde8e87bb04a167"
+    },
+    {
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_7\\library_revision\\frozen_checkout\\ModelLakeFishing\\stage1BuildTransferGraph\\dataset_embed\\xm0_builder.py",
+      "sha256": "74064e946beae6395faaa99e57fd7082fa42bade136b49a8ab8af3f62474fd84"
+    },
+    {
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_7\\library_revision\\frozen_checkout\\ModelLakeFishing\\stage1BuildTransferGraph\\dataset_embed\\model_node_encoder.py",
+      "sha256": "5ddb3ff9c7b0606585840f94c4a3e99ba09c98aa0257d8af249ed8d337bc7326"
+    },
+    {
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_7\\library_revision\\frozen_checkout\\ModelLakeFishing\\stage2TrainGraphSAGE\\model.py",
+      "sha256": "076ae6b9cea5be20a73fb5a093033eb60789585daeec3f6acbe442932af90fbe"
+    },
+    {
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_7\\library_revision\\frozen_checkout\\ModelLakeFishing\\stage2TrainGraphSAGE\\edge_aware.py",
+      "sha256": "381005fd3aa126aa31ad7af0a7b56066448db31a3a011be2dcc0c8ec60b6cbf6"
+    },
+    {
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_7\\library_revision\\frozen_checkout\\ModelLakeFishing\\stage2TrainGraphSAGE\\losses.py",
+      "sha256": "c9b35119ac64471352dbc75da372a3b065d60f8b630b3954ed45c94711392b9c"
+    },
+    {
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_7\\library_revision\\frozen_checkout\\ModelLakeFishing\\stage2TrainGraphSAGE\\d0_splits.py",
+      "sha256": "5bdf7239c29c2bfe2208fbf44124dcbab9ba3c2c1ce5b0e1e873273798f4710b"
+    },
+    {
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_7\\library_revision\\frozen_checkout\\ModelLakeFishing\\stage3HNSW\\build_prior_sidecar.py",
+      "sha256": "5d6cc83b53217b7f28774dae88f3ea2c6ae2f41836f9d2c6cfbf424451f569a0"
+    },
+    {
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_7\\library_revision\\frozen_checkout\\ModelLakeFishing\\scale1m\\a0_evaluation.py",
+      "sha256": "9196944ac78cad5c9b72c6875b4ffc3021b6f2c83290f071fb906066af700840"
+    },
+    {
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_7\\library_revision\\frozen_checkout\\ModelLakeFishing\\scale1m\\eval_y2.py",
+      "sha256": "7be9f5c6937136434f5847dc700d63fb7b61fd4c665ea20a680438d786ea3401"
+    },
+    {
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_7\\library_revision\\frozen_checkout\\ModelLakeFishing\\scale\\global_metrics.py",
+      "sha256": "330c5daf63142660267ed8d97bb9bb389d5c15729a6d983579a8e69154dd0e3c"
+    },
+    {
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_7\\library_revision\\frozen_checkout\\ModelLakeFishing\\scale1m\\export_rf.py",
+      "sha256": "18b67b25cc5d4735ad6cfc591d10ec3388878ecdeb957c34adbc5fb15701a166"
+    }
+  ],
+  "reported_precision_fixes": [
+    "Explicit zero-based feature column indices in both languages.",
+    "Zeroing terminology in scope and paper summary preserves458D dimensions.",
+    "Distinguish raw parameter-count range from log10 interval widths and endpoint clamping.",
+    "Chinese contrastive pairs called positive pairs, distinct from RankNet preference pairs."
+  ],
+  "remaining_issues": [],
+  "preserved_evidence_limits": [
+    "Two missing original crawl-event counters",
+    "Transductive materialized-node scope",
+    "One formal timed pass per seed",
+    "Full-lake independent summaries rely on saved raw comparison counts"
+  ]
+}

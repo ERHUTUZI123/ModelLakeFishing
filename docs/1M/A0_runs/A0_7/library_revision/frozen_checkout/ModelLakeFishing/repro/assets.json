@@ -1,0 +1,56 @@
+{
+  "bundles": {
+    "inputs-3m-v1": {
+      "description": "Frozen metadata snapshots and source evidence required for a full rebuild.",
+      "id": "inputs-3m-v1",
+      "installed_bytes": 425659374,
+      "manifest": "repro/manifests/inputs-3m-v1.json",
+      "parts": [
+        {
+          "bytes": 425748480,
+          "name": "inputs-3m-v1.tar.part001",
+          "sha256": "2f8ef3f9eb52dce3826b5d0e35764af17b7f9ac7f348a7f0ae7a8a9e4c2bfa64"
+        }
+      ],
+      "tree_sha256": "eac73e604ea2061de30bd094d3b159e476959916e79cce143f43414f13f323d1"
+    },
+    "paper-3m-v1": {
+      "description": "Frozen row maps, held-out query embeddings, gold labels, split-safe task priors, and HNSW indexes needed to reproduce the final paper result.",
+      "id": "paper-3m-v1",
+      "installed_bytes": 7253871903,
+      "manifest": "repro/manifests/paper-3m-v1.json",
+      "parts": [
+        {
+          "bytes": 1800000000,
+          "name": "paper-3m-v1.tar.part001",
+          "sha256": "9a55b33696aff23017d94bc6b1b2a763330617a273cb32eeefaa4ce32432b17d"
+        },
+        {
+          "bytes": 1800000000,
+          "name": "paper-3m-v1.tar.part002",
+          "sha256": "c9cfb823849ea17abd2a05da3f6234d8f36febc282c52c821481157619a7f286"
+        },
+        {
+          "bytes": 1800000000,
+          "name": "paper-3m-v1.tar.part003",
+          "sha256": "f75a8933c645b21a4abe3e9b302f72a259432a698e188b4fad896f21da1a8b14"
+        },
+        {
+          "bytes": 1800000000,
+          "name": "paper-3m-v1.tar.part004",
+          "sha256": "b543919c84df8f61b9e81427acd248ccabc3974cb8b19e8b4521e80c3e641546"
+        },
+        {
+          "bytes": 53893120,
+          "name": "paper-3m-v1.tar.part005",
+          "sha256": "09a3819bb498a761c858a2734f9df2994f2167d944e4b749425e08b1df15b270"
+        }
+      ],
+      "tree_sha256": "bcf7c12663f1d5def9a18b48d52f997505df6c12f8e665d9330c98f06339f01d"
+    }
+  },
+  "release_state": "ASSETS_BUILT_NOT_YET_CONFIRMED_UPLOADED",
+  "release_tag": "paper-results-v1",
+  "repository": "ERHUTUZI123/ModelLakeFishing",
+  "schema_version": 1
+}

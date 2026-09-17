@@ -1,0 +1,40 @@
+usage: eval_y2.py [-h] [--protocol {legacy,a0}]
+                  [--a0-protocol-file A0_PROTOCOL_FILE]
+                  [--a0-query-identity A0_QUERY_IDENTITY]
+                  [--a0-run-id A0_RUN_ID]
+                  [--stage {exact,replay-exact,hnsw,finalize,all}]
+                  [--exports EXPORTS] [--run-fmt RUN_FMT]
+                  [--sidecar-exports SIDECAR_EXPORTS]
+                  [--sidecar-run-fmt SIDECAR_RUN_FMT]
+                  [--dataset-nodes DATASET_NODES] [--out OUT]
+                  [--frozen-pools FROZEN_POOLS] [--device DEVICE]
+                  [--model-chunk MODEL_CHUNK] [--query-chunk QUERY_CHUNK]
+                  [--hnsw-M HNSW_M] [--ef-construction EF_CONSTRUCTION]
+                  [--hnsw-threads HNSW_THREADS]
+                  [--ef-search EF_SEARCH [EF_SEARCH ...]]
+
+options:
+  -h, --help            show this help message and exit
+  --protocol {legacy,a0}
+                        legacy archived-value gates, or A0 fresh-artifact
+                        evaluation
+  --a0-protocol-file A0_PROTOCOL_FILE
+  --a0-query-identity A0_QUERY_IDENTITY
+  --a0-run-id A0_RUN_ID
+  --stage {exact,replay-exact,hnsw,finalize,all}
+  --exports EXPORTS
+  --run-fmt RUN_FMT
+  --sidecar-exports SIDECAR_EXPORTS
+  --sidecar-run-fmt SIDECAR_RUN_FMT
+  --dataset-nodes DATASET_NODES
+  --out OUT
+  --frozen-pools FROZEN_POOLS
+                        directory containing hash-bound
+                        exact_pool_s{0,1,2}.npz
+  --device DEVICE
+  --model-chunk MODEL_CHUNK
+  --query-chunk QUERY_CHUNK
+  --hnsw-M HNSW_M
+  --ef-construction EF_CONSTRUCTION
+  --hnsw-threads HNSW_THREADS
+  --ef-search EF_SEARCH [EF_SEARCH ...]

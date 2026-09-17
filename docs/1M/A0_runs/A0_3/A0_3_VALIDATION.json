@@ -1,0 +1,22 @@
+{
+  "stage": "A0.3",
+  "status": "blocked",
+  "checked_at_utc": "2026-09-13T01:59:29.670637+00:00",
+  "regression_passed": 396,
+  "regression_failed": 0,
+  "regression_skipped": 0,
+  "config_keys_equal": 40,
+  "graph_sha256": "acddeb93d926efcb636c83d452fe360736a0e6e4ac68cab3f5fef210e7cef5db",
+  "smoke_returncode": 1,
+  "smoke_optimizer_steps_completed": 0,
+  "smoke_checkpoint_count": 0,
+  "smoke_report_present": false,
+  "peak_training_rss_bytes": null,
+  "peak_gpu_bytes": null,
+  "epoch_seconds": null,
+  "estimated_25_epoch_seconds": null,
+  "monitoring_limitation": "Direct launcher process only; RSS cannot represent training interpreter. No reliable GPU peak.",
+  "min_system_available_ram_bytes": 319197184,
+  "formal_training_started": false,
+  "plan_sections_1_through_9_unchanged": true
+}

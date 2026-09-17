@@ -1,0 +1,2159 @@
+{
+  "schema_version": "a0.bilingual_literal_review.v1",
+  "created_at_utc": "2026-09-15T01:42:34.092243+00:00",
+  "scope": "Automated literal/structural checks only. Scientific correctness, contextual exceptions and translation accuracy require human/agent review.",
+  "read_only_inputs": true,
+  "link_destination": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M",
+  "status": "REVIEW_REQUIRED",
+  "inputs": {
+    "en": {
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\EVIDENCE_SOURCE_LIBRARY_en.md",
+      "sha256": "6c7d883734fb9a05ca99c4a8409e366955c86ba2e644bd5328c9ba696ff344cd",
+      "bytes": 51538
+    },
+    "zh": {
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\EVIDENCE_SOURCE_LIBRARY_zh.md",
+      "sha256": "a148717b213bc99b013eddd8f2b0b6a290516b51397c513305768dcabab80f83",
+      "bytes": 48301
+    }
+  },
+  "counts": {
+    "en": {
+      "sections": 32,
+      "tables": 9,
+      "display_math": 47,
+      "inline_ascii_literals": 214,
+      "fenced_commands": 4,
+      "flags": 109,
+      "digests": 6,
+      "links": 102,
+      "prose_numbers": 197
+    },
+    "zh": {
+      "sections": 32,
+      "tables": 9,
+      "display_math": 47,
+      "inline_ascii_literals": 199,
+      "fenced_commands": 4,
+      "flags": 109,
+      "digests": 6,
+      "links": 102,
+      "prose_numbers": 204
+    }
+  },
+  "mismatches": [
+    {
+      "check": "display_math",
+      "en_count": 47,
+      "zh_count": 47,
+      "differences": [
+        {
+          "change": "replace",
+          "en_range": [
+            2,
+            3
+          ],
+          "zh_range": [
+            2,
+            3
+          ],
+          "en": [
+            "$$\\text{hubrecords}\\xrightarrow{\\text{canonicalize}}(X_M,X_D,E)\\xrightarrow{\\text{evidencegraph}}G\\xrightarrow{f_\\theta}(Z_M,Z_D)\\xrightarrow{\\text{HNSW}}\\mathcal{I}(Z_M).$$"
+          ],
+          "zh": [
+            "$$\\text{hubrecords}\\xrightarrow{\\text{canonicalize}}(X_M,X_D,E)\\xrightarrow{\\text{证据图}}G\\xrightarrow{f_\\theta}(Z_M,Z_D)\\xrightarrow{\\text{HNSW}}\\mathcal{I}(Z_M).$$"
+          ]
+        },
+        {
+          "change": "replace",
+          "en_range": [
+            7,
+            8
+          ],
+          "zh_range": [
+            7,
+            8
+          ],
+          "en": [
+            "$$\\operatorname{sizeB}(m)=\\begin{cases}\\texttt{safetensors.total}/10^9,&\\text{ifpresent},\\\\\\mathrm{NA},&\\text{otherwise}.\\end{cases}$$"
+          ],
+          "zh": [
+            "$$\\operatorname{sizeB}(m)=\\begin{cases}\\texttt{safetensors.total}/10^9,&\\text{若存在},\\\\\\mathrm{NA},&\\text{否则}.\\end{cases}$$"
+          ]
+        }
+      ]
+    },
+    {
+      "check": "inline_ascii_literals",
+      "en_count": 214,
+      "zh_count": 199,
+      "differences": [
+        {
+          "change": "insert",
+          "en_range": [
+            20,
+            20
+          ],
+          "zh_range": [
+            20,
+            21
+          ],
+          "en": [],
+          "zh": [
+            "createdAt"
+          ]
+        },
+        {
+          "change": "delete",
+          "en_range": [
+            21,
+            22
+          ],
+          "zh_range": [
+            22,
+            22
+          ],
+          "en": [
+            "createdAt"
+          ],
+          "zh": []
+        },
+        {
+          "change": "insert",
+          "en_range": [
+            34,
+            34
+          ],
+          "zh_range": [
+            34,
+            35
+          ],
+          "en": [],
+          "zh": [
+            "scale1m/hf_canonicalize.py"
+          ]
+        },
+        {
+          "change": "delete",
+          "en_range": [
+            37,
+            38
+          ],
+          "zh_range": [
+            38,
+            38
+          ],
+          "en": [
+            "scale1m/hf_canonicalize.py"
+          ],
+          "zh": []
+        },
+        {
+          "change": "insert",
+          "en_range": [
+            54,
+            54
+          ],
+          "zh_range": [
+            54,
+            55
+          ],
+          "en": [],
+          "zh": [
+            "scale1m/canonicalize_rf.py"
+          ]
+        },
+        {
+          "change": "delete",
+          "en_range": [
+            55,
+            56
+          ],
+          "zh_range": [
+            56,
+            56
+          ],
+          "en": [
+            "scale1m/canonicalize_rf.py"
+          ],
+          "zh": []
+        },
+        {
+          "change": "insert",
+          "en_range": [
+            89,
+            89
+          ],
+          "zh_range": [
+            89,
+            90
+          ],
+          "en": [],
+          "zh": [
+            "scale1m/build_graph_rf.py"
+          ]
+        },
+        {
+          "change": "delete",
+          "en_range": [
+            90,
+            91
+          ],
+          "zh_range": [
+            91,
+            91
+          ],
+          "en": [
+            "scale1m/build_graph_rf.py"
+          ],
+          "zh": []
+        },
+        {
+          "change": "insert",
+          "en_range": [
+            101,
+            101
+          ],
+          "zh_range": [
+            101,
+            102
+          ],
+          "en": [],
+          "zh": [
+            "stage2TrainGraphSAGE/graph_surgery.py"
+          ]
+        },
+        {
+          "change": "delete",
+          "en_range": [
+            102,
+            103
+          ],
+          "zh_range": [
+            103,
+            103
+          ],
+          "en": [
+            "stage2TrainGraphSAGE/graph_surgery.py"
+          ],
+          "zh": []
+        },
+        {
+          "change": "insert",
+          "en_range": [
+            110,
+            110
+          ],
+          "zh_range": [
+            110,
+            111
+          ],
+          "en": [],
+          "zh": [
+            "stage2TrainGraphSAGE/model.py"
+          ]
+        },
+        {
+          "change": "delete",
+          "en_range": [
+            111,
+            112
+          ],
+          "zh_range": [
+            112,
+            112
+          ],
+          "en": [
+            "stage2TrainGraphSAGE/model.py"
+          ],
+          "zh": []
+        },
+        {
+          "change": "insert",
+          "en_range": [
+            114,
+            114
+          ],
+          "zh_range": [
+            114,
+            115
+          ],
+          "en": [],
+          "zh": [
+            "stage2TrainGraphSAGE/edge_aware.py"
+          ]
+        },
+        {
+          "change": "replace",
+          "en_range": [
+            116,
+            117
+          ],
+          "zh_range": [
+            117,
+            118
+          ],
+          "en": [
+            "stage2TrainGraphSAGE/edge_aware.py"
+          ],
+          "zh": [
+            "stage2TrainGraphSAGE/losses.py"
+          ]
+        },
+        {
+          "change": "delete",
+          "en_range": [
+            118,
+            119
+          ],
+          "zh_range": [
+            119,
+            119
+          ],
+          "en": [
+            "stage2TrainGraphSAGE/losses.py"
+          ],
+          "zh": []
+        },
+        {
+          "change": "delete",
+          "en_range": [
+            121,
+            122
+          ],
+          "zh_range": [
+            121,
+            121
+          ],
+          "en": [
+            "contrastive_loss_sampled"
+          ],
+          "zh": []
+        },
+        {
+          "change": "insert",
+          "en_range": [
+            124,
+            124
+          ],
+          "zh_range": [
+            123,
+            125
+          ],
+          "en": [],
+          "zh": [
+            "contrastive_loss_sampled",
+            "stage2TrainGraphSAGE/losses.py"
+          ]
+        },
+        {
+          "change": "delete",
+          "en_range": [
+            126,
+            127
+          ],
+          "zh_range": [
+            127,
+            127
+          ],
+          "en": [
+            "stage2TrainGraphSAGE/losses.py"
+          ],
+          "zh": []
+        },
+        {
+          "change": "insert",
+          "en_range": [
+            136,
+            136
+          ],
+          "zh_range": [
+            136,
+            137
+          ],
+          "en": [],
+          "zh": [
+            "scale1m/export_rf.py"
+          ]
+        },
+        {
+          "change": "delete",
+          "en_range": [
+            137,
+            138
+          ],
+          "zh_range": [
+            138,
+            138
+          ],
+          "en": [
+            "scale1m/export_rf.py"
+          ],
+          "zh": []
+        },
+        {
+          "change": "insert",
+          "en_range": [
+            146,
+            146
+          ],
+          "zh_range": [
+            146,
+            147
+          ],
+          "en": [],
+          "zh": [
+            "scale/export_ours.py"
+          ]
+        },
+        {
+          "change": "replace",
+          "en_range": [
+            147,
+            148
+          ],
+          "zh_range": [
+            148,
+            149
+          ],
+          "en": [
+            "scale/export_ours.py"
+          ],
+          "zh": [
+            "scale1m/export_rf.py"
+          ]
+        },
+        {
+          "change": "replace",
+          "en_range": [
+            149,
+            150
+          ],
+          "zh_range": [
+            150,
+            151
+          ],
+          "en": [
+            "scale1m/export_rf.py"
+          ],
+          "zh": [
+            "recall@1000 >= 0.99"
+          ]
+        },
+        {
+          "change": "delete",
+          "en_range": [
+            151,
+            152
+          ],
+          "zh_range": [
+            152,
+            152
+          ],
+          "en": [
+            "recall@1000 >= 0.99"
+          ],
+          "zh": []
+        },
+        {
+          "change": "delete",
+          "en_range": [
+            170,
+            171
+          ],
+          "zh_range": [
+            170,
+            170
+          ],
+          "en": [
+            "model provenance"
+          ],
+          "zh": []
+        },
+        {
+          "change": "delete",
+          "en_range": [
+            172,
+            173
+          ],
+          "zh_range": [
+            171,
+            171
+          ],
+          "en": [
+            "dataset provenance"
+          ],
+          "zh": []
+        },
+        {
+          "change": "delete",
+          "en_range": [
+            175,
+            176
+          ],
+          "zh_range": [
+            173,
+            173
+          ],
+          "en": [
+            "coverage report"
+          ],
+          "zh": []
+        },
+        {
+          "change": "delete",
+          "en_range": [
+            178,
+            179
+          ],
+          "zh_range": [
+            175,
+            175
+          ],
+          "en": [
+            "native canonicalization"
+          ],
+          "zh": []
+        },
+        {
+          "change": "delete",
+          "en_range": [
+            180,
+            182
+          ],
+          "zh_range": [
+            176,
+            176
+          ],
+          "en": [
+            "merge report",
+            "rule file"
+          ],
+          "zh": []
+        },
+        {
+          "change": "delete",
+          "en_range": [
+            183,
+            184
+          ],
+          "zh_range": [
+            177,
+            177
+          ],
+          "en": [
+            "ladder report"
+          ],
+          "zh": []
+        },
+        {
+          "change": "delete",
+          "en_range": [
+            185,
+            186
+          ],
+          "zh_range": [
+            178,
+            178
+          ],
+          "en": [
+            "feature report"
+          ],
+          "zh": []
+        },
+        {
+          "change": "delete",
+          "en_range": [
+            187,
+            189
+          ],
+          "zh_range": [
+            179,
+            179
+          ],
+          "en": [
+            "graph report",
+            "lineage report"
+          ],
+          "zh": []
+        },
+        {
+          "change": "delete",
+          "en_range": [
+            190,
+            191
+          ],
+          "zh_range": [
+            180,
+            180
+          ],
+          "en": [
+            "split audit"
+          ],
+          "zh": []
+        },
+        {
+          "change": "delete",
+          "en_range": [
+            198,
+            199
+          ],
+          "zh_range": [
+            187,
+            187
+          ],
+          "en": [
+            "dense eligible-query metrics"
+          ],
+          "zh": []
+        },
+        {
+          "change": "delete",
+          "en_range": [
+            201,
+            202
+          ],
+          "zh_range": [
+            189,
+            189
+          ],
+          "en": [
+            "training-free baseline report"
+          ],
+          "zh": []
+        },
+        {
+          "change": "delete",
+          "en_range": [
+            204,
+            205
+          ],
+          "zh_range": [
+            191,
+            191
+          ],
+          "en": [
+            "Y2 report"
+          ],
+          "zh": []
+        },
+        {
+          "change": "delete",
+          "en_range": [
+            207,
+            208
+          ],
+          "zh_range": [
+            193,
+            193
+          ],
+          "en": [
+            "Y2 report"
+          ],
+          "zh": []
+        },
+        {
+          "change": "delete",
+          "en_range": [
+            209,
+            210
+          ],
+          "zh_range": [
+            194,
+            194
+          ],
+          "en": [
+            "Y4 report"
+          ],
+          "zh": []
+        },
+        {
+          "change": "insert",
+          "en_range": [
+            214,
+            214
+          ],
+          "zh_range": [
+            198,
+            199
+          ],
+          "en": [],
+          "zh": [
+            "recall@1000"
+          ]
+        }
+      ]
+    },
+    {
+      "check": "fenced_commands",
+      "en_count": 4,
+      "zh_count": 4,
+      "differences": [
+        {
+          "change": "replace",
+          "en_range": [
+            1,
+            2
+          ],
+          "zh_range": [
+            1,
+            2
+          ],
+          "en": [
+            {
+              "language": "text",
+              "body": [
+                "z_m.npy, z_d.npy # serving graph",
+                "z_m_eval.npy, z_d_eval.npy # leakage-controlled evaluation graph"
+              ]
+            }
+          ],
+          "zh": [
+            {
+              "language": "text",
+              "body": [
+                "z_m.npy, z_d.npy # 服务图",
+                "z_m_eval.npy, z_d_eval.npy # 泄漏受控的评估图"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "check": "prose_numbers",
+      "en_count": 197,
+      "zh_count": 204,
+      "differences": [
+        {
+          "change": "insert",
+          "en_range": [
+            13,
+            13
+          ],
+          "zh_range": [
+            13,
+            14
+          ],
+          "en": [],
+          "zh": [
+            "0.3216"
+          ]
+        },
+        {
+          "change": "insert",
+          "en_range": [
+            14,
+            14
+          ],
+          "zh_range": [
+            15,
+            16
+          ],
+          "en": [],
+          "zh": [
+            "1000"
+          ]
+        },
+        {
+          "change": "delete",
+          "en_range": [
+            15,
+            16
+          ],
+          "zh_range": [
+            17,
+            17
+          ],
+          "en": [
+            "1,000"
+          ],
+          "zh": []
+        },
+        {
+          "change": "delete",
+          "en_range": [
+            21,
+            22
+          ],
+          "zh_range": [
+            22,
+            22
+          ],
+          "en": [
+            "1"
+          ],
+          "zh": []
+        },
+        {
+          "change": "insert",
+          "en_range": [
+            25,
+            25
+          ],
+          "zh_range": [
+            25,
+            26
+          ],
+          "en": [],
+          "zh": [
+            "3,004"
+          ]
+        },
+        {
+          "change": "delete",
+          "en_range": [
+            26,
+            27
+          ],
+          "zh_range": [
+            27,
+            27
+          ],
+          "en": [
+            "3,004"
+          ],
+          "zh": []
+        },
+        {
+          "change": "insert",
+          "en_range": [
+            34,
+            34
+          ],
+          "zh_range": [
+            34,
+            35
+          ],
+          "en": [],
+          "zh": [
+            "18,729"
+          ]
+        },
+        {
+          "change": "delete",
+          "en_range": [
+            35,
+            36
+          ],
+          "zh_range": [
+            36,
+            36
+          ],
+          "en": [
+            "18,729"
+          ],
+          "zh": []
+        },
+        {
+          "change": "delete",
+          "en_range": [
+            37,
+            38
+          ],
+          "zh_range": [
+            37,
+            37
+          ],
+          "en": [
+            "2"
+          ],
+          "zh": []
+        },
+        {
+          "change": "insert",
+          "en_range": [
+            46,
+            46
+          ],
+          "zh_range": [
+            45,
+            46
+          ],
+          "en": [],
+          "zh": [
+            "0"
+          ]
+        },
+        {
+          "change": "replace",
+          "en_range": [
+            78,
+            79
+          ],
+          "zh_range": [
+            78,
+            79
+          ],
+          "en": [
+            "13.561"
+          ],
+          "zh": [
+            "13.561%"
+          ]
+        },
+        {
+          "change": "insert",
+          "en_range": [
+            84,
+            84
+          ],
+          "zh_range": [
+            84,
+            85
+          ],
+          "en": [],
+          "zh": [
+            "4"
+          ]
+        },
+        {
+          "change": "insert",
+          "en_range": [
+            85,
+            85
+          ],
+          "zh_range": [
+            86,
+            87
+          ],
+          "en": [],
+          "zh": [
+            "384"
+          ]
+        },
+        {
+          "change": "delete",
+          "en_range": [
+            86,
+            87
+          ],
+          "zh_range": [
+            88,
+            88
+          ],
+          "en": [
+            "384"
+          ],
+          "zh": []
+        },
+        {
+          "change": "insert",
+          "en_range": [
+            90,
+            90
+          ],
+          "zh_range": [
+            91,
+            92
+          ],
+          "en": [],
+          "zh": [
+            "1"
+          ]
+        },
+        {
+          "change": "delete",
+          "en_range": [
+            92,
+            93
+          ],
+          "zh_range": [
+            94,
+            94
+          ],
+          "en": [
+            "3"
+          ],
+          "zh": []
+        },
+        {
+          "change": "insert",
+          "en_range": [
+            99,
+            99
+          ],
+          "zh_range": [
+            100,
+            101
+          ],
+          "en": [],
+          "zh": [
+            "30%"
+          ]
+        },
+        {
+          "change": "insert",
+          "en_range": [
+            109,
+            109
+          ],
+          "zh_range": [
+            111,
+            112
+          ],
+          "en": [],
+          "zh": [
+            "1"
+          ]
+        },
+        {
+          "change": "insert",
+          "en_range": [
+            113,
+            113
+          ],
+          "zh_range": [
+            116,
+            118
+          ],
+          "en": [],
+          "zh": [
+            "2",
+            "1"
+          ]
+        },
+        {
+          "change": "insert",
+          "en_range": [
+            120,
+            120
+          ],
+          "zh_range": [
+            125,
+            126
+          ],
+          "en": [],
+          "zh": [
+            "1"
+          ]
+        },
+        {
+          "change": "insert",
+          "en_range": [
+            134,
+            134
+          ],
+          "zh_range": [
+            140,
+            143
+          ],
+          "en": [],
+          "zh": [
+            "0",
+            "1",
+            "2"
+          ]
+        },
+        {
+          "change": "delete",
+          "en_range": [
+            137,
+            139
+          ],
+          "zh_range": [
+            146,
+            146
+          ],
+          "en": [
+            "0",
+            "1"
+          ],
+          "zh": []
+        },
+        {
+          "change": "insert",
+          "en_range": [
+            151,
+            151
+          ],
+          "zh_range": [
+            158,
+            159
+          ],
+          "en": [],
+          "zh": [
+            "1,000"
+          ]
+        },
+        {
+          "change": "delete",
+          "en_range": [
+            152,
+            153
+          ],
+          "zh_range": [
+            160,
+            160
+          ],
+          "en": [
+            "1,000"
+          ],
+          "zh": []
+        },
+        {
+          "change": "insert",
+          "en_range": [
+            156,
+            156
+          ],
+          "zh_range": [
+            163,
+            164
+          ],
+          "en": [],
+          "zh": [
+            "10"
+          ]
+        },
+        {
+          "change": "insert",
+          "en_range": [
+            170,
+            170
+          ],
+          "zh_range": [
+            178,
+            179
+          ],
+          "en": [],
+          "zh": [
+            "18,729"
+          ]
+        },
+        {
+          "change": "delete",
+          "en_range": [
+            171,
+            172
+          ],
+          "zh_range": [
+            180,
+            180
+          ],
+          "en": [
+            "18,729"
+          ],
+          "zh": []
+        },
+        {
+          "change": "delete",
+          "en_range": [
+            175,
+            176
+          ],
+          "zh_range": [
+            183,
+            183
+          ],
+          "en": [
+            "247,803"
+          ],
+          "zh": []
+        },
+        {
+          "change": "insert",
+          "en_range": [
+            178,
+            178
+          ],
+          "zh_range": [
+            185,
+            186
+          ],
+          "en": [],
+          "zh": [
+            "247,803"
+          ]
+        },
+        {
+          "change": "delete",
+          "en_range": [
+            193,
+            194
+          ],
+          "zh_range": [
+            201,
+            201
+          ],
+          "en": [
+            "1,000"
+          ],
+          "zh": []
+        }
+      ]
+    }
+  ],
+  "review_flags": [
+    {
+      "language": "en",
+      "kind": "stale_other_series_result",
+      "line": 85,
+      "matches": [
+        "F1_runs/",
+        "F1_runs/"
+      ],
+      "context": "and terminated by cursor exhaustion, not by the numerical limit. It contains **3,003,759 unique model records**, written in 61 shards after 3,004 API pages. The archived run reports zero skipped duplicates and binds every shard by hash in [`F1_runs/PROVENANCE.json`](F1_runs/PROVENANCE.json)."
+    },
+    {
+      "language": "en",
+      "kind": "legacy_claim_requires_manual_review",
+      "line": 85,
+      "matches": [
+        "3,004"
+      ],
+      "context": "and terminated by cursor exhaustion, not by the numerical limit. It contains **3,003,759 unique model records**, written in 61 shards after 3,004 API pages. The archived run reports zero skipped duplicates and binds every shard by hash in [`F1_runs/PROVENANCE.json`](F1_runs/PROVENANCE.json)."
+    },
+    {
+      "language": "en",
+      "kind": "stale_other_series_result",
+      "line": 87,
+      "matches": [
+        "F15_runs/",
+        "F15_runs/"
+      ],
+      "context": "Dataset metadata is collected independently from `/api/datasets` with the same cursor, resume, sharding, and hash discipline. The retained fields include repository identity, task categories, tags, description, language, size category, license, and source-dataset metadata. The frozen dataset crawl contains **1,008,417 repositories** in 11 shards and is recorded in [`F15_runs/PROVENANCE.json`](F15_"
+    },
+    {
+      "language": "en",
+      "kind": "stale_other_series_result",
+      "line": 124,
+      "matches": [
+        "F15_runs/",
+        "F15_runs/"
+      ],
+      "context": "In the final node set, 3,928 of 18,729 nodes have an exact or parent Hugging Face card. Missing cards therefore remain a first-class condition rather than being filled by a popularity-based guess. Coverage measurements are archived in [`F15_runs/f15b_coverage.json`](F15_runs/f15b_coverage.json)."
+    },
+    {
+      "language": "en",
+      "kind": "stale_other_series_result",
+      "line": 174,
+      "matches": [
+        "F2_runs/",
+        "F2_REPORT.json",
+        "F2_runs/",
+        "F2_REPORT.json"
+      ],
+      "context": "For each dataset--task node, a direction-known metric is preferred and the metric with the greatest number of records is selected, with deterministic lexical tie-breaking. The `trained_on` edge weight is the median oriented value for the resulting model--node pair. Of 2,158,375 parsed raw metric rows, 2,097,081 are finite and parseable; median deduplication produces 1,435,162 rows. Native primary-"
+    },
+    {
+      "language": "en",
+      "kind": "stale_other_series_result",
+      "line": 203,
+      "matches": [
+        "F2_runs/",
+        "F2_runs/",
+        "F2_runs/",
+        "F2_runs/"
+      ],
+      "context": "The frozen rule file is `rf-gold-2.0`, SHA-256 `be3fb05ecf92ea0112ba4de10b8191d71dfe096b8667a86911c2ebaeadb9cdb1`; the merge counts and source table are in [`F2_runs/F2_MERGE_REPORT.json`](F2_runs/F2_MERGE_REPORT.json), and the rule artifact is [`F2_runs/rf_gold_rules.json`](F2_runs/rf_gold_rules.json)."
+    },
+    {
+      "language": "en",
+      "kind": "stale_other_series_result",
+      "line": 221,
+      "matches": [
+        "F3_runs/",
+        "F3_runs/"
+      ],
+      "context": "The model and dataset ladders have SHA-256 values `fee360d1fef9afa4c446b70af35bcbf4ead2c75387f47abc3b0d21c944ae3efa` and `31c027ff2eeb693aed6abaa5d235f4a6264bb4b3245bfd71cf1c8b85d32173cb`. All eight identity and endpoint checks pass in [`F3_runs/LADDER_REPORT.json`](F3_runs/LADDER_REPORT.json). The implementation is [`scale1m/build_ladder_rf.py`](../../scale1m/build_ladder_rf.py)."
+    },
+    {
+      "language": "en",
+      "kind": "stale_other_series_result",
+      "line": 254,
+      "matches": [
+        "F4_runs/",
+        "F4_runs/"
+      ],
+      "context": "The final `x_m` matrix has shape `[3,016,439, 448]`, dtype `float32`, file size 5.41 GB, and SHA-256 `ba1020872ddb6e90726c755f9f08f236f4c73e506013c91d8a0075fc0c0361e6`. The append-only family vocabulary has 41,056 rows and SHA-256 `00d304df9bd72acb2c2c1ca5b84ed0dc9d4adb0cbc9f098f32a9e62109d24005`. Unknown size accounts for 71.929% of models and `Other` for 13.561%. Feature construction and row-ord"
+    },
+    {
+      "language": "en",
+      "kind": "stale_other_series_result",
+      "line": 315,
+      "matches": [
+        "F5_runs/",
+        "F5_runs/"
+      ],
+      "context": "The graph is stored as memory-mapped `.npy` feature arrays, NPZ node/edge structures, Parquet row maps, and hashed JSON metadata. This avoids materializing the 5.41 GB model matrix during loading. The sharded format is implemented in [`scale1m/graph_store.py`](../../scale1m/graph_store.py); construction counts and gates are in [`F5_runs/GRAPH_REPORT.json`](F5_runs/GRAPH_REPORT.json). The frozen gr"
+    },
+    {
+      "language": "en",
+      "kind": "stale_other_series_result",
+      "line": 523,
+      "matches": [
+        "X4_runs/",
+        "X4GD_full_s",
+        "X4_runs/",
+        "X4GD_full_s",
+        "X4_runs/",
+        "X4GD_full_s"
+      ],
+      "context": "The three archived final configurations are [`seed 0`](X4_runs/X4GD_full_s0_e25/metadata/resolved_config.json), [`seed 1`](X4_runs/X4GD_full_s1_e25/metadata/resolved_config.json), and [`seed 2`](X4_runs/X4GD_full_s2_e25/metadata/resolved_config.json). Each records the exact command line, runtime versions, graph digest, configuration, split seed, and initialization seed. All three contain 25 epoch "
+    },
+    {
+      "language": "en",
+      "kind": "stale_other_series_result",
+      "line": 602,
+      "matches": [
+        "Y2_REPORT.json",
+        "Y2_runs/",
+        "Y2_REPORT.json"
+      ],
+      "context": "All latency measurements begin from a precomputed query embedding and use one HNSW query thread after warm-up. Query encoding, index loading, and index construction are excluded.[`Y2_REPORT.json`](Y2_runs/Y2_REPORT.json)"
+    },
+    {
+      "language": "en",
+      "kind": "stale_other_series_result",
+      "line": 615,
+      "matches": [
+        "Y2_REPORT.json",
+        "Y2_runs/",
+        "Y2_REPORT.json"
+      ],
+      "context": "The split-specific sidecars contain only train+validation edges: 198,216 / 196,912 / 196,124 visible edges for seeds 0 / 1 / 2. The evaluator asserts exact equality of the X4 and sidecar model and dataset row mappings, verifies the root mapping, and asserts that no visible prior edge shares a root with any scored test query. The query itself and every same-root sibling are therefore absent from th"
+    },
+    {
+      "language": "en",
+      "kind": "stale_other_series_result",
+      "line": 617,
+      "matches": [
+        "exports_x4/",
+        "X4GD_full_s",
+        "hnsw_y2_eval.bin"
+      ],
+      "context": "An HNSW label is meaningful only under the model row map used to construct the index. The three measured evaluation indexes bind the 3,016,439-row X4-GD held-out embeddings and live at `data1m/exports_x4/X4GD_full_s{0,1,2}_e25/hnsw_y2_eval.bin`. A truly new dataset that is absent from the frozen node table still requires a validated query-only inductive encoding path; the present measurements conc"
+    },
+    {
+      "language": "en",
+      "kind": "stale_other_series_result",
+      "line": 631,
+      "matches": [
+        "Y2_REPORT.json",
+        "Y2_runs/",
+        "Y2_REPORT.json"
+      ],
+      "context": "The unrounded final values are 0.3279132791, 0.3387829246, and 0.2427184466; their arithmetic mean is **0.3031382168**. The final path beats the 3M-scale BM25 baseline on every seed and by 2.98 times on the three-seed mean. Exact top-1,000 reranking retains 94.32% of the full-pool fused result on average, and HNSW retains 99.93% of exact top-1,000 reranking, for 94.25% overall two-stage retention "
+    },
+    {
+      "language": "en",
+      "kind": "legacy_claim_requires_manual_review",
+      "line": 631,
+      "matches": [
+        "BM25",
+        "2.98"
+      ],
+      "context": "The unrounded final values are 0.3279132791, 0.3387829246, and 0.2427184466; their arithmetic mean is **0.3031382168**. The final path beats the 3M-scale BM25 baseline on every seed and by 2.98 times on the three-seed mean. Exact top-1,000 reranking retains 94.32% of the full-pool fused result on average, and HNSW retains 99.93% of exact top-1,000 reranking, for 94.25% overall two-stage retention "
+    },
+    {
+      "language": "en",
+      "kind": "stale_other_series_result",
+      "line": 649,
+      "matches": [
+        "Y2_REPORT.json",
+        "Y2_runs/",
+        "Y2_REPORT.json",
+        "Y4_REPORT.json",
+        "Y4_runs/",
+        "Y4_REPORT.json"
+      ],
+      "context": "Mean HNSW and reranking p50 components are 0.566 and 0.123 ms. This path starts from a precomputed $z_q$ and excludes query encoding, index loading, and index construction. Each index occupies about 2.214 GiB; the three total 6.643 GiB and were built in 184.6 / 191.3 / 181.6 seconds.[`Y2_REPORT.json`](Y2_runs/Y2_REPORT.json) [`Y4_REPORT.json`](Y4_runs/Y4_REPORT.json)"
+    },
+    {
+      "language": "en",
+      "kind": "stale_other_series_result",
+      "line": 690,
+      "matches": [
+        "X4GD_full_s"
+      ],
+      "context": "  --out <RUNS>/X4GD_full_s<SEED>_e25 --seed <SEED> --epochs 25 `"
+    },
+    {
+      "language": "en",
+      "kind": "stale_other_series_result",
+      "line": 697,
+      "matches": [
+        "X4GD_full_s"
+      ],
+      "context": "  --run <RUNS>/X4GD_full_s<SEED>_e25 --stage embed `"
+    },
+    {
+      "language": "en",
+      "kind": "stale_other_series_result",
+      "line": 700,
+      "matches": [
+        "exports_x4/",
+        "X4GD_full_s"
+      ],
+      "context": "  --out <DATA>/data1m/exports_x4/X4GD_full_s<SEED>_e25"
+    },
+    {
+      "language": "en",
+      "kind": "stale_other_series_result",
+      "line": 702,
+      "matches": [
+        "X4GD_full_s"
+      ],
+      "context": "  --run <RUNS>/X4GD_full_s<SEED>_e25 --stage metrics `"
+    },
+    {
+      "language": "en",
+      "kind": "stale_other_series_result",
+      "line": 703,
+      "matches": [
+        "exports_x4/",
+        "X4GD_full_s"
+      ],
+      "context": "  --out <DATA>/data1m/exports_x4/X4GD_full_s<SEED>_e25"
+    },
+    {
+      "language": "en",
+      "kind": "stale_other_series_result",
+      "line": 708,
+      "matches": [
+        "exports_x4/",
+        "X4GD_full_s"
+      ],
+      "context": "  --export <DATA>/data1m/exports_x4/X4GD_full_s<SEED>_e25 `"
+    },
+    {
+      "language": "en",
+      "kind": "stale_other_series_result",
+      "line": 714,
+      "matches": [
+        "X4GD_full_s"
+      ],
+      "context": "  --exports <DATA>/data1m/exports_x4 --run-fmt \"X4GD_full_s%d_e25\" `"
+    },
+    {
+      "language": "en",
+      "kind": "stale_other_series_result",
+      "line": 715,
+      "matches": [
+        "X4GD_full_s"
+      ],
+      "context": "  --sidecar-exports <DATA>/data1m/exports_x4 --sidecar-run-fmt \"X4GD_full_s%d_e25\" `"
+    },
+    {
+      "language": "en",
+      "kind": "stale_other_series_result",
+      "line": 720,
+      "matches": [
+        "X4GD_full_s"
+      ],
+      "context": "  --exports <DATA>/data1m/exports_x4 --run-fmt \"X4GD_full_s%d_e25\" `"
+    },
+    {
+      "language": "en",
+      "kind": "stale_other_series_result",
+      "line": 721,
+      "matches": [
+        "X4GD_full_s"
+      ],
+      "context": "  --sidecar-exports <DATA>/data1m/exports_x4 --sidecar-run-fmt \"X4GD_full_s%d_e25\" `"
+    },
+    {
+      "language": "en",
+      "kind": "stale_other_series_result",
+      "line": 727,
+      "matches": [
+        "X4GD_full_s"
+      ],
+      "context": "  --exports <DATA>/data1m/exports_x4 --run-fmt \"X4GD_full_s%d_e25\" `"
+    },
+    {
+      "language": "en",
+      "kind": "stale_other_series_result",
+      "line": 728,
+      "matches": [
+        "X4GD_full_s"
+      ],
+      "context": "  --sidecar-exports <DATA>/data1m/exports_x4 --sidecar-run-fmt \"X4GD_full_s%d_e25\" `"
+    },
+    {
+      "language": "en",
+      "kind": "stale_other_series_result",
+      "line": 735,
+      "matches": [
+        "X4GD_full_s"
+      ],
+      "context": "  --exports <DATA>/data1m/exports_x4 --run-fmt \"X4GD_full_s%d_e25\" `"
+    },
+    {
+      "language": "en",
+      "kind": "stale_other_series_result",
+      "line": 736,
+      "matches": [
+        "X4GD_full_s"
+      ],
+      "context": "  --sidecar-exports <DATA>/data1m/exports_x4 --sidecar-run-fmt \"X4GD_full_s%d_e25\" `"
+    },
+    {
+      "language": "en",
+      "kind": "stale_other_series_result",
+      "line": 739,
+      "matches": [
+        "metrics_y2/",
+        "Y2_REPORT.json"
+      ],
+      "context": "  --y2-report <DATA>/data1m/metrics_y2/Y2_REPORT.json `"
+    },
+    {
+      "language": "en",
+      "kind": "stale_other_series_result",
+      "line": 742,
+      "matches": [
+        "X4GD_full_s"
+      ],
+      "context": "  --exports <DATA>/data1m/exports_x4 --run-fmt \"X4GD_full_s%d_e25\" `"
+    },
+    {
+      "language": "en",
+      "kind": "stale_other_series_result",
+      "line": 743,
+      "matches": [
+        "X4GD_full_s"
+      ],
+      "context": "  --sidecar-exports <DATA>/data1m/exports_x4 --sidecar-run-fmt \"X4GD_full_s%d_e25\" `"
+    },
+    {
+      "language": "en",
+      "kind": "stale_other_series_result",
+      "line": 746,
+      "matches": [
+        "metrics_y2/",
+        "Y2_REPORT.json"
+      ],
+      "context": "  --y2-report <DATA>/data1m/metrics_y2/Y2_REPORT.json `"
+    },
+    {
+      "language": "en",
+      "kind": "stale_other_series_result",
+      "line": 750,
+      "matches": [
+        "metrics_y2/",
+        "Y2_REPORT.json"
+      ],
+      "context": "  --y2-report <DATA>/data1m/metrics_y2/Y2_REPORT.json `"
+    },
+    {
+      "language": "en",
+      "kind": "stale_other_series_result",
+      "line": 760,
+      "matches": [
+        "F1_runs/"
+      ],
+      "context": "| Cursor-safe model snapshot | [`scale1m/hf_crawl.py`](../../scale1m/hf_crawl.py) | [`model provenance`](F1_runs/PROVENANCE.json) |"
+    },
+    {
+      "language": "en",
+      "kind": "stale_other_series_result",
+      "line": 761,
+      "matches": [
+        "F15_runs/"
+      ],
+      "context": "| Cursor-safe dataset snapshot | [`scale1m/hf_crawl_datasets.py`](../../scale1m/hf_crawl_datasets.py) | [`dataset provenance`](F15_runs/PROVENANCE.json) |"
+    },
+    {
+      "language": "en",
+      "kind": "stale_other_series_result",
+      "line": 762,
+      "matches": [
+        "F15_runs/"
+      ],
+      "context": "| Dataset descriptors and card matching | [`scale1m/dataset_descriptor.py`](../../scale1m/dataset_descriptor.py), [`scale1m/match_dataset_cards.py`](../../scale1m/match_dataset_cards.py) | [`coverage report`](F15_runs/f15b_coverage.json) |"
+    },
+    {
+      "language": "en",
+      "kind": "stale_other_series_result",
+      "line": 763,
+      "matches": [
+        "F2_runs/",
+        "F2_REPORT.json"
+      ],
+      "context": "| Metric direction and orientation | [`scale1m/metric_semantics.py`](../../scale1m/metric_semantics.py), [`scale1m/canonicalize_rf.py`](../../scale1m/canonicalize_rf.py) | [`native canonicalization`](F2_runs/F2_REPORT.json) |"
+    },
+    {
+      "language": "en",
+      "kind": "stale_other_series_result",
+      "line": 764,
+      "matches": [
+        "F2_runs/",
+        "F2_runs/"
+      ],
+      "context": "| Six-source merge and query rules | [`scale1m/merge_supervision.py`](../../scale1m/merge_supervision.py) | [`merge report`](F2_runs/F2_MERGE_REPORT.json), [`rule file`](F2_runs/rf_gold_rules.json) |"
+    },
+    {
+      "language": "en",
+      "kind": "stale_other_series_result",
+      "line": 765,
+      "matches": [
+        "F3_runs/"
+      ],
+      "context": "| Candidate and dataset row maps | [`scale1m/build_ladder_rf.py`](../../scale1m/build_ladder_rf.py) | [`ladder report`](F3_runs/LADDER_REPORT.json) |"
+    },
+    {
+      "language": "en",
+      "kind": "stale_other_series_result",
+      "line": 766,
+      "matches": [
+        "F4_runs/"
+      ],
+      "context": "| Model metadata features | [`scale1m/embed_lake_rf.py`](../../scale1m/embed_lake_rf.py) | [`feature report`](F4_runs/FEATS_REPORT.json) |"
+    },
+    {
+      "language": "en",
+      "kind": "stale_other_series_result",
+      "line": 767,
+      "matches": [
+        "F5_runs/",
+        "F5_runs/"
+      ],
+      "context": "| Evidence-graph construction | [`scale1m/build_graph_rf.py`](../../scale1m/build_graph_rf.py) | [`graph report`](F5_runs/GRAPH_REPORT.json), [`lineage report`](F5_runs/lineage_stats.json) |"
+    },
+    {
+      "language": "en",
+      "kind": "stale_other_series_result",
+      "line": 768,
+      "matches": [
+        "F5_runs/"
+      ],
+      "context": "| Leakage-controlled split | [`stage2TrainGraphSAGE/d0_splits.py`](../../stage2TrainGraphSAGE/d0_splits.py) | [`split audit`](F5_runs/f5_splits.json) |"
+    },
+    {
+      "language": "en",
+      "kind": "stale_other_series_result",
+      "line": 771,
+      "matches": [
+        "X5_runs/"
+      ],
+      "context": "| Held-out export and exact dense ranking | [`scale1m/export_rf.py`](../../scale1m/export_rf.py), [`scale/global_metrics.py`](../../scale/global_metrics.py) | [`dense eligible-query metrics`](X5_runs/X5_GD_ELIGIBILITY.json) |"
+    },
+    {
+      "language": "en",
+      "kind": "stale_other_series_result",
+      "line": 772,
+      "matches": [
+        "X6_runs/"
+      ],
+      "context": "| Three-million-candidate baselines | [`scale1m/baselines.py`](../../scale1m/baselines.py), [`scale1m/eval_x6.py`](../../scale1m/eval_x6.py) | [`training-free baseline report`](X6_runs/X6_BASELINES.training_free.json) |"
+    },
+    {
+      "language": "en",
+      "kind": "stale_other_series_result",
+      "line": 773,
+      "matches": [
+        "Y2_runs/",
+        "Y2_REPORT.json"
+      ],
+      "context": "| Split-safe task sidecar | [`stage3HNSW/build_prior_sidecar.py`](../../stage3HNSW/build_prior_sidecar.py), [`scale1m/eval_rf.py`](../../scale1m/eval_rf.py) | [`Y2 report`](Y2_runs/Y2_REPORT.json) |"
+    },
+    {
+      "language": "en",
+      "kind": "stale_other_series_result",
+      "line": 774,
+      "matches": [
+        "Y2_runs/",
+        "Y2_REPORT.json"
+      ],
+      "context": "| HNSW top-1,000 and deterministic reranking | [`scale1m/eval_y2.py`](../../scale1m/eval_y2.py), [`scale/export_ours.py`](../../scale/export_ours.py) | [`Y2 report`](Y2_runs/Y2_REPORT.json) |"
+    },
+    {
+      "language": "en",
+      "kind": "stale_other_series_result",
+      "line": 775,
+      "matches": [
+        "Y4_runs/",
+        "Y4_REPORT.json"
+      ],
+      "context": "| Final K=1,000 retrieval and timing | [`scale1m/eval_y4.py`](../../scale1m/eval_y4.py) | [`Y4 report`](Y4_runs/Y4_REPORT.json) |"
+    },
+    {
+      "language": "zh",
+      "kind": "stale_other_series_result",
+      "line": 85,
+      "matches": [
+        "F1_runs/",
+        "F1_runs/"
+      ],
+      "context": "抓取由游标耗尽而非数值上限终止。最终包含 **3,003,759 条唯一模型记录**，由 3,004 个 API 页面写入 61 个分片。归档记录显示跳过的重复项为零，并在 [`F1_runs/PROVENANCE.json`](F1_runs/PROVENANCE.json) 中以哈希绑定每个分片。"
+    },
+    {
+      "language": "zh",
+      "kind": "legacy_claim_requires_manual_review",
+      "line": 85,
+      "matches": [
+        "3,004"
+      ],
+      "context": "抓取由游标耗尽而非数值上限终止。最终包含 **3,003,759 条唯一模型记录**，由 3,004 个 API 页面写入 61 个分片。归档记录显示跳过的重复项为零，并在 [`F1_runs/PROVENANCE.json`](F1_runs/PROVENANCE.json) 中以哈希绑定每个分片。"
+    },
+    {
+      "language": "zh",
+      "kind": "stale_other_series_result",
+      "line": 87,
+      "matches": [
+        "F15_runs/",
+        "F15_runs/"
+      ],
+      "context": "数据集元数据通过 `/api/datasets` 独立收集，并采用相同的游标、续跑、分片和哈希规范。保留字段包括仓库标识、任务类别、标签、描述、语言、规模类别、许可证和源数据集元数据。冻结的数据集抓取包含 **1,008,417 个仓库**，写入 11 个分片，并记录在 [`F15_runs/PROVENANCE.json`](F15_runs/PROVENANCE.json) 中。其实现为 [`scale1m/hf_crawl_datasets.py`](../../scale1m/hf_crawl_datasets.py)。"
+    },
+    {
+      "language": "zh",
+      "kind": "stale_other_series_result",
+      "line": 124,
+      "matches": [
+        "F15_runs/",
+        "F15_runs/"
+      ],
+      "context": "最终节点集合中，18,729 个节点有 3,928 个匹配到精确或父级 Hugging Face 数据集卡。因此，卡片缺失被作为一等状态保留，而不是用基于流行度的猜测填充。覆盖率测量归档在 [`F15_runs/f15b_coverage.json`](F15_runs/f15b_coverage.json)。"
+    },
+    {
+      "language": "zh",
+      "kind": "stale_other_series_result",
+      "line": 174,
+      "matches": [
+        "F2_runs/",
+        "F2_REPORT.json",
+        "F2_runs/",
+        "F2_REPORT.json"
+      ],
+      "context": "对每个数据集--任务节点，优先选择方向已知的指标，再选择记录数最多的指标；记录数相同时使用确定性的词典序裁决。最终模型--节点对的方向统一值取中位数，作为 `trained_on` 边权。在解析的 2,158,375 条原始指标记录中，2,097,081 条是有限且可解析的；中位数去重后得到 1,435,162 条。原生主指标选择在单节点限额之前生成 143,478 条边，限额之后保留 74,346 条。精确构造由 [`scale1m/canonicalize_rf.py`](../../scale1m/canonicalize_rf.py) 中的 `build_supervision` 实现，计数见 [`F2_runs/F2_REPORT.json`](F2_runs/F2_REPORT.json)。"
+    },
+    {
+      "language": "zh",
+      "kind": "stale_other_series_result",
+      "line": 203,
+      "matches": [
+        "F2_runs/",
+        "F2_runs/",
+        "F2_runs/",
+        "F2_runs/"
+      ],
+      "context": "冻结规则文件版本为 `rf-gold-2.0`，SHA-256 为 `be3fb05ecf92ea0112ba4de10b8191d71dfe096b8667a86911c2ebaeadb9cdb1`；合并计数与来源表位于 [`F2_runs/F2_MERGE_REPORT.json`](F2_runs/F2_MERGE_REPORT.json)，规则产物位于 [`F2_runs/rf_gold_rules.json`](F2_runs/rf_gold_rules.json)。"
+    },
+    {
+      "language": "zh",
+      "kind": "stale_other_series_result",
+      "line": 221,
+      "matches": [
+        "F3_runs/",
+        "F3_runs/"
+      ],
+      "context": "模型与数据集 ladder 的 SHA-256 分别为 `fee360d1fef9afa4c446b70af35bcbf4ead2c75387f47abc3b0d21c944ae3efa` 和 `31c027ff2eeb693aed6abaa5d235f4a6264bb4b3245bfd71cf1c8b85d32173cb`。[`F3_runs/LADDER_REPORT.json`](F3_runs/LADDER_REPORT.json) 中的八项标识与端点检查全部通过。实现位于 [`scale1m/build_ladder_rf.py`](../../scale1m/build_ladder_rf.py)。"
+    },
+    {
+      "language": "zh",
+      "kind": "stale_other_series_result",
+      "line": 254,
+      "matches": [
+        "F4_runs/",
+        "F4_runs/"
+      ],
+      "context": "最终 `x_m` 矩阵形状为 `[3,016,439, 448]`，数据类型为 `float32`，文件大小为 5.41 GB，SHA-256 为 `ba1020872ddb6e90726c755f9f08f236f4c73e506013c91d8a0075fc0c0361e6`。仅追加的模型族词表有 41,056 行，SHA-256 为 `00d304df9bd72acb2c2c1ca5b84ed0dc9d4adb0cbc9f098f32a9e62109d24005`。未知规模模型占 71.929%，`Other` 占 13.561%。特征构造与行序检查位于 [`scale1m/embed_lake_rf.py`](../../scale1m/embed_lake_rf.py) 和 [`F4_runs/FEATS_REPORT.json`](F4_runs/FEATS_REPORT.js"
+    },
+    {
+      "language": "zh",
+      "kind": "stale_other_series_result",
+      "line": 315,
+      "matches": [
+        "F5_runs/",
+        "F5_runs/"
+      ],
+      "context": "图以 memory-mapped `.npy` 特征数组、NPZ 节点/边结构、Parquet 行映射和带哈希的 JSON 元数据存储，从而避免加载时物化 5.41 GB 模型矩阵。分片格式由 [`scale1m/graph_store.py`](../../scale1m/graph_store.py) 实现；构造计数和门禁位于 [`F5_runs/GRAPH_REPORT.json`](F5_runs/GRAPH_REPORT.json)。所有最终训练运行使用的冻结图摘要为 `0e80b8393846dcc4b9e354218fd5139a906d569125d2e8545e17ccd01612b76c`。"
+    },
+    {
+      "language": "zh",
+      "kind": "stale_other_series_result",
+      "line": 523,
+      "matches": [
+        "X4_runs/",
+        "X4GD_full_s",
+        "X4_runs/",
+        "X4GD_full_s",
+        "X4_runs/",
+        "X4GD_full_s"
+      ],
+      "context": "三个归档的最终配置分别为 [`seed 0`](X4_runs/X4GD_full_s0_e25/metadata/resolved_config.json)、[`seed 1`](X4_runs/X4GD_full_s1_e25/metadata/resolved_config.json) 和 [`seed 2`](X4_runs/X4GD_full_s2_e25/metadata/resolved_config.json)。每份配置都记录了精确命令行、运行时版本、图摘要、配置、划分 seed 和初始化 seed。三次运行均包含 25 条 epoch 记录，损失为有限值，总损失下降，且机制门禁通过。"
+    },
+    {
+      "language": "zh",
+      "kind": "stale_other_series_result",
+      "line": 602,
+      "matches": [
+        "Y2_REPORT.json",
+        "Y2_runs/",
+        "Y2_REPORT.json"
+      ],
+      "context": "所有延迟都从预计算好的查询嵌入开始，并在预热后用单个 HNSW 查询线程测量；不计查询编码、索引加载与索引构建时间。[`Y2_REPORT.json`](Y2_runs/Y2_REPORT.json)"
+    },
+    {
+      "language": "zh",
+      "kind": "stale_other_series_result",
+      "line": 615,
+      "matches": [
+        "Y2_REPORT.json",
+        "Y2_runs/",
+        "Y2_REPORT.json"
+      ],
+      "context": "三个 split-specific sidecar 只包含 train+validation 边：seed 0 / 1 / 2 分别有 198,216 / 196,912 / 196,124 条可见边。评测器断言 X4 与 sidecar 的模型和数据集行映射逐行完全一致，核验 root 映射，并断言任何可见先验边都不与测试查询共享 root。因此，查询自身及同 root sibling 都不会进入先验。归档报告中的全部映射和泄漏门均通过。[`eval_y2.py`](../../scale1m/eval_y2.py) [`Y2_REPORT.json`](Y2_runs/Y2_REPORT.json)"
+    },
+    {
+      "language": "zh",
+      "kind": "stale_other_series_result",
+      "line": 617,
+      "matches": [
+        "exports_x4/",
+        "X4GD_full_s",
+        "hnsw_y2_eval.bin"
+      ],
+      "context": "只有在使用构造索引时的同一个模型行映射下，HNSW 标签才有意义。三个实测评估索引绑定 3,016,439 行 X4-GD held-out 嵌入，位于 `data1m/exports_x4/X4GD_full_s{0,1,2}_e25/hnsw_y2_eval.bin`。对于不在冻结节点表中的真正新数据集，仍需验证仅查询节点的归纳编码路径；当前测量针对 performance 边被 held out 的已物化数据集--任务节点。"
+    },
+    {
+      "language": "zh",
+      "kind": "stale_other_series_result",
+      "line": 631,
+      "matches": [
+        "Y2_REPORT.json",
+        "Y2_runs/",
+        "Y2_REPORT.json"
+      ],
+      "context": "最终未舍入值为 0.3279132791、0.3387829246 和 0.2427184466，算术均值为 **0.3031382168**。最终路径在每个 seed 上都超过三百万规模 BM25 基线，三 seed 均值为其 2.98 倍。Exact top-1,000 重排平均保留全池融合的 94.32%，HNSW 平均保留 exact top-1,000 重排的 99.93%，相对全池融合的完整两阶段保留率为 94.25%。稠密 top-1,000 平均包含 51.88% 查询的 held-out gold；全池精确融合 top-10 中有 89.91% 的成员已经位于该候选池。剩余质量损失因此主要来自候选池截断，而非 ANN 近似。[`Y2_REPORT.json`](Y2_runs/Y2_REPORT.json)"
+    },
+    {
+      "language": "zh",
+      "kind": "legacy_claim_requires_manual_review",
+      "line": 631,
+      "matches": [
+        "BM25",
+        "2.98"
+      ],
+      "context": "最终未舍入值为 0.3279132791、0.3387829246 和 0.2427184466，算术均值为 **0.3031382168**。最终路径在每个 seed 上都超过三百万规模 BM25 基线，三 seed 均值为其 2.98 倍。Exact top-1,000 重排平均保留全池融合的 94.32%，HNSW 平均保留 exact top-1,000 重排的 99.93%，相对全池融合的完整两阶段保留率为 94.25%。稠密 top-1,000 平均包含 51.88% 查询的 held-out gold；全池精确融合 top-10 中有 89.91% 的成员已经位于该候选池。剩余质量损失因此主要来自候选池截断，而非 ANN 近似。[`Y2_REPORT.json`](Y2_runs/Y2_REPORT.json)"
+    },
+    {
+      "language": "zh",
+      "kind": "stale_other_series_result",
+      "line": 649,
+      "matches": [
+        "Y2_REPORT.json",
+        "Y2_runs/",
+        "Y2_REPORT.json",
+        "Y4_REPORT.json",
+        "Y4_runs/",
+        "Y4_REPORT.json"
+      ],
+      "context": "HNSW 与重排的 p50 分量均值分别为 0.566 和 0.123 ms。该路径从预计算的 $z_q$ 开始，不计查询编码、索引加载与索引构建。每个索引约占 2.214 GiB，三个索引合计 6.643 GiB；构建时间为 184.6 / 191.3 / 181.6 秒。[`Y2_REPORT.json`](Y2_runs/Y2_REPORT.json) [`Y4_REPORT.json`](Y4_runs/Y4_REPORT.json)"
+    },
+    {
+      "language": "zh",
+      "kind": "stale_other_series_result",
+      "line": 690,
+      "matches": [
+        "X4GD_full_s"
+      ],
+      "context": "  --out <RUNS>/X4GD_full_s<SEED>_e25 --seed <SEED> --epochs 25 `"
+    },
+    {
+      "language": "zh",
+      "kind": "stale_other_series_result",
+      "line": 697,
+      "matches": [
+        "X4GD_full_s"
+      ],
+      "context": "  --run <RUNS>/X4GD_full_s<SEED>_e25 --stage embed `"
+    },
+    {
+      "language": "zh",
+      "kind": "stale_other_series_result",
+      "line": 700,
+      "matches": [
+        "exports_x4/",
+        "X4GD_full_s"
+      ],
+      "context": "  --out <DATA>/data1m/exports_x4/X4GD_full_s<SEED>_e25"
+    },
+    {
+      "language": "zh",
+      "kind": "stale_other_series_result",
+      "line": 702,
+      "matches": [
+        "X4GD_full_s"
+      ],
+      "context": "  --run <RUNS>/X4GD_full_s<SEED>_e25 --stage metrics `"
+    },
+    {
+      "language": "zh",
+      "kind": "stale_other_series_result",
+      "line": 703,
+      "matches": [
+        "exports_x4/",
+        "X4GD_full_s"
+      ],
+      "context": "  --out <DATA>/data1m/exports_x4/X4GD_full_s<SEED>_e25"
+    },
+    {
+      "language": "zh",
+      "kind": "stale_other_series_result",
+      "line": 708,
+      "matches": [
+        "exports_x4/",
+        "X4GD_full_s"
+      ],
+      "context": "  --export <DATA>/data1m/exports_x4/X4GD_full_s<SEED>_e25 `"
+    },
+    {
+      "language": "zh",
+      "kind": "stale_other_series_result",
+      "line": 714,
+      "matches": [
+        "X4GD_full_s"
+      ],
+      "context": "  --exports <DATA>/data1m/exports_x4 --run-fmt \"X4GD_full_s%d_e25\" `"
+    },
+    {
+      "language": "zh",
+      "kind": "stale_other_series_result",
+      "line": 715,
+      "matches": [
+        "X4GD_full_s"
+      ],
+      "context": "  --sidecar-exports <DATA>/data1m/exports_x4 --sidecar-run-fmt \"X4GD_full_s%d_e25\" `"
+    },
+    {
+      "language": "zh",
+      "kind": "stale_other_series_result",
+      "line": 720,
+      "matches": [
+        "X4GD_full_s"
+      ],
+      "context": "  --exports <DATA>/data1m/exports_x4 --run-fmt \"X4GD_full_s%d_e25\" `"
+    },
+    {
+      "language": "zh",
+      "kind": "stale_other_series_result",
+      "line": 721,
+      "matches": [
+        "X4GD_full_s"
+      ],
+      "context": "  --sidecar-exports <DATA>/data1m/exports_x4 --sidecar-run-fmt \"X4GD_full_s%d_e25\" `"
+    },
+    {
+      "language": "zh",
+      "kind": "stale_other_series_result",
+      "line": 727,
+      "matches": [
+        "X4GD_full_s"
+      ],
+      "context": "  --exports <DATA>/data1m/exports_x4 --run-fmt \"X4GD_full_s%d_e25\" `"
+    },
+    {
+      "language": "zh",
+      "kind": "stale_other_series_result",
+      "line": 728,
+      "matches": [
+        "X4GD_full_s"
+      ],
+      "context": "  --sidecar-exports <DATA>/data1m/exports_x4 --sidecar-run-fmt \"X4GD_full_s%d_e25\" `"
+    },
+    {
+      "language": "zh",
+      "kind": "stale_other_series_result",
+      "line": 735,
+      "matches": [
+        "X4GD_full_s"
+      ],
+      "context": "  --exports <DATA>/data1m/exports_x4 --run-fmt \"X4GD_full_s%d_e25\" `"
+    },
+    {
+      "language": "zh",
+      "kind": "stale_other_series_result",
+      "line": 736,
+      "matches": [
+        "X4GD_full_s"
+      ],
+      "context": "  --sidecar-exports <DATA>/data1m/exports_x4 --sidecar-run-fmt \"X4GD_full_s%d_e25\" `"
+    },
+    {
+      "language": "zh",
+      "kind": "stale_other_series_result",
+      "line": 739,
+      "matches": [
+        "metrics_y2/",
+        "Y2_REPORT.json"
+      ],
+      "context": "  --y2-report <DATA>/data1m/metrics_y2/Y2_REPORT.json `"
+    },
+    {
+      "language": "zh",
+      "kind": "stale_other_series_result",
+      "line": 742,
+      "matches": [
+        "X4GD_full_s"
+      ],
+      "context": "  --exports <DATA>/data1m/exports_x4 --run-fmt \"X4GD_full_s%d_e25\" `"
+    },
+    {
+      "language": "zh",
+      "kind": "stale_other_series_result",
+      "line": 743,
+      "matches": [
+        "X4GD_full_s"
+      ],
+      "context": "  --sidecar-exports <DATA>/data1m/exports_x4 --sidecar-run-fmt \"X4GD_full_s%d_e25\" `"
+    },
+    {
+      "language": "zh",
+      "kind": "stale_other_series_result",
+      "line": 746,
+      "matches": [
+        "metrics_y2/",
+        "Y2_REPORT.json"
+      ],
+      "context": "  --y2-report <DATA>/data1m/metrics_y2/Y2_REPORT.json `"
+    },
+    {
+      "language": "zh",
+      "kind": "stale_other_series_result",
+      "line": 750,
+      "matches": [
+        "metrics_y2/",
+        "Y2_REPORT.json"
+      ],
+      "context": "  --y2-report <DATA>/data1m/metrics_y2/Y2_REPORT.json `"
+    },
+    {
+      "language": "zh",
+      "kind": "stale_other_series_result",
+      "line": 760,
+      "matches": [
+        "F1_runs/"
+      ],
+      "context": "| 游标安全的模型快照 | [`scale1m/hf_crawl.py`](../../scale1m/hf_crawl.py) | [`模型来源记录`](F1_runs/PROVENANCE.json) |"
+    },
+    {
+      "language": "zh",
+      "kind": "stale_other_series_result",
+      "line": 761,
+      "matches": [
+        "F15_runs/"
+      ],
+      "context": "| 游标安全的数据集快照 | [`scale1m/hf_crawl_datasets.py`](../../scale1m/hf_crawl_datasets.py) | [`数据集来源记录`](F15_runs/PROVENANCE.json) |"
+    },
+    {
+      "language": "zh",
+      "kind": "stale_other_series_result",
+      "line": 762,
+      "matches": [
+        "F15_runs/"
+      ],
+      "context": "| 数据集描述与数据集卡匹配 | [`scale1m/dataset_descriptor.py`](../../scale1m/dataset_descriptor.py)、[`scale1m/match_dataset_cards.py`](../../scale1m/match_dataset_cards.py) | [`覆盖率报告`](F15_runs/f15b_coverage.json) |"
+    },
+    {
+      "language": "zh",
+      "kind": "stale_other_series_result",
+      "line": 763,
+      "matches": [
+        "F2_runs/",
+        "F2_REPORT.json"
+      ],
+      "context": "| 指标方向与方向统一 | [`scale1m/metric_semantics.py`](../../scale1m/metric_semantics.py)、[`scale1m/canonicalize_rf.py`](../../scale1m/canonicalize_rf.py) | [`原生规范化报告`](F2_runs/F2_REPORT.json) |"
+    },
+    {
+      "language": "zh",
+      "kind": "stale_other_series_result",
+      "line": 764,
+      "matches": [
+        "F2_runs/",
+        "F2_runs/"
+      ],
+      "context": "| 六来源合并与查询规则 | [`scale1m/merge_supervision.py`](../../scale1m/merge_supervision.py) | [`合并报告`](F2_runs/F2_MERGE_REPORT.json)、[`规则文件`](F2_runs/rf_gold_rules.json) |"
+    },
+    {
+      "language": "zh",
+      "kind": "stale_other_series_result",
+      "line": 765,
+      "matches": [
+        "F3_runs/"
+      ],
+      "context": "| 候选与数据集行映射 | [`scale1m/build_ladder_rf.py`](../../scale1m/build_ladder_rf.py) | [`ladder 报告`](F3_runs/LADDER_REPORT.json) |"
+    },
+    {
+      "language": "zh",
+      "kind": "stale_other_series_result",
+      "line": 766,
+      "matches": [
+        "F4_runs/"
+      ],
+      "context": "| 模型元数据特征 | [`scale1m/embed_lake_rf.py`](../../scale1m/embed_lake_rf.py) | [`特征报告`](F4_runs/FEATS_REPORT.json) |"
+    },
+    {
+      "language": "zh",
+      "kind": "stale_other_series_result",
+      "line": 767,
+      "matches": [
+        "F5_runs/",
+        "F5_runs/"
+      ],
+      "context": "| 证据图构建 | [`scale1m/build_graph_rf.py`](../../scale1m/build_graph_rf.py) | [`图报告`](F5_runs/GRAPH_REPORT.json)、[`谱系报告`](F5_runs/lineage_stats.json) |"
+    },
+    {
+      "language": "zh",
+      "kind": "stale_other_series_result",
+      "line": 768,
+      "matches": [
+        "F5_runs/"
+      ],
+      "context": "| 泄漏受控划分 | [`stage2TrainGraphSAGE/d0_splits.py`](../../stage2TrainGraphSAGE/d0_splits.py) | [`划分审计`](F5_runs/f5_splits.json) |"
+    },
+    {
+      "language": "zh",
+      "kind": "stale_other_series_result",
+      "line": 771,
+      "matches": [
+        "X5_runs/"
+      ],
+      "context": "| Held-out 导出与精确稠密排名 | [`scale1m/export_rf.py`](../../scale1m/export_rf.py)、[`scale/global_metrics.py`](../../scale/global_metrics.py) | [`稠密合格查询指标`](X5_runs/X5_GD_ELIGIBILITY.json) |"
+    },
+    {
+      "language": "zh",
+      "kind": "stale_other_series_result",
+      "line": 772,
+      "matches": [
+        "X6_runs/"
+      ],
+      "context": "| 三百万候选基线 | [`scale1m/baselines.py`](../../scale1m/baselines.py)、[`scale1m/eval_x6.py`](../../scale1m/eval_x6.py) | [`免训练基线报告`](X6_runs/X6_BASELINES.training_free.json) |"
+    },
+    {
+      "language": "zh",
+      "kind": "stale_other_series_result",
+      "line": 773,
+      "matches": [
+        "Y2_runs/",
+        "Y2_REPORT.json"
+      ],
+      "context": "| Split-safe 任务 sidecar | [`stage3HNSW/build_prior_sidecar.py`](../../stage3HNSW/build_prior_sidecar.py)、[`scale1m/eval_rf.py`](../../scale1m/eval_rf.py) | [`Y2 报告`](Y2_runs/Y2_REPORT.json) |"
+    },
+    {
+      "language": "zh",
+      "kind": "stale_other_series_result",
+      "line": 774,
+      "matches": [
+        "Y2_runs/",
+        "Y2_REPORT.json"
+      ],
+      "context": "| HNSW top-1,000 与确定性重排 | [`scale1m/eval_y2.py`](../../scale1m/eval_y2.py)、[`scale/export_ours.py`](../../scale/export_ours.py) | [`Y2 报告`](Y2_runs/Y2_REPORT.json) |"
+    },
+    {
+      "language": "zh",
+      "kind": "stale_other_series_result",
+      "line": 775,
+      "matches": [
+        "Y4_runs/",
+        "Y4_REPORT.json"
+      ],
+      "context": "| 最终 K=1,000 检索与计时 | [`scale1m/eval_y4.py`](../../scale1m/eval_y4.py) | [`Y4 报告`](Y4_runs/Y4_REPORT.json) |"
+    }
+  ],
+  "broken_links": [],
+  "unclosed_fences": []
+}

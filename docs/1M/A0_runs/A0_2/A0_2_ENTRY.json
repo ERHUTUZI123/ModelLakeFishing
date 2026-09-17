@@ -1,0 +1,46 @@
+{
+  "stage": "A0.2",
+  "started_at_utc": "2026-09-13T00:46:16.720939+00:00",
+  "A0_1_manifest_verified": true,
+  "source_sha256": "6c7d883734fb9a05ca99c4a8409e366955c86ba2e644bd5328c9ba696ff344cd",
+  "snapshots": {
+    "A0.md": {
+      "source": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0.md",
+      "snapshot": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_2\\frozen\\A0.md",
+      "sha256": "90a86143b07428fdb9e5c0df9d0fb19b263bdb2e2a0f0d0f669d7cd0de2e138b"
+    },
+    "A0.1.md": {
+      "source": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0.1.md",
+      "snapshot": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_2\\frozen\\A0.1.md",
+      "sha256": "a64c8d48ed836d51f8dd9d0ec91ae37f44bc4276b9b64afde923c91acffeefae"
+    },
+    "A0_SOURCE_MANIFEST.json": {
+      "source": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_SOURCE_MANIFEST.json",
+      "snapshot": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_2\\frozen\\A0_SOURCE_MANIFEST.json",
+      "sha256": "bb70037e443699d98a4909bc2cc522d35b5dcdeb686113bdbe201e7b4ed058c1"
+    },
+    "A0_PROTOCOL.json": {
+      "source": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_PROTOCOL.json",
+      "snapshot": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_2\\frozen\\A0_PROTOCOL.json",
+      "sha256": "cf5f9b543cc26176b416a24e44a3faf22369d094360d7d57d5e5d0de465eef64"
+    },
+    "A0_METRIC_INVENTORY.json": {
+      "source": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_METRIC_INVENTORY.json",
+      "snapshot": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_2\\frozen\\A0_METRIC_INVENTORY.json",
+      "sha256": "1a12a3f48cc463e72cefc36c59a4a43febf61f57fc347770305974ebfc4f196a"
+    },
+    "A0_COMMANDS.md": {
+      "source": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_COMMANDS.md",
+      "snapshot": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_2\\frozen\\A0_COMMANDS.md",
+      "sha256": "421259e86a3acde15d91f4700e4e7d25bb136ca4c0869e2339f13b3249272061"
+    },
+    "A0_DISCREPANCIES.md": {
+      "source": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_DISCREPANCIES.md",
+      "snapshot": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_2\\frozen\\A0_DISCREPANCIES.md",
+      "sha256": "6465ee2dca0eaa4c0796c22a48b63310d8f93b8201addb9f0fd1a14eea0644f2"
+    }
+  },
+  "git_head": "dd57c5c3f8e1787ee843872bc7c395d2f4c5c595",
+  "status_sha256": "2bed1efe409057ecfb5137457e6bb66669ef4a7b410e470f61bedbaa378fa5ce",
+  "authorized_scope": "A0.2 implementation, fixture verification, prepare new graph; A0.3 full regression/smoke and formal training not executed"
+}

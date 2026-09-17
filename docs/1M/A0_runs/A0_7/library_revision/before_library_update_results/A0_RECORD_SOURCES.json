@@ -1,0 +1,876 @@
+{
+  "schema_version": "a0.record-sources.v1",
+  "run_id": "A0_20260912",
+  "sources": [
+    {
+      "id": "frozen_input_audit.candidate_models.shared",
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_6\\inputs\\audit\\A0_INPUT_AUDIT.json",
+      "sha256": "55cd3dce0fb53371eb3b996dd82c53f8808764b6b2120ea399960d86f53769d5",
+      "pointer": "/measurements/model_rows",
+      "operation": "json_record"
+    },
+    {
+      "id": "frozen_input_audit.dataset_task_nodes.shared",
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_6\\inputs\\audit\\A0_INPUT_AUDIT.json",
+      "sha256": "55cd3dce0fb53371eb3b996dd82c53f8808764b6b2120ea399960d86f53769d5",
+      "pointer": "/measurements/dataset_task_rows",
+      "operation": "json_record"
+    },
+    {
+      "id": "frozen_input_audit.historical_only_models.shared",
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_6\\inputs\\audit\\A0_INPUT_AUDIT.json",
+      "sha256": "55cd3dce0fb53371eb3b996dd82c53f8808764b6b2120ea399960d86f53769d5",
+      "pointer": "/measurements/historical_appended_rows",
+      "operation": "json_record"
+    },
+    {
+      "id": "frozen_input_audit.matched_card_nodes.shared",
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_6\\inputs\\audit\\A0_INPUT_AUDIT.json",
+      "sha256": "55cd3dce0fb53371eb3b996dd82c53f8808764b6b2120ea399960d86f53769d5",
+      "pointer": "/measurements/matched_cards",
+      "operation": "json_record"
+    },
+    {
+      "id": "frozen_input_audit.stored_total_directed_edges.shared",
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_6\\inputs\\audit\\A0_INPUT_AUDIT.json",
+      "sha256": "55cd3dce0fb53371eb3b996dd82c53f8808764b6b2120ea399960d86f53769d5",
+      "pointer": "/measurements/total_directed_edges",
+      "operation": "json_record"
+    },
+    {
+      "id": "frozen_input_audit.family_vocab_rows.shared",
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_6\\inputs\\audit\\A0_INPUT_AUDIT.json",
+      "sha256": "55cd3dce0fb53371eb3b996dd82c53f8808764b6b2120ea399960d86f53769d5",
+      "pointer": "/measurements/family_vocab_rows",
+      "operation": "json_record"
+    },
+    {
+      "id": "frozen_input_audit.trained_on_edges.shared",
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_6\\inputs\\audit\\A0_INPUT_AUDIT.json",
+      "sha256": "55cd3dce0fb53371eb3b996dd82c53f8808764b6b2120ea399960d86f53769d5",
+      "pointer": "/measurements/relation_counts/model__trained_on__dataset",
+      "operation": "json_record"
+    },
+    {
+      "id": "frozen_input_audit.rev_trained_on_edges.shared",
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_6\\inputs\\audit\\A0_INPUT_AUDIT.json",
+      "sha256": "55cd3dce0fb53371eb3b996dd82c53f8808764b6b2120ea399960d86f53769d5",
+      "pointer": "/measurements/relation_counts/dataset__rev_trained_on__model",
+      "operation": "json_record"
+    },
+    {
+      "id": "frozen_input_audit.stored_similar_to_edges.shared",
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_6\\inputs\\audit\\A0_INPUT_AUDIT.json",
+      "sha256": "55cd3dce0fb53371eb3b996dd82c53f8808764b6b2120ea399960d86f53769d5",
+      "pointer": "/measurements/relation_counts/dataset__similar_to__dataset",
+      "operation": "json_record"
+    },
+    {
+      "id": "frozen_input_audit.is_base_of_edges.shared",
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_6\\inputs\\audit\\A0_INPUT_AUDIT.json",
+      "sha256": "55cd3dce0fb53371eb3b996dd82c53f8808764b6b2120ea399960d86f53769d5",
+      "pointer": "/measurements/relation_counts/model__is_base_of__model",
+      "operation": "json_record"
+    },
+    {
+      "id": "frozen_input_audit.rev_is_base_of_edges.shared",
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_6\\inputs\\audit\\A0_INPUT_AUDIT.json",
+      "sha256": "55cd3dce0fb53371eb3b996dd82c53f8808764b6b2120ea399960d86f53769d5",
+      "pointer": "/measurements/relation_counts/model__rev_is_base_of__model",
+      "operation": "json_record"
+    },
+    {
+      "id": "frozen_input_audit.retained_modellens_v2_edges.shared",
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_6\\inputs\\audit\\A0_INPUT_AUDIT.json",
+      "sha256": "55cd3dce0fb53371eb3b996dd82c53f8808764b6b2120ea399960d86f53769d5",
+      "pointer": "/measurements/supervision_source_counts/modellens_v2",
+      "operation": "json_record"
+    },
+    {
+      "id": "frozen_input_audit.retained_hf_model_index_edges.shared",
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_6\\inputs\\audit\\A0_INPUT_AUDIT.json",
+      "sha256": "55cd3dce0fb53371eb3b996dd82c53f8808764b6b2120ea399960d86f53769d5",
+      "pointer": "/measurements/supervision_source_counts/hf_model_index",
+      "operation": "json_record"
+    },
+    {
+      "id": "frozen_input_audit.retained_d0_v1_5_edges.shared",
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_6\\inputs\\audit\\A0_INPUT_AUDIT.json",
+      "sha256": "55cd3dce0fb53371eb3b996dd82c53f8808764b6b2120ea399960d86f53769d5",
+      "pointer": "/measurements/supervision_source_counts/d0_v1_5",
+      "operation": "json_record"
+    },
+    {
+      "id": "frozen_input_audit.retained_hf_effective_edges.shared",
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_6\\inputs\\audit\\A0_INPUT_AUDIT.json",
+      "sha256": "55cd3dce0fb53371eb3b996dd82c53f8808764b6b2120ea399960d86f53769d5",
+      "pointer": "/measurements/supervision_source_counts/hf_effective",
+      "operation": "json_record"
+    },
+    {
+      "id": "frozen_input_audit.retained_a_ctrl_2000m_edges.shared",
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_6\\inputs\\audit\\A0_INPUT_AUDIT.json",
+      "sha256": "55cd3dce0fb53371eb3b996dd82c53f8808764b6b2120ea399960d86f53769d5",
+      "pointer": "/measurements/supervision_source_counts/a_ctrl_2000m",
+      "operation": "json_record"
+    },
+    {
+      "id": "frozen_input_audit.retained_diverse_zoo_edges.shared",
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_6\\inputs\\audit\\A0_INPUT_AUDIT.json",
+      "sha256": "55cd3dce0fb53371eb3b996dd82c53f8808764b6b2120ea399960d86f53769d5",
+      "pointer": "/measurements/supervision_source_counts/diverse_zoo",
+      "operation": "json_record"
+    },
+    {
+      "id": "frozen_input_audit.supervision_edges.shared",
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_6\\inputs\\audit\\A0_INPUT_AUDIT.json",
+      "sha256": "55cd3dce0fb53371eb3b996dd82c53f8808764b6b2120ea399960d86f53769d5",
+      "pointer": "/measurements/canonical_parquet_rows/supervision_merged.parquet",
+      "operation": "json_record"
+    },
+    {
+      "id": "frozen_input_audit.matched_card_percent.shared",
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_6\\inputs\\audit\\A0_INPUT_AUDIT.json",
+      "sha256": "55cd3dce0fb53371eb3b996dd82c53f8808764b6b2120ea399960d86f53769d5",
+      "pointer": "/measurements/matched_cards",
+      "operation": "ratio",
+      "scale": 100,
+      "numerator_pointer": "/measurements/matched_cards",
+      "denominator_pointer": "/measurements/dataset_task_rows"
+    },
+    {
+      "id": "frozen_input_audit.resolved_lineage_percent.shared",
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_6\\inputs\\audit\\A0_INPUT_REVIEW.json",
+      "sha256": "e5115c33b8d7a898b7e44bbb5cbadd50f915efebf7fdf492b2247f1b71f18e31",
+      "pointer": "/lineage_reconstruction/resolved_nonself_edges",
+      "operation": "ratio",
+      "scale": 100,
+      "numerator_pointer": "/lineage_reconstruction/resolved_nonself_edges",
+      "denominator_pointer": "/lineage_reconstruction/declared"
+    },
+    {
+      "id": "frozen_input_audit.input_file_bytes.shared",
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_6\\inputs\\audit\\A0_INPUT_AUDIT.json",
+      "sha256": "55cd3dce0fb53371eb3b996dd82c53f8808764b6b2120ea399960d86f53769d5",
+      "pointer": "/files",
+      "operation": "audit_files"
+    },
+    {
+      "id": "frozen_input_audit.rowmap_identity_and_endpoint_checks.shared",
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_6\\inputs\\audit\\A0_INPUT_AUDIT.json",
+      "sha256": "55cd3dce0fb53371eb3b996dd82c53f8808764b6b2120ea399960d86f53769d5",
+      "pointer": "/checks",
+      "operation": "audit_checks",
+      "name_contains": [
+        "rowmap",
+        "contiguous_physical_order",
+        "equal_ladder",
+        "endpoint",
+        "node_id_order",
+        "node_serialization",
+        "roots_match",
+        "historical_suffix"
+      ]
+    },
+    {
+      "id": "frozen_input_audit.input_hash_match.shared",
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_6\\inputs\\audit\\A0_INPUT_AUDIT.json",
+      "sha256": "55cd3dce0fb53371eb3b996dd82c53f8808764b6b2120ea399960d86f53769d5",
+      "pointer": "/checks",
+      "operation": "audit_checks",
+      "name_contains": [
+        "hash:",
+        "input_unchanged:",
+        "file_stable:",
+        "source_stable"
+      ]
+    },
+    {
+      "id": "frozen_input_audit.snapshot_unique_models.shared",
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_6\\inputs\\audit\\A0_SNAPSHOT_AUDIT.json",
+      "sha256": "452e058fa80180f93118106a982f0f0f3f72a84fb5e4cf5d24ba189dbfce6078",
+      "pointer": "/snapshots/0/measured/unique_normalized_repository_ids",
+      "operation": "json_record"
+    },
+    {
+      "id": "frozen_input_audit.model_snapshot_shards.shared",
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_6\\inputs\\audit\\A0_SNAPSHOT_AUDIT.json",
+      "sha256": "452e058fa80180f93118106a982f0f0f3f72a84fb5e4cf5d24ba189dbfce6078",
+      "pointer": "/snapshots/0/measured/shards",
+      "operation": "json_record"
+    },
+    {
+      "id": "frozen_input_audit.snapshot_dataset_repositories.shared",
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_6\\inputs\\audit\\A0_SNAPSHOT_AUDIT.json",
+      "sha256": "452e058fa80180f93118106a982f0f0f3f72a84fb5e4cf5d24ba189dbfce6078",
+      "pointer": "/snapshots/1/measured/unique_raw_repository_ids",
+      "operation": "json_record"
+    },
+    {
+      "id": "frozen_input_audit.dataset_snapshot_shards.shared",
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_6\\inputs\\audit\\A0_SNAPSHOT_AUDIT.json",
+      "sha256": "452e058fa80180f93118106a982f0f0f3f72a84fb5e4cf5d24ba189dbfce6078",
+      "pointer": "/snapshots/1/measured/shards",
+      "operation": "json_record"
+    },
+    {
+      "id": "pipeline_cost.export_seconds.0",
+      "path": "D:\\research\\model_lake\\data\\data1m\\a0_20260912\\exports\\A0GD_full_s0_e25\\EXPORT_MANIFEST.json",
+      "sha256": "aa0a9cace4bec7c07aded899c5af7e546e93f9596de34dfb325362f4e6a938af",
+      "pointer": "/stages/embed/export_segments",
+      "operation": "duration_ns",
+      "envelope_pointer": "/stages/embed/a0"
+    },
+    {
+      "id": "reproducibility_checks.chunked_inference_agreement.0",
+      "path": "D:\\research\\model_lake\\data\\data1m\\a0_20260912\\exports\\A0GD_full_s0_e25\\EXPORT_MANIFEST.json",
+      "sha256": "aa0a9cace4bec7c07aded899c5af7e546e93f9596de34dfb325362f4e6a938af",
+      "pointer": "/stages/embed/gates/2",
+      "operation": "passed_gate",
+      "envelope_pointer": "/stages/embed/a0"
+    },
+    {
+      "id": "pipeline_cost.training_seconds.0",
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_4\\delivery_s0\\A0_RUN_RECORDS.json",
+      "sha256": "81adb0fd3714b7e16303a97b655f4b3841a70ed36710e8322c1da8ae773ba72b",
+      "pointer": "/train_segments",
+      "operation": "duration_ns",
+      "envelope_pointer": "/a0"
+    },
+    {
+      "id": "pipeline_cost.training_peak_rss_bytes.0",
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_4\\delivery_s0\\A0_RUN_RECORDS.json",
+      "sha256": "81adb0fd3714b7e16303a97b655f4b3841a70ed36710e8322c1da8ae773ba72b",
+      "pointer": "/peak_process_rss_bytes",
+      "operation": "max",
+      "envelope_pointer": "/a0"
+    },
+    {
+      "id": "pipeline_cost.training_peak_vram_bytes.0",
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_4\\delivery_s0\\A0_RUN_RECORDS.json",
+      "sha256": "81adb0fd3714b7e16303a97b655f4b3841a70ed36710e8322c1da8ae773ba72b",
+      "pointer": "/peak_gpu_allocated_bytes",
+      "operation": "max",
+      "envelope_pointer": "/a0"
+    },
+    {
+      "id": "training_records.epochs_completed.0",
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_4\\delivery_s0\\A0_RUN_RECORDS.json",
+      "sha256": "81adb0fd3714b7e16303a97b655f4b3841a70ed36710e8322c1da8ae773ba72b",
+      "pointer": "/epochs",
+      "operation": "json_record",
+      "envelope_pointer": "/a0"
+    },
+    {
+      "id": "training_records.initialization_seed.0",
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_4\\delivery_s0\\A0_RUN_RECORDS.json",
+      "sha256": "81adb0fd3714b7e16303a97b655f4b3841a70ed36710e8322c1da8ae773ba72b",
+      "pointer": "/initialization_seed",
+      "operation": "json_record",
+      "envelope_pointer": "/a0"
+    },
+    {
+      "id": "training_records.split_seed.0",
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_4\\delivery_s0\\A0_RUN_RECORDS.json",
+      "sha256": "81adb0fd3714b7e16303a97b655f4b3841a70ed36710e8322c1da8ae773ba72b",
+      "pointer": "/a0/seed",
+      "operation": "json_record",
+      "envelope_pointer": "/a0"
+    },
+    {
+      "id": "training_records.effective_resolved_config.0",
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_4\\delivery_s0\\A0_RUN_RECORDS.json",
+      "sha256": "81adb0fd3714b7e16303a97b655f4b3841a70ed36710e8322c1da8ae773ba72b",
+      "pointer": "/resolved_config",
+      "operation": "json_record",
+      "envelope_pointer": "/a0"
+    },
+    {
+      "id": "training_records.mechanism_gate.0",
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_4\\delivery_s0\\A0_RUN_RECORDS.json",
+      "sha256": "81adb0fd3714b7e16303a97b655f4b3841a70ed36710e8322c1da8ae773ba72b",
+      "pointer": "/mechanism_gate",
+      "operation": "json_record",
+      "envelope_pointer": "/a0"
+    },
+    {
+      "id": "training_records.all_existing_epoch_fields.0",
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_4\\delivery_s0\\A0_RUN_RECORDS.json",
+      "sha256": "81adb0fd3714b7e16303a97b655f4b3841a70ed36710e8322c1da8ae773ba72b",
+      "pointer": "/history",
+      "operation": "json_record",
+      "envelope_pointer": "/a0"
+    },
+    {
+      "id": "training_records.disabled_diagnostics.0",
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_4\\delivery_s0\\A0_RUN_RECORDS.json",
+      "sha256": "81adb0fd3714b7e16303a97b655f4b3841a70ed36710e8322c1da8ae773ba72b",
+      "pointer": "/resolved_config",
+      "operation": "disabled",
+      "envelope_pointer": "/a0",
+      "reason": "Frozen original skip_diagnostics=True; no disabled measurement replaced by zero"
+    },
+    {
+      "id": "reproducibility.runtime_environment.0",
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_4\\delivery_s0\\A0_RUN_RECORDS.json",
+      "sha256": "81adb0fd3714b7e16303a97b655f4b3841a70ed36710e8322c1da8ae773ba72b",
+      "pointer": "/runtime_environment",
+      "operation": "json_record",
+      "envelope_pointer": "/a0"
+    },
+    {
+      "id": "training_records.total_loss_by_epoch.0",
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_4\\delivery_s0\\A0_RUN_RECORDS.json",
+      "sha256": "81adb0fd3714b7e16303a97b655f4b3841a70ed36710e8322c1da8ae773ba72b",
+      "pointer": "/history",
+      "operation": "epoch_field",
+      "field": "total"
+    },
+    {
+      "id": "training_records.total_loss_final_epoch.0",
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_4\\delivery_s0\\A0_RUN_RECORDS.json",
+      "sha256": "81adb0fd3714b7e16303a97b655f4b3841a70ed36710e8322c1da8ae773ba72b",
+      "pointer": "/history",
+      "operation": "epoch_final_field",
+      "field": "total"
+    },
+    {
+      "id": "training_records.rank_loss_by_epoch.0",
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_4\\delivery_s0\\A0_RUN_RECORDS.json",
+      "sha256": "81adb0fd3714b7e16303a97b655f4b3841a70ed36710e8322c1da8ae773ba72b",
+      "pointer": "/history",
+      "operation": "epoch_field",
+      "field": "rank"
+    },
+    {
+      "id": "training_records.rank_loss_final_epoch.0",
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_4\\delivery_s0\\A0_RUN_RECORDS.json",
+      "sha256": "81adb0fd3714b7e16303a97b655f4b3841a70ed36710e8322c1da8ae773ba72b",
+      "pointer": "/history",
+      "operation": "epoch_final_field",
+      "field": "rank"
+    },
+    {
+      "id": "training_records.contrast_loss_by_epoch.0",
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_4\\delivery_s0\\A0_RUN_RECORDS.json",
+      "sha256": "81adb0fd3714b7e16303a97b655f4b3841a70ed36710e8322c1da8ae773ba72b",
+      "pointer": "/history",
+      "operation": "epoch_field",
+      "field": "contrast"
+    },
+    {
+      "id": "training_records.contrast_loss_final_epoch.0",
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_4\\delivery_s0\\A0_RUN_RECORDS.json",
+      "sha256": "81adb0fd3714b7e16303a97b655f4b3841a70ed36710e8322c1da8ae773ba72b",
+      "pointer": "/history",
+      "operation": "epoch_final_field",
+      "field": "contrast"
+    },
+    {
+      "id": "training_records.global_loss_by_epoch.0",
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_4\\delivery_s0\\A0_RUN_RECORDS.json",
+      "sha256": "81adb0fd3714b7e16303a97b655f4b3841a70ed36710e8322c1da8ae773ba72b",
+      "pointer": "/history",
+      "operation": "epoch_field",
+      "field": "global"
+    },
+    {
+      "id": "training_records.global_loss_final_epoch.0",
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_4\\delivery_s0\\A0_RUN_RECORDS.json",
+      "sha256": "81adb0fd3714b7e16303a97b655f4b3841a70ed36710e8322c1da8ae773ba72b",
+      "pointer": "/history",
+      "operation": "epoch_final_field",
+      "field": "global"
+    },
+    {
+      "id": "pipeline_cost.prior_build_seconds.0",
+      "path": "D:\\research\\model_lake\\data\\data1m\\a0_20260912\\exports\\A0GD_full_s0_e25\\prior_sidecar_s0_meta.json",
+      "sha256": "c26b561e6618f29d49da4ce6980ada83cf4e6f22005baead81353f3e7baf1917",
+      "pointer": "/prior_build_segments",
+      "operation": "duration_ns",
+      "envelope_pointer": "/a0"
+    },
+    {
+      "id": "pipeline_cost.exact_full_reference_seconds.0",
+      "path": "D:\\research\\model_lake\\data\\data1m\\a0_20260912\\metrics\\A0_EVAL_RECORDS_s0.json",
+      "sha256": "e03a4f6bff3f56c49b8fd4ff44ee8e7754d6f5010a3e6a21aceadbff38e6de80",
+      "pointer": "/exact_segments",
+      "operation": "duration_ns",
+      "envelope_pointer": "/a0"
+    },
+    {
+      "id": "pipeline_cost.exact1000_reference_seconds.0",
+      "path": "D:\\research\\model_lake\\data\\data1m\\a0_20260912\\metrics\\A0_EVAL_RECORDS_s0.json",
+      "sha256": "e03a4f6bff3f56c49b8fd4ff44ee8e7754d6f5010a3e6a21aceadbff38e6de80",
+      "pointer": "/exact_segments",
+      "operation": "duration_ns",
+      "envelope_pointer": "/a0"
+    },
+    {
+      "id": "pipeline_cost.complete_evaluation_seconds.0",
+      "path": "D:\\research\\model_lake\\data\\data1m\\a0_20260912\\metrics\\A0_EVAL_RECORDS_s0.json",
+      "sha256": "e03a4f6bff3f56c49b8fd4ff44ee8e7754d6f5010a3e6a21aceadbff38e6de80",
+      "pointer": "",
+      "operation": "evaluation_duration_ns",
+      "envelope_pointer": "/a0"
+    },
+    {
+      "id": "pipeline_cost.evaluation_peak_rss_bytes.0",
+      "path": "D:\\research\\model_lake\\data\\data1m\\a0_20260912\\metrics\\A0_EVAL_RECORDS_s0.json",
+      "sha256": "e03a4f6bff3f56c49b8fd4ff44ee8e7754d6f5010a3e6a21aceadbff38e6de80",
+      "pointer": "",
+      "operation": "evaluation_peak",
+      "envelope_pointer": "/a0",
+      "field": "rss_bytes"
+    },
+    {
+      "id": "pipeline_cost.evaluation_peak_vram_bytes.0",
+      "path": "D:\\research\\model_lake\\data\\data1m\\a0_20260912\\metrics\\A0_EVAL_RECORDS_s0.json",
+      "sha256": "e03a4f6bff3f56c49b8fd4ff44ee8e7754d6f5010a3e6a21aceadbff38e6de80",
+      "pointer": "",
+      "operation": "evaluation_peak",
+      "envelope_pointer": "/a0",
+      "field": "vram_bytes"
+    },
+    {
+      "id": "pipeline_cost.export_seconds.1",
+      "path": "D:\\research\\model_lake\\data\\data1m\\a0_20260912\\exports\\A0GD_full_s1_e25\\EXPORT_MANIFEST.json",
+      "sha256": "2897091182d336efee25ed9f2815a74a9beb7995398491441c75839bf94805a0",
+      "pointer": "/stages/embed/export_segments",
+      "operation": "duration_ns",
+      "envelope_pointer": "/stages/embed/a0"
+    },
+    {
+      "id": "reproducibility_checks.chunked_inference_agreement.1",
+      "path": "D:\\research\\model_lake\\data\\data1m\\a0_20260912\\exports\\A0GD_full_s1_e25\\EXPORT_MANIFEST.json",
+      "sha256": "2897091182d336efee25ed9f2815a74a9beb7995398491441c75839bf94805a0",
+      "pointer": "/stages/embed/gates/2",
+      "operation": "passed_gate",
+      "envelope_pointer": "/stages/embed/a0"
+    },
+    {
+      "id": "pipeline_cost.training_seconds.1",
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_4\\delivery_s1\\A0_RUN_RECORDS.json",
+      "sha256": "4978533cb5e843aceee4ebdb86daa28b0f94a537850903ab0d328be2d59dd7ce",
+      "pointer": "/train_segments",
+      "operation": "duration_ns",
+      "envelope_pointer": "/a0"
+    },
+    {
+      "id": "pipeline_cost.training_peak_rss_bytes.1",
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_4\\delivery_s1\\A0_RUN_RECORDS.json",
+      "sha256": "4978533cb5e843aceee4ebdb86daa28b0f94a537850903ab0d328be2d59dd7ce",
+      "pointer": "/peak_process_rss_bytes",
+      "operation": "max",
+      "envelope_pointer": "/a0"
+    },
+    {
+      "id": "pipeline_cost.training_peak_vram_bytes.1",
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_4\\delivery_s1\\A0_RUN_RECORDS.json",
+      "sha256": "4978533cb5e843aceee4ebdb86daa28b0f94a537850903ab0d328be2d59dd7ce",
+      "pointer": "/peak_gpu_allocated_bytes",
+      "operation": "max",
+      "envelope_pointer": "/a0"
+    },
+    {
+      "id": "training_records.epochs_completed.1",
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_4\\delivery_s1\\A0_RUN_RECORDS.json",
+      "sha256": "4978533cb5e843aceee4ebdb86daa28b0f94a537850903ab0d328be2d59dd7ce",
+      "pointer": "/epochs",
+      "operation": "json_record",
+      "envelope_pointer": "/a0"
+    },
+    {
+      "id": "training_records.initialization_seed.1",
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_4\\delivery_s1\\A0_RUN_RECORDS.json",
+      "sha256": "4978533cb5e843aceee4ebdb86daa28b0f94a537850903ab0d328be2d59dd7ce",
+      "pointer": "/initialization_seed",
+      "operation": "json_record",
+      "envelope_pointer": "/a0"
+    },
+    {
+      "id": "training_records.split_seed.1",
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_4\\delivery_s1\\A0_RUN_RECORDS.json",
+      "sha256": "4978533cb5e843aceee4ebdb86daa28b0f94a537850903ab0d328be2d59dd7ce",
+      "pointer": "/a0/seed",
+      "operation": "json_record",
+      "envelope_pointer": "/a0"
+    },
+    {
+      "id": "training_records.effective_resolved_config.1",
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_4\\delivery_s1\\A0_RUN_RECORDS.json",
+      "sha256": "4978533cb5e843aceee4ebdb86daa28b0f94a537850903ab0d328be2d59dd7ce",
+      "pointer": "/resolved_config",
+      "operation": "json_record",
+      "envelope_pointer": "/a0"
+    },
+    {
+      "id": "training_records.mechanism_gate.1",
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_4\\delivery_s1\\A0_RUN_RECORDS.json",
+      "sha256": "4978533cb5e843aceee4ebdb86daa28b0f94a537850903ab0d328be2d59dd7ce",
+      "pointer": "/mechanism_gate",
+      "operation": "json_record",
+      "envelope_pointer": "/a0"
+    },
+    {
+      "id": "training_records.all_existing_epoch_fields.1",
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_4\\delivery_s1\\A0_RUN_RECORDS.json",
+      "sha256": "4978533cb5e843aceee4ebdb86daa28b0f94a537850903ab0d328be2d59dd7ce",
+      "pointer": "/history",
+      "operation": "json_record",
+      "envelope_pointer": "/a0"
+    },
+    {
+      "id": "training_records.disabled_diagnostics.1",
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_4\\delivery_s1\\A0_RUN_RECORDS.json",
+      "sha256": "4978533cb5e843aceee4ebdb86daa28b0f94a537850903ab0d328be2d59dd7ce",
+      "pointer": "/resolved_config",
+      "operation": "disabled",
+      "envelope_pointer": "/a0",
+      "reason": "Frozen original skip_diagnostics=True; no disabled measurement replaced by zero"
+    },
+    {
+      "id": "reproducibility.runtime_environment.1",
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_4\\delivery_s1\\A0_RUN_RECORDS.json",
+      "sha256": "4978533cb5e843aceee4ebdb86daa28b0f94a537850903ab0d328be2d59dd7ce",
+      "pointer": "/runtime_environment",
+      "operation": "json_record",
+      "envelope_pointer": "/a0"
+    },
+    {
+      "id": "training_records.total_loss_by_epoch.1",
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_4\\delivery_s1\\A0_RUN_RECORDS.json",
+      "sha256": "4978533cb5e843aceee4ebdb86daa28b0f94a537850903ab0d328be2d59dd7ce",
+      "pointer": "/history",
+      "operation": "epoch_field",
+      "field": "total"
+    },
+    {
+      "id": "training_records.total_loss_final_epoch.1",
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_4\\delivery_s1\\A0_RUN_RECORDS.json",
+      "sha256": "4978533cb5e843aceee4ebdb86daa28b0f94a537850903ab0d328be2d59dd7ce",
+      "pointer": "/history",
+      "operation": "epoch_final_field",
+      "field": "total"
+    },
+    {
+      "id": "training_records.rank_loss_by_epoch.1",
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_4\\delivery_s1\\A0_RUN_RECORDS.json",
+      "sha256": "4978533cb5e843aceee4ebdb86daa28b0f94a537850903ab0d328be2d59dd7ce",
+      "pointer": "/history",
+      "operation": "epoch_field",
+      "field": "rank"
+    },
+    {
+      "id": "training_records.rank_loss_final_epoch.1",
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_4\\delivery_s1\\A0_RUN_RECORDS.json",
+      "sha256": "4978533cb5e843aceee4ebdb86daa28b0f94a537850903ab0d328be2d59dd7ce",
+      "pointer": "/history",
+      "operation": "epoch_final_field",
+      "field": "rank"
+    },
+    {
+      "id": "training_records.contrast_loss_by_epoch.1",
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_4\\delivery_s1\\A0_RUN_RECORDS.json",
+      "sha256": "4978533cb5e843aceee4ebdb86daa28b0f94a537850903ab0d328be2d59dd7ce",
+      "pointer": "/history",
+      "operation": "epoch_field",
+      "field": "contrast"
+    },
+    {
+      "id": "training_records.contrast_loss_final_epoch.1",
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_4\\delivery_s1\\A0_RUN_RECORDS.json",
+      "sha256": "4978533cb5e843aceee4ebdb86daa28b0f94a537850903ab0d328be2d59dd7ce",
+      "pointer": "/history",
+      "operation": "epoch_final_field",
+      "field": "contrast"
+    },
+    {
+      "id": "training_records.global_loss_by_epoch.1",
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_4\\delivery_s1\\A0_RUN_RECORDS.json",
+      "sha256": "4978533cb5e843aceee4ebdb86daa28b0f94a537850903ab0d328be2d59dd7ce",
+      "pointer": "/history",
+      "operation": "epoch_field",
+      "field": "global"
+    },
+    {
+      "id": "training_records.global_loss_final_epoch.1",
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_4\\delivery_s1\\A0_RUN_RECORDS.json",
+      "sha256": "4978533cb5e843aceee4ebdb86daa28b0f94a537850903ab0d328be2d59dd7ce",
+      "pointer": "/history",
+      "operation": "epoch_final_field",
+      "field": "global"
+    },
+    {
+      "id": "pipeline_cost.prior_build_seconds.1",
+      "path": "D:\\research\\model_lake\\data\\data1m\\a0_20260912\\exports\\A0GD_full_s1_e25\\prior_sidecar_s1_meta.json",
+      "sha256": "97ca2ab3d269f5b42c8c00272ea830cf3fe81298a8c51984606dc034523d46b9",
+      "pointer": "/prior_build_segments",
+      "operation": "duration_ns",
+      "envelope_pointer": "/a0"
+    },
+    {
+      "id": "pipeline_cost.exact_full_reference_seconds.1",
+      "path": "D:\\research\\model_lake\\data\\data1m\\a0_20260912\\metrics\\A0_EVAL_RECORDS_s1.json",
+      "sha256": "bca6cbee71b784a13d43722d6457c7bdaedfb4de70817e296009d067471ba4d7",
+      "pointer": "/exact_segments",
+      "operation": "duration_ns",
+      "envelope_pointer": "/a0"
+    },
+    {
+      "id": "pipeline_cost.exact1000_reference_seconds.1",
+      "path": "D:\\research\\model_lake\\data\\data1m\\a0_20260912\\metrics\\A0_EVAL_RECORDS_s1.json",
+      "sha256": "bca6cbee71b784a13d43722d6457c7bdaedfb4de70817e296009d067471ba4d7",
+      "pointer": "/exact_segments",
+      "operation": "duration_ns",
+      "envelope_pointer": "/a0"
+    },
+    {
+      "id": "pipeline_cost.complete_evaluation_seconds.1",
+      "path": "D:\\research\\model_lake\\data\\data1m\\a0_20260912\\metrics\\A0_EVAL_RECORDS_s1.json",
+      "sha256": "bca6cbee71b784a13d43722d6457c7bdaedfb4de70817e296009d067471ba4d7",
+      "pointer": "",
+      "operation": "evaluation_duration_ns",
+      "envelope_pointer": "/a0"
+    },
+    {
+      "id": "pipeline_cost.evaluation_peak_rss_bytes.1",
+      "path": "D:\\research\\model_lake\\data\\data1m\\a0_20260912\\metrics\\A0_EVAL_RECORDS_s1.json",
+      "sha256": "bca6cbee71b784a13d43722d6457c7bdaedfb4de70817e296009d067471ba4d7",
+      "pointer": "",
+      "operation": "evaluation_peak",
+      "envelope_pointer": "/a0",
+      "field": "rss_bytes"
+    },
+    {
+      "id": "pipeline_cost.evaluation_peak_vram_bytes.1",
+      "path": "D:\\research\\model_lake\\data\\data1m\\a0_20260912\\metrics\\A0_EVAL_RECORDS_s1.json",
+      "sha256": "bca6cbee71b784a13d43722d6457c7bdaedfb4de70817e296009d067471ba4d7",
+      "pointer": "",
+      "operation": "evaluation_peak",
+      "envelope_pointer": "/a0",
+      "field": "vram_bytes"
+    },
+    {
+      "id": "pipeline_cost.export_seconds.2",
+      "path": "D:\\research\\model_lake\\data\\data1m\\a0_20260912\\exports\\A0GD_full_s2_e25\\EXPORT_MANIFEST.json",
+      "sha256": "a2a6eb85c6fc57e459f20a371b2c45fe2f8adfbf349962b50f6e4dd8194a81de",
+      "pointer": "/stages/embed/export_segments",
+      "operation": "duration_ns",
+      "envelope_pointer": "/stages/embed/a0"
+    },
+    {
+      "id": "reproducibility_checks.chunked_inference_agreement.2",
+      "path": "D:\\research\\model_lake\\data\\data1m\\a0_20260912\\exports\\A0GD_full_s2_e25\\EXPORT_MANIFEST.json",
+      "sha256": "a2a6eb85c6fc57e459f20a371b2c45fe2f8adfbf349962b50f6e4dd8194a81de",
+      "pointer": "/stages/embed/gates/2",
+      "operation": "passed_gate",
+      "envelope_pointer": "/stages/embed/a0"
+    },
+    {
+      "id": "pipeline_cost.training_seconds.2",
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_4\\delivery_s2\\A0_RUN_RECORDS.json",
+      "sha256": "da5cfff51f0a25dfdfdd26f6c25176703dfcb3259365990de9c8f17938890e0b",
+      "pointer": "/train_segments",
+      "operation": "duration_ns",
+      "envelope_pointer": "/a0"
+    },
+    {
+      "id": "pipeline_cost.training_peak_rss_bytes.2",
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_4\\delivery_s2\\A0_RUN_RECORDS.json",
+      "sha256": "da5cfff51f0a25dfdfdd26f6c25176703dfcb3259365990de9c8f17938890e0b",
+      "pointer": "/peak_process_rss_bytes",
+      "operation": "max",
+      "envelope_pointer": "/a0"
+    },
+    {
+      "id": "pipeline_cost.training_peak_vram_bytes.2",
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_4\\delivery_s2\\A0_RUN_RECORDS.json",
+      "sha256": "da5cfff51f0a25dfdfdd26f6c25176703dfcb3259365990de9c8f17938890e0b",
+      "pointer": "/peak_gpu_allocated_bytes",
+      "operation": "max",
+      "envelope_pointer": "/a0"
+    },
+    {
+      "id": "training_records.epochs_completed.2",
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_4\\delivery_s2\\A0_RUN_RECORDS.json",
+      "sha256": "da5cfff51f0a25dfdfdd26f6c25176703dfcb3259365990de9c8f17938890e0b",
+      "pointer": "/epochs",
+      "operation": "json_record",
+      "envelope_pointer": "/a0"
+    },
+    {
+      "id": "training_records.initialization_seed.2",
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_4\\delivery_s2\\A0_RUN_RECORDS.json",
+      "sha256": "da5cfff51f0a25dfdfdd26f6c25176703dfcb3259365990de9c8f17938890e0b",
+      "pointer": "/initialization_seed",
+      "operation": "json_record",
+      "envelope_pointer": "/a0"
+    },
+    {
+      "id": "training_records.split_seed.2",
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_4\\delivery_s2\\A0_RUN_RECORDS.json",
+      "sha256": "da5cfff51f0a25dfdfdd26f6c25176703dfcb3259365990de9c8f17938890e0b",
+      "pointer": "/a0/seed",
+      "operation": "json_record",
+      "envelope_pointer": "/a0"
+    },
+    {
+      "id": "training_records.effective_resolved_config.2",
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_4\\delivery_s2\\A0_RUN_RECORDS.json",
+      "sha256": "da5cfff51f0a25dfdfdd26f6c25176703dfcb3259365990de9c8f17938890e0b",
+      "pointer": "/resolved_config",
+      "operation": "json_record",
+      "envelope_pointer": "/a0"
+    },
+    {
+      "id": "training_records.mechanism_gate.2",
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_4\\delivery_s2\\A0_RUN_RECORDS.json",
+      "sha256": "da5cfff51f0a25dfdfdd26f6c25176703dfcb3259365990de9c8f17938890e0b",
+      "pointer": "/mechanism_gate",
+      "operation": "json_record",
+      "envelope_pointer": "/a0"
+    },
+    {
+      "id": "training_records.all_existing_epoch_fields.2",
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_4\\delivery_s2\\A0_RUN_RECORDS.json",
+      "sha256": "da5cfff51f0a25dfdfdd26f6c25176703dfcb3259365990de9c8f17938890e0b",
+      "pointer": "/history",
+      "operation": "json_record",
+      "envelope_pointer": "/a0"
+    },
+    {
+      "id": "training_records.disabled_diagnostics.2",
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_4\\delivery_s2\\A0_RUN_RECORDS.json",
+      "sha256": "da5cfff51f0a25dfdfdd26f6c25176703dfcb3259365990de9c8f17938890e0b",
+      "pointer": "/resolved_config",
+      "operation": "disabled",
+      "envelope_pointer": "/a0",
+      "reason": "Frozen original skip_diagnostics=True; no disabled measurement replaced by zero"
+    },
+    {
+      "id": "reproducibility.runtime_environment.2",
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_4\\delivery_s2\\A0_RUN_RECORDS.json",
+      "sha256": "da5cfff51f0a25dfdfdd26f6c25176703dfcb3259365990de9c8f17938890e0b",
+      "pointer": "/runtime_environment",
+      "operation": "json_record",
+      "envelope_pointer": "/a0"
+    },
+    {
+      "id": "training_records.total_loss_by_epoch.2",
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_4\\delivery_s2\\A0_RUN_RECORDS.json",
+      "sha256": "da5cfff51f0a25dfdfdd26f6c25176703dfcb3259365990de9c8f17938890e0b",
+      "pointer": "/history",
+      "operation": "epoch_field",
+      "field": "total"
+    },
+    {
+      "id": "training_records.total_loss_final_epoch.2",
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_4\\delivery_s2\\A0_RUN_RECORDS.json",
+      "sha256": "da5cfff51f0a25dfdfdd26f6c25176703dfcb3259365990de9c8f17938890e0b",
+      "pointer": "/history",
+      "operation": "epoch_final_field",
+      "field": "total"
+    },
+    {
+      "id": "training_records.rank_loss_by_epoch.2",
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_4\\delivery_s2\\A0_RUN_RECORDS.json",
+      "sha256": "da5cfff51f0a25dfdfdd26f6c25176703dfcb3259365990de9c8f17938890e0b",
+      "pointer": "/history",
+      "operation": "epoch_field",
+      "field": "rank"
+    },
+    {
+      "id": "training_records.rank_loss_final_epoch.2",
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_4\\delivery_s2\\A0_RUN_RECORDS.json",
+      "sha256": "da5cfff51f0a25dfdfdd26f6c25176703dfcb3259365990de9c8f17938890e0b",
+      "pointer": "/history",
+      "operation": "epoch_final_field",
+      "field": "rank"
+    },
+    {
+      "id": "training_records.contrast_loss_by_epoch.2",
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_4\\delivery_s2\\A0_RUN_RECORDS.json",
+      "sha256": "da5cfff51f0a25dfdfdd26f6c25176703dfcb3259365990de9c8f17938890e0b",
+      "pointer": "/history",
+      "operation": "epoch_field",
+      "field": "contrast"
+    },
+    {
+      "id": "training_records.contrast_loss_final_epoch.2",
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_4\\delivery_s2\\A0_RUN_RECORDS.json",
+      "sha256": "da5cfff51f0a25dfdfdd26f6c25176703dfcb3259365990de9c8f17938890e0b",
+      "pointer": "/history",
+      "operation": "epoch_final_field",
+      "field": "contrast"
+    },
+    {
+      "id": "training_records.global_loss_by_epoch.2",
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_4\\delivery_s2\\A0_RUN_RECORDS.json",
+      "sha256": "da5cfff51f0a25dfdfdd26f6c25176703dfcb3259365990de9c8f17938890e0b",
+      "pointer": "/history",
+      "operation": "epoch_field",
+      "field": "global"
+    },
+    {
+      "id": "training_records.global_loss_final_epoch.2",
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\A0_4\\delivery_s2\\A0_RUN_RECORDS.json",
+      "sha256": "da5cfff51f0a25dfdfdd26f6c25176703dfcb3259365990de9c8f17938890e0b",
+      "pointer": "/history",
+      "operation": "epoch_final_field",
+      "field": "global"
+    },
+    {
+      "id": "pipeline_cost.prior_build_seconds.2",
+      "path": "D:\\research\\model_lake\\data\\data1m\\a0_20260912\\exports\\A0GD_full_s2_e25\\prior_sidecar_s2_meta.json",
+      "sha256": "c5987f28cb9a3aff74b34ac15a0a7f87d7f64010b3a463e162fcaac341ff382a",
+      "pointer": "/prior_build_segments",
+      "operation": "duration_ns",
+      "envelope_pointer": "/a0"
+    },
+    {
+      "id": "pipeline_cost.exact_full_reference_seconds.2",
+      "path": "D:\\research\\model_lake\\data\\data1m\\a0_20260912\\metrics\\A0_EVAL_RECORDS_s2.json",
+      "sha256": "263351123439572dff8b997c153daca60e190cac0f73a6afa69ee0434f768044",
+      "pointer": "/exact_segments",
+      "operation": "duration_ns",
+      "envelope_pointer": "/a0"
+    },
+    {
+      "id": "pipeline_cost.exact1000_reference_seconds.2",
+      "path": "D:\\research\\model_lake\\data\\data1m\\a0_20260912\\metrics\\A0_EVAL_RECORDS_s2.json",
+      "sha256": "263351123439572dff8b997c153daca60e190cac0f73a6afa69ee0434f768044",
+      "pointer": "/exact_segments",
+      "operation": "duration_ns",
+      "envelope_pointer": "/a0"
+    },
+    {
+      "id": "pipeline_cost.complete_evaluation_seconds.2",
+      "path": "D:\\research\\model_lake\\data\\data1m\\a0_20260912\\metrics\\A0_EVAL_RECORDS_s2.json",
+      "sha256": "263351123439572dff8b997c153daca60e190cac0f73a6afa69ee0434f768044",
+      "pointer": "",
+      "operation": "evaluation_duration_ns",
+      "envelope_pointer": "/a0"
+    },
+    {
+      "id": "pipeline_cost.evaluation_peak_rss_bytes.2",
+      "path": "D:\\research\\model_lake\\data\\data1m\\a0_20260912\\metrics\\A0_EVAL_RECORDS_s2.json",
+      "sha256": "263351123439572dff8b997c153daca60e190cac0f73a6afa69ee0434f768044",
+      "pointer": "",
+      "operation": "evaluation_peak",
+      "envelope_pointer": "/a0",
+      "field": "rss_bytes"
+    },
+    {
+      "id": "pipeline_cost.evaluation_peak_vram_bytes.2",
+      "path": "D:\\research\\model_lake\\data\\data1m\\a0_20260912\\metrics\\A0_EVAL_RECORDS_s2.json",
+      "sha256": "263351123439572dff8b997c153daca60e190cac0f73a6afa69ee0434f768044",
+      "pointer": "",
+      "operation": "evaluation_peak",
+      "envelope_pointer": "/a0",
+      "field": "vram_bytes"
+    }
+  ],
+  "missing_sources": [],
+  "note": "Only descriptors; no measured result values are supplied by this file."
+}

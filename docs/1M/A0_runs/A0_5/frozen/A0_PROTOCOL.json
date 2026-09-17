@@ -1,0 +1,572 @@
+{
+  "schema_version": "1.0",
+  "stage": "A0.1",
+  "status": "A0.1_complete_protocol_and_frozen_inputs_verified_A0.2_not_started",
+  "authority": {
+    "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\EVIDENCE_SOURCE_LIBRARY_en.md",
+    "sha256": "6c7d883734fb9a05ca99c4a8409e366955c86ba2e644bd5328c9ba696ff344cd",
+    "role": "sole authority for historical facts and published method",
+    "evidence_cutoff": "2026-09-06 America/Toronto",
+    "snapshot_copy": "frozen/EVIDENCE_SOURCE_LIBRARY_en.md",
+    "snapshot_copy_binding": "parent freeze confirms byte-identical SHA256; full binding in A0_SOURCE_MANIFEST.json"
+  },
+  "authorized_plan": {
+    "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0.md",
+    "sha256": "816f946292b9ceb997b9f55a60a261a5c1c1f18b5818d4568676d96bd4dda863",
+    "role": "authorized A0 change and execution contract, not an alternative historical source",
+    "snapshot_copy": "frozen/A0.before_A01.md",
+    "hash_scope": "Plan content at A0.1 entry, before feedback-only updates to live A0.md"
+  },
+  "historical_facts_policy": "Use only the authoritative English evidence source. F/X/Y/Z paths may locate code/artifacts; they cannot fill unpublished historical metric digits or override this protocol.",
+  "sole_final_system": "X4G+D (GD combined arm) -> held-out embeddings -> HNSW top-1000 -> task-prior fusion -> top-10",
+  "official_runs": [
+    {
+      "split_seed": 0,
+      "initialization_seed": 0,
+      "epochs": 25,
+      "name": "A0GD_full_s0_e25"
+    },
+    {
+      "split_seed": 1,
+      "initialization_seed": 0,
+      "epochs": 25,
+      "name": "A0GD_full_s1_e25"
+    },
+    {
+      "split_seed": 2,
+      "initialization_seed": 0,
+      "epochs": 25,
+      "name": "A0GD_full_s2_e25"
+    }
+  ],
+  "exact_references": [
+    {
+      "path": "exact1000_task_prior",
+      "purpose": "same new GD representations, queries and fusion; offline diagnostic only"
+    },
+    {
+      "path": "exact_full_lake_task_prior",
+      "purpose": "same new GD representations, queries and fusion; offline diagnostic only"
+    }
+  ],
+  "out_of_scope": [
+    "separate G or D training",
+    "NoGraph",
+    "BM25 or other baseline reruns",
+    "larger K pools",
+    "new fusion search",
+    "new dataset inductive encoding claim",
+    "A0.2 or later execution during A0.1"
+  ],
+  "permitted_changes": {
+    "feature_repair": {
+      "authorized_by": "A0.md sections 3-4",
+      "historical_definition": "evidence 3.5",
+      "array": "x_dataset",
+      "all_dataset_nodes": true,
+      "zero_based_columns": [
+        448,
+        449,
+        450,
+        451,
+        452,
+        453,
+        455
+      ],
+      "operation": "set exactly to 0.0 in new graph artifact and feature builder; no columns removed",
+      "old_stats": [
+        "log(1+n)",
+        "log(1+n)",
+        "mean",
+        "std",
+        "min",
+        "max",
+        "log(1+root_node_count)",
+        "gold_eligible",
+        0,
+        0
+      ],
+      "new_stats": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        "log(1+root_node_count)",
+        0,
+        0,
+        0
+      ],
+      "preserve_columns": {
+        "454": "frozen root-node count from node table",
+        "456,457": "original reserved zeros"
+      },
+      "preserve_dimensions": [
+        458,
+        486,
+        128
+      ],
+      "implemented": false,
+      "gold_eligibility": "remain in independent evaluation table; never change eligibility or labels to implement input masking"
+    },
+    "derived_artifacts": "New graph digest, from-scratch checkpoints, embeddings, recomputed split priors, exact candidates, indexes, predictions and every metric/time/resource observation.",
+    "ef_search": "Recalibrate on new dense IDs using the unchanged grid and recall rule; do not copy old selected values.",
+    "required_evaluation_adaptations": "A0.2 may separate historical-value/effectiveness gates from completing measurement and persist missing raw outputs. Preserve formulas, precision, sorting, original gate values and all correctness gates; log deviations explicitly."
+  },
+  "frozen_data": {
+    "source_sections": [
+      "2.1",
+      "2.2",
+      "2.3",
+      "2.4",
+      "3.1",
+      "3.2",
+      "3.3",
+      "3.4",
+      "3.5",
+      "3.6"
+    ],
+    "snapshot_date": "2026-08-18",
+    "candidate_models": 3016439,
+    "dataset_task_nodes": 18729,
+    "positive_edges": 247803,
+    "candidate_identity": "lower(strip(model_id)); hub snapshot exact prefix; 12680 normalized historical-only IDs appended in sorted order",
+    "dataset_identity": "(normalize(dataset), task), serialized with tab; original root mapping unchanged",
+    "metric_policy": "known higher/lower directions, existing reward/unknown handling, finite-value filter, original comparable grouping and constant-group 0.5",
+    "merge_priority": [
+      "modellens_v2",
+      "d0_v1_5",
+      "a_ctrl_2000m",
+      "hf_effective",
+      "diverse_zoo",
+      "hf_model_index"
+    ],
+    "merge_policy": "median within source/node/model; min-max within node/source; fixed source conflict priority; deterministic weight-stratified cap",
+    "cap_per_node": 200,
+    "cap_numpy_seed": 0,
+    "gold_rule_version": "rf-gold-2.0",
+    "gold_rule_sha256": "be3fb05ecf92ea0112ba4de10b8191d71dfe096b8667a86911c2ebaeadb9cdb1",
+    "model_ladder_sha256": "fee360d1fef9afa4c446b70af35bcbf4ead2c75387f47abc3b0d21c944ae3efa",
+    "dataset_ladder_sha256": "31c027ff2eeb693aed6abaa5d235f4a6264bb4b3245bfd71cf1c8b85d32173cb",
+    "model_feature_sha256": "ba1020872ddb6e90726c755f9f08f236f4c73e506013c91d8a0075fc0c0361e6",
+    "family_vocab_sha256": "00d304df9bd72acb2c2c1ca5b84ed0dc9d4adb0cbc9f098f32a9e62109d24005",
+    "reuse_rule": "Re-use hash-verified frozen inputs; recount all counts/coverage/file sizes. No fresh web crawl, reordering, new metadata or copied old measurements."
+  },
+  "features": {
+    "source_sections": [
+      "3.4",
+      "3.5",
+      "4.2"
+    ],
+    "minilm": "all-MiniLM-L6-v2",
+    "minilm_dim": 384,
+    "minilm_output_normalized": false,
+    "model_name_seed": 42,
+    "dataset_name_seed": 43,
+    "name_dim": 64,
+    "name_hash": "MD5 modulo 10000; frozen row-normalized Gaussian table; original tokenization",
+    "model_descriptor": "cleaned repository identifier + canonical family + parameter-size phrase if safetensors count exists",
+    "dataset_descriptor": "cleaned dataset-task name + card task categories + <=10 non-colon tags + <=400 description characters; unmatched uses cleaned name/task only",
+    "model_frozen_dim": 448,
+    "model_size_dim": 16,
+    "model_family_dim": 16,
+    "model_input_dim": 480,
+    "dataset_frozen_dim": 458,
+    "dataset_stats_dim": 10,
+    "dataset_category_dims": [
+      16,
+      8,
+      4
+    ],
+    "dataset_input_dim": 486,
+    "freeze_feature_matrices": true,
+    "preserve_vocab_and_categorical_ids": true,
+    "model_id_embedding": false
+  },
+  "graph": {
+    "source_sections": [
+      "3.6",
+      "4.1",
+      "4.3",
+      "4.7"
+    ],
+    "relations": [
+      "model/trained_on/dataset",
+      "dataset/rev_trained_on/model",
+      "dataset/similar_to/dataset",
+      "model/is_base_of/model",
+      "model/rev_is_base_of/model"
+    ],
+    "stored_similarity": {
+      "block": "384-dimensional card embeddings",
+      "top_k": 20,
+      "exclude_self": true,
+      "score": "cosine"
+    },
+    "training_similarity": {
+      "mode": "topk_unweighted",
+      "top_k": 10,
+      "edge_attr": 1
+    },
+    "preserve_relation_endpoints_order_and_weights": true,
+    "depth": 1,
+    "hidden_dim": 128,
+    "output_dim": 128,
+    "weighted_relations": [],
+    "operator": "relation-specific self/neighbour linear projections and unweighted mean; scalar learned relation gates initialized to 1",
+    "shared_output_head": true,
+    "l2_normalize_output": true
+  },
+  "split": {
+    "source_section": "4.1",
+    "unit": "dataset root",
+    "split_seeds": [
+      0,
+      1,
+      2
+    ],
+    "test_edge_fraction_approx": 0.2,
+    "val_edge_fraction_approx": 0.1,
+    "train_disjoint_supervision_fraction": 0.3,
+    "algorithm": "original root shuffle and greedy edge quota assignment, without changing root definition or RNG",
+    "training_message_edges": "E_train minus E_disjoint_supervision",
+    "validation_message_edges": "E_train",
+    "test_message_edges": "E_train union E_validation",
+    "remove_reverse_performance_edges_together": true,
+    "binary_negative_ratio": 1.0,
+    "negative_exclusion": "complete positive edge set",
+    "ranking_targets": "training-selected positive edge keys read oriented weights; no mechanism change"
+  },
+  "training": {
+    "source_sections": [
+      "4.4",
+      "4.5",
+      "4.6",
+      "4.7",
+      "6"
+    ],
+    "optimizer": "Adam",
+    "learning_rate": 0.01,
+    "epochs": 25,
+    "batch_size": 1024,
+    "initialization_seed": 0,
+    "objective_coefficients": {
+      "ranknet": 1,
+      "model_model_contrastive": 1,
+      "whole_lake_sampled_softmax": 1
+    },
+    "ranknet": {
+      "temperature": 0.1,
+      "min_gap": 0.02,
+      "max_pairs_per_dataset": 256,
+      "pair_selection_if_capped": "half most inverted; half sampled remainder",
+      "aggregation": "mean within dataset then across datasets"
+    },
+    "contrastive": {
+      "temperature": 0.2,
+      "n_negatives": 256,
+      "positive_membership": "top max(1, round(0.1*n_d)) train-visible models per dataset",
+      "sparse_membership": true,
+      "lineage_nonpositive_negative_weight": 2
+    },
+    "global": {
+      "temperature": 0.1,
+      "n_negatives": 256,
+      "n_datasets": 128,
+      "lake_gamma": 0.5,
+      "proposal_alpha": 0.75,
+      "proposal_n0": 1.0,
+      "proposal": "0.5*normalized((train_visible_degree+1)^0.75)+0.5*uniform_over_labeled",
+      "negative_sampling": "with replacement; remove sampled positives",
+      "logq_correction": true,
+      "forward": "full training-message graph, fresh edge dropout"
+    },
+    "fanout": {
+      "enabled": true,
+      "hops": 2,
+      "ordinary": 10,
+      "lineage": 20,
+      "fallback": "without replacement; per-node hard bound"
+    },
+    "edge_dropout": {
+      "ordinary": 0.3,
+      "lineage": 0.05,
+      "targets": "message edges only"
+    },
+    "flags": {
+      "sparse_M": true,
+      "skip_diagnostics": true,
+      "chunked_infer": 50000
+    },
+    "disabled": [
+      "MSE",
+      "embedding uniformity",
+      "dataset-model contrastive",
+      "hard-negative mining",
+      "positive inverse-propensity weighting",
+      "separate heads",
+      "early stopping"
+    ],
+    "checkpoint_policy": "start at epoch 0 in fresh formal directories; use epoch 25 last checkpoint; no old/smoke weights or optimizer state; only same-A0 valid resume",
+    "native_epoch_losses": [
+      "rank",
+      "contrast",
+      "global",
+      "total"
+    ],
+    "native_epoch_loss_aggregation": "arithmetic mean of per-batch parts values (train.py:247)"
+  },
+  "evaluation": {
+    "source_sections": [
+      "4.8",
+      "5.1",
+      "5.2",
+      "5.3",
+      "5.4",
+      "6"
+    ],
+    "representations": [
+      "z_m_eval.npy",
+      "z_d_eval.npy"
+    ],
+    "embedding_dim": 128,
+    "mappedID_order": true,
+    "eligibility": [
+      "known metric direction or curated oriented source",
+      "non-RL task",
+      "non-placeholder dataset",
+      "at least 3 observed candidates",
+      "nonconstant held-out values"
+    ],
+    "expected_query_counts": {
+      "0": 1476,
+      "1": 1101,
+      "2": 1545
+    },
+    "hnsw": {
+      "space": "ip",
+      "dim": 128,
+      "M": 32,
+      "ef_construction": 200,
+      "K": 1000,
+      "construction_threads_cli": 8
+    },
+    "ef_calibration": {
+      "grid": [
+        1000,
+        1500,
+        2000,
+        3000,
+        5000
+      ],
+      "threshold": 0.99,
+      "metric": "mean per-query intersection(ANN1000, exact_dense1000)/1000",
+      "selection": "first passing grid value",
+      "labels_used": false,
+      "query_set_ids": null,
+      "query_set_binding": "exact_pool.query from the same eligible held-out query set; persist new actual IDs/hash; static implementation binding in audit",
+      "A0_failure_policy": "if none passes, preserve failure and full trace, finish fixed-K measurement at ef=5000; no claim of meeting original fidelity standard"
+    },
+    "task_prior": {
+      "visible_edges": "train+validation; exclude all scored test roots and same-root siblings",
+      "task": "original normalized task",
+      "shrink": 5,
+      "beta": 1,
+      "prior_mean": 0.5,
+      "formula": "(sum_oriented+0.5*5)/(count+5) when count>0; else 0",
+      "rebuild_per_split": true,
+      "verify_rowmaps_and_root_mapping": true
+    },
+    "fusion": {
+      "formula": "(cosine+1)/2 + task_prior",
+      "query_minmax": false,
+      "return_k": 10,
+      "ties": "fixed label-free permutation of model row IDs; same convention for all three fused paths",
+      "tie_permutation_seed": null,
+      "tie_seed_status": "not applicable: implementation uses fixed uint64 arithmetic bijection, not RNG",
+      "implementation_tie_binding": {
+        "source": "scale1m/baselines.py:20; scale1m/eval_y2.py:83",
+        "algorithm": "uint64(mappedID * 11400714819323198485 + 0xD1B54A32D192ED03), modulo 2^64; argsort-stable gives unique tie ranks; smaller wins",
+        "rng_seed": null,
+        "classification": "implementation-bound fixed bijection; there is no RNG seed to guess"
+      }
+    },
+    "dense_rank_diagnostic": "strictly-greater-score count per evidence 4.8; do not confuse this dense convention with final deterministic fused top-10 ordering",
+    "exact_compute": {
+      "device_cli": "cuda",
+      "query_chunk": 16,
+      "model_chunk": 50000
+    },
+    "timing": {
+      "start": "precomputed query embedding",
+      "query_batch": 1,
+      "hnsw_query_threads": 1,
+      "warmup": true,
+      "excludes": [
+        "query encoding",
+        "index loading",
+        "index construction"
+      ],
+      "warmup_count": "min(50, n_queries)",
+      "repetitions": 1,
+      "percentile_interpolation": "NumPy percentile default linear; actual execution version must be recorded",
+      "unpublished_setting_policy": "bind original implementation; record actual environment; no guessed historical values",
+      "cross_seed_summary": "arithmetic mean of each seed's percentile, not pooled queries; total percentile from total per-query timings, not sum of component percentiles",
+      "setting_provenance": "implementation-bound static audit, not additional published historical timing facts"
+    },
+    "chunked_tolerance_binding": {
+      "source": "scale1m/export_rf.py:241-252",
+      "max_abs_delta_strictly_less_than": 1e-05,
+      "scope": "original verification subgraph of min(verify_nodes,N) models with full dataset side",
+      "classification": "implementation-bound numerical tolerance referenced but not numerically specified by evidence 4.8"
+    }
+  },
+  "required_config_audit": {
+    "status": "pure_build_config_and_static_behavior_audited",
+    "artifact": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\audit\\A0_CONFIG_AUDIT.json",
+    "rule": "Every actual resolved training/evaluation key must be enumerated and hash-bound before formal runs. Values absent from evidence are implementation-bound, not published facts.",
+    "not_specified_in_authoritative_document": [
+      "Adam betas/epsilon/weight decay and remaining optimizer keys",
+      "all loader/worker/device flags",
+      "tie permutation seed and exact numeric tie behavior",
+      "HNSW construction random seed",
+      "calibration query ID selection",
+      "timing warmup/repetition counts and quantile convention",
+      "chunked/full inference tolerance",
+      "remaining resolved config keys"
+    ],
+    "conflict_policy": "Record conflicts in A0_DISCREPANCIES.md; do not start affected stage or change established protocol silently.",
+    "sha256": "04e740bf5fa54a88f281bca503013c082f577164790efe41d6bda0b534d607be",
+    "resolved_config": {
+      "num_layers": 1,
+      "top_frac": 0.1,
+      "lr": 0.01,
+      "lambda_rank": 1.0,
+      "lambda_contrast": 1.0,
+      "lambda_mse": 0.0,
+      "lambda_uniform": 0.0,
+      "scorer": "dot",
+      "similar_to_mode": "topk_unweighted",
+      "similar_to_k": 10,
+      "edge_aware": true,
+      "weighted_relations": [],
+      "rank_loss": "ranknet",
+      "rank_temperature": 0.1,
+      "rank_min_gap": 0.02,
+      "rank_gap_weighted": false,
+      "separate_heads": false,
+      "grouped": false,
+      "lambda_dm_contrast": 0.0,
+      "dm_temperature": 0.1,
+      "dm_hard_neg_weight": 1.0,
+      "dm_warmup": 0,
+      "early_stop": false,
+      "patience": 0,
+      "lambda_global": 1.0,
+      "global_known_low": true,
+      "global_hard_frac": 0.5,
+      "global_mode": "lake",
+      "lake_alpha": 0.75,
+      "lake_n0": 1.0,
+      "global_n_neg": 256,
+      "batch_size": 1024,
+      "fanout": true,
+      "sparse_M": true,
+      "contrast_n_neg": 256,
+      "contrast_max_pos_per_dataset": null,
+      "infer_chunk": 50000,
+      "skip_diagnostics": true,
+      "lake_gamma": 0.5,
+      "global_n_datasets": 128
+    },
+    "resolved_key_count": 40,
+    "all_document_mapped_values_match": true,
+    "doc_linked_identity_checks_all_equal": true,
+    "remaining_execution_bindings": [
+      "actual formal execution host software defaults",
+      "actual new graph digest after A0.2",
+      "actual split/calibration query ID hashes",
+      "new effective config after A0.2 adaptations, checked identical in training recipe"
+    ]
+  },
+  "raw_output_contract": {
+    "query_alignment": "explicit query IDs, never coincidental row position",
+    "per_query": [
+      "seed",
+      "query_id",
+      "root",
+      "normalized_task",
+      "gold_id",
+      "top3_observed_ids",
+      "gap_eligible_observed_ids",
+      "heldout_model_ids_and_values",
+      "hnsw_ids[1000]",
+      "hnsw_cosine[1000]",
+      "prior[1000]",
+      "fused_score[1000]",
+      "top10_ids[10]",
+      "complete_pool_gold_position_or_absent",
+      "exact_dense_ids[1000]",
+      "exact_full_fused_top10_ids[10]",
+      "exact_reference_quality_inputs",
+      "hnsw_time",
+      "prior_lookup_and_rerank_time",
+      "total_time"
+    ],
+    "bindings": [
+      "graph",
+      "checkpoint",
+      "feature arrays",
+      "model/dataset row maps",
+      "split IDs",
+      "query/gold IDs",
+      "task-prior sidecar",
+      "index",
+      "code and resolved configuration",
+      "all raw outputs"
+    ],
+    "independent_recomputation": "A0.7 recomputes quality, counts, ratios, summaries and timing percentiles from new raw artifacts only"
+  },
+  "reporting": {
+    "all_new_metrics_initially_null": true,
+    "no_old_measurement_reuse": true,
+    "summary_requires_all_three_seeds": true,
+    "retention_summary": "mean of seed-specific ratios, never ratio of means",
+    "zero_denominator": "undefined with numerator, denominator and reason retained",
+    "missing_seed": "pending or missing; never silently omitted",
+    "conditional_gold_position": "only queries with gold in actual pool; retain count; other quality denominators include misses",
+    "no_pooled_unique_query_claim": "sum of seed query counts is observations across splits, not disjoint datasets",
+    "completion_independent_of_old_score": true
+  },
+  "input_audit_binding": {
+    "status": "PASS",
+    "input_audit": {
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\audit\\A0_INPUT_AUDIT.json",
+      "sha256": "a1ebf3745aef4e2e4c828a366d9900cf238bf5bec9991682dcf1077d0a5f4248",
+      "bytes": 126878
+    },
+    "snapshot_audit": {
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\audit\\A0_SNAPSHOT_AUDIT.json",
+      "sha256": "452e058fa80180f93118106a982f0f0f3f72a84fb5e4cf5d24ba189dbfce6078",
+      "bytes": 418639
+    },
+    "input_review": {
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\audit\\A0_INPUT_REVIEW.json",
+      "sha256": "e5115c33b8d7a898b7e44bbb5cbadd50f915efebf7fdf492b2247f1b71f18e31",
+      "bytes": 29475
+    },
+    "query_identity": {
+      "path": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\docs\\1M\\A0_runs\\audit\\A0_QUERY_IDENTITY.jsonl",
+      "sha256": "8b81cf2cfc435ee623ceb4c86b7584df81fa67e442472f835cca13e9f27f8be5",
+      "rows": 4122
+    }
+  },
+  "execution_boundary": {
+    "completed": "A0.1",
+    "next": "A0.2 pending separate execution",
+    "training_started": false,
+    "new_retrieval_results": false,
+    "discrepancies": "A0_DISCREPANCIES.md"
+  }
+}
