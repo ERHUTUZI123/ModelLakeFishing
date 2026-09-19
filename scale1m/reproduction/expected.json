@@ -1,0 +1,15 @@
+{
+  "protocol": "a0",
+  "candidate_models": 3016439,
+  "dataset_task_nodes": 18729,
+  "performance_edges": 247803,
+  "eligible_queries": [1476, 1101, 1545],
+  "gold_at_10": [0.3319783197831978, 0.3369663941871026, 0.22135922330097088],
+  "mean_gold_at_10": 0.296767979090424,
+  "mean_exact_full_gold_at_10": 0.317399163550995,
+  "mean_retention_percent": 93.4738263950941,
+  "reference_mean_split_p50_ms": 0.747395,
+  "reference_mean_split_p95_ms": 1.101754,
+  "reference_ef_search": [1000, 1500, 1000],
+  "reference_note": "A0.7 independent report, latest A0 repaired features. Latency is descriptive, not a cross-hardware equality gate; fresh training is compared, never silently accepted by an invented quality tolerance."
+}

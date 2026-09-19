@@ -62,7 +62,7 @@ def load_canon(rf_dir):
     return df, len(parts)
 
 
-def family_from_history(models):
+def family_from_history(models, source_dir=None):
     """model -> (family string, which graph it came from).
 
     Historical graphs store `family_id` against their own `family_vocab`, so
@@ -71,7 +71,7 @@ def family_from_history(models):
     """
     want, out = set(models), {}
     for key, fname, _prio in SOURCES:
-        ck = torch.load(os.path.join(G, fname), map_location="cpu", weights_only=False)
+        ck = torch.load(os.path.join(source_dir or G, fname), map_location="cpu", weights_only=False)
         meta = ck.get("xm0_meta") or {}
         vocab = meta.get("family_vocab")
         if not vocab or "family_id" not in ck["data"]["model"]:
@@ -91,13 +91,15 @@ def family_from_history(models):
     return out
 
 
-def build(rf_dir, out_dir):
+def build(rf_dir, out_dir, source_dir=None, hf_only=False):
     canon, n_parts = load_canon(rf_dir)
     extra = pd.read_parquet(os.path.join(rf_dir, "canon",
                                          "models_out_of_snapshot.parquet"))
     extra = extra.sort_values("model").reset_index(drop=True)
 
-    fam = family_from_history(extra["model"].tolist())
+    if hf_only and len(extra):
+        raise ValueError("HF-only ladder cannot append models absent from the crawl")
+    fam = {} if hf_only or extra.empty else family_from_history(extra["model"].tolist(), source_dir=source_dir)
     rows = pd.DataFrame({
         "model": extra["model"],
         "size_b": pd.NA,
@@ -147,6 +149,7 @@ def build(rf_dir, out_dir):
 
     report = {
         "artifact": "F3 ladder (RF)", "written_at": utcnow(),
+        "evidence_mode": "live_hf_only" if hf_only else "historical_and_hf",
         "models": {"total": int(len(ladder)), "snapshot": n_snap,
                    "historical_only": int(len(rows)),
                    "canon_parts_read": n_parts},
@@ -170,8 +173,12 @@ def main(argv=None) -> int:
     p = argparse.ArgumentParser(description="F3: build the RF ladder")
     p.add_argument("--rf", default=os.path.join(data_root(), "data1m", "rf"))
     p.add_argument("--out", default=os.path.join(data_root(), "data1m", "ladder_rf"))
+    p.add_argument("--source-dir", default=None,
+                   help="directory containing the five frozen historical graphs")
+    p.add_argument("--hf-only", action="store_true",
+                   help="retain exactly the current crawl; reject historical-only candidates")
     args = p.parse_args(argv)
-    _l, _n, rep = build(args.rf, args.out)
+    _l, _n, rep = build(args.rf, args.out, source_dir=args.source_dir, hf_only=args.hf_only)
     print(json.dumps(rep, indent=2, ensure_ascii=False))
     failed = [k for k, v in rep["checks"].items() if not v]
     if failed:

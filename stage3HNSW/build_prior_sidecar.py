@@ -43,6 +43,7 @@ Run from the parent of the repository, once per split seed:
 """
 
 import argparse
+import hashlib
 import json
 import os
 import re
@@ -61,6 +62,11 @@ if _REPO_ROOT not in sys.path:
 _PACKAGE_ROOT = os.path.dirname(_HERE)
 if _PACKAGE_ROOT not in sys.path:
     sys.path.insert(0, _PACKAGE_ROOT)
+
+# Register the compatibility package before graph loading or the split code
+# imports historical ModelLakeFishing.* names. A freshly rebuilt graph has no
+# A0 archive marker, so a0_prior_context() may not import scale1m on that path.
+import scale1m  # noqa: E402,F401
 
 TRAINED_ON = ("model", "trained_on", "dataset")
 
@@ -95,6 +101,39 @@ def a0_prior_context(args):
     return dict(context)
 
 
+def graph_export_binding(args):
+    """Validate freshly built graph-store exports without historical markers."""
+    if not args.graph_store:
+        return None
+    with open(os.path.join(args.graph_store, "meta.json"), encoding="utf-8") as handle:
+        files = json.load(handle)["files"]
+    required = {"x_model.npy", "x_dataset.npy", "nodes.npz", "edges.npz",
+                "unique_model_id.parquet", "unique_dataset_id.parquet"}
+    if not required <= set(files) or set(os.listdir(args.graph_store)) != set(files) | {"meta.json"}:
+        raise ValueError("Prior graph-store file membership differs from its manifest")
+    for name, expected in files.items():
+        if os.path.basename(name) != name or file_sha256(os.path.join(args.graph_store, name)) != expected:
+            raise ValueError("Prior graph-store bytes changed: " + name)
+    digest = hashlib.sha256(json.dumps(files, sort_keys=True, ensure_ascii=False).encode("utf-8")).hexdigest()
+    with open(os.path.join(args.export, "EXPORT_MANIFEST.json"), encoding="utf-8") as handle:
+        embed = json.load(handle)["stages"]["embed"]
+    if embed.get("graph_digest") != digest or embed.get("binding", {}).get("graph_sha256") != digest:
+        raise ValueError("Prior graph-store bytes differ from the export graph binding")
+    if args.split_seed is not None and (embed.get("split_seed") != args.split_seed
+            or embed.get("binding", {}).get("split_seed") != args.split_seed):
+        raise ValueError("Prior split differs from the export split binding")
+    hashes = embed.get("artifact_hashes", {})
+    for name in ("model_ids.parquet", "dataset_ids.parquet"):
+        if hashes and hashes.get(name) != file_sha256(os.path.join(args.export, name)):
+            raise ValueError("Prior export row-map bytes changed: " + name)
+    return digest
+
+
+def file_sha256(path):
+    with open(path, "rb") as handle:
+        return hashlib.file_digest(handle, "sha256").hexdigest()
+
+
 def _norm_task(t):
     return re.sub(r"[\s_]+", "-", str(t).strip().lower())
 
@@ -114,7 +153,7 @@ def _read_ids(export_dir, stem, col):
 def load_graph(args):
     """Returns (data, unique_dataset_id df, unique_model_id df)."""
     if args.graph_store:
-        from ModelLakeFishing.scale1m.graph_store import load_sharded
+        from scale1m.graph_store import load_sharded
         payload = load_sharded(args.graph_store, mmap=True, verify_sha256=False)
     else:
         payload = torch.load(args.graph, map_location="cpu", weights_only=False)
@@ -214,6 +253,8 @@ def main(argv=None):
 
     prior_start_ns=time.perf_counter_ns()
     a0_context=a0_prior_context(args)
+    export_graph_digest = (a0_context["graph_digest"] if a0_context is not None
+                           else graph_export_binding(args))
     if a0_context is not None:
         expected_name="prior_sidecar_s%d.npz" % args.split_seed
         proposed=args.out or os.path.join(args.export,expected_name)
@@ -252,6 +293,8 @@ def main(argv=None):
             "held_out_datasets": n_test_ds,
             "root_source": root_src, "task_source": task_src,
             "graph": os.path.basename(args.graph_store or args.graph)}
+    if export_graph_digest is not None:
+        meta.update(graph_digest=export_graph_digest, sidecar_sha256=file_sha256(out))
     if a0_context is not None:
         from scale1m.checkpoint import sha256_of
         meta.update(a0=a0_context,graph_digest=a0_context["graph_digest"],sidecar_sha256=sha256_of(out),

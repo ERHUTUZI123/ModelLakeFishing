@@ -1,0 +1,10 @@
+# CPython 3.11, CPU-only replay of the recorded A0 indexes.
+# Full preparation and training use full-cu130.txt instead.
+--extra-index-url https://download.pytorch.org/whl/cpu
+numpy==2.4.6
+pandas==3.0.3
+pyarrow==24.0.0
+torch==2.12.0+cpu
+hnswlib==0.8.0
+requests==2.34.2
+-r download.txt

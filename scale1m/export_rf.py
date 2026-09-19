@@ -82,6 +82,17 @@ def gate_pool_size(n_models, expect_n):
             "n_models": int(n_models), "expect_n": expect_n}
 
 
+def expected_pool_size(manifest, rung):
+    if rung != "live":
+        return RUNGS.get(rung, {}).get("expect_n")
+    if manifest.get("rung") != "live":
+        raise ValueError("Live export requires a live training manifest")
+    count = manifest.get("expect_n")
+    if not isinstance(count, int) or isinstance(count, bool) or count <= 0 or manifest.get("n_models") != count:
+        raise ValueError("Live training manifest must bind its actual candidate count")
+    return count
+
+
 def gate_leakage(gold10_eval, gold10_full):
     """G-F7b. Held-out embeddings must score worse than full-graph ones."""
     ok = gold10_eval < gold10_full
@@ -227,11 +238,13 @@ def stage_embed(args, run, out):
     from ModelLakeFishing.stage2TrainGraphSAGE.top1_audit import candidates
 
     man = read_manifest(run)
+    rung = args.rung or man["rung"]
     graph_path = args.graph or man["graph"]
     if not os.path.exists(graph_path):                 # remote path in the manifest
+        if rung == "live":
+            raise FileNotFoundError("Live training graph is unavailable; pass its exact --graph path")
         graph_path = args.graph or os.path.join(data_root(), "data1m", "graphs", "hgraph_rf")
-    rung = args.rung or man["rung"]
-    expect_n = RUNGS.get(rung, {}).get("expect_n")
+    expect_n = expected_pool_size(man, rung)
     device = args.device or ("cuda" if torch.cuda.is_available() else "cpu")
 
     ck_path = resolve_ckpt(run, args.ckpt)
@@ -250,6 +263,8 @@ def stage_embed(args, run, out):
     umi = payload["unique_model_id"].sort_values("mappedID").reset_index(drop=True)
     root_of = udi["root"].astype(str).tolist()
     n_models = int(data["model"].num_nodes)
+    if rung == "live" and n_models != expect_n:
+        raise ValueError("Live graph candidate count differs from the training manifest")
 
     cfg = dict(ck["cfg"])
     split_seed = int(binding["split_seed"])
@@ -316,11 +331,14 @@ def stage_embed(args, run, out):
            "n_test_queries": len(cands), "expect_n": expect_n,
            "device": device, "chunk": args.chunk,
            "seconds": round(time.time() - t0, 1), "gates": gates}
+    # Newly rebuilt graphs have no historical A0 repair envelope. They still
+    # need content-bound exports so the portable evaluator can verify them.
+    artifact_names = ("z_m.npy", "z_d.npy", "z_m_eval.npy", "z_d_eval.npy",
+                      "gold_cands.npz", "model_ids.parquet", "dataset_ids.parquet")
+    rep.update(checkpoint_sha256=CK.sha256_of(ck_path),
+               artifact_hashes={name: CK.sha256_of(os.path.join(out, name)) for name in artifact_names})
     if a0_context is not None:
-        artifact_names = ("z_m.npy", "z_d.npy", "z_m_eval.npy", "z_d_eval.npy",
-                          "gold_cands.npz", "model_ids.parquet", "dataset_ids.parquet")
-        rep.update(a0=a0_context,
-                   artifact_hashes={name: CK.sha256_of(os.path.join(out,name)) for name in artifact_names})
+        rep.update(a0=a0_context)
         rep["export_segments"] = [{"start_ns":export_start_ns,"end_ns":time.perf_counter_ns(),
                                    "clock":"perf_counter_ns","scope":"embed stage after graph/checkpoint preflight; includes chunk verification and artifact hashing"}]
     merge_stage(out, "embed", rep)

@@ -1,6 +1,6 @@
-"""Stable public wrapper for the 3M reproduction CLI."""
+"""Portable latest-A0 reproduction entry point (no ignored repro/ dependency)."""
 
-from repro.cli import main
+from scale1m.reproduction.cli import main
 
 
 if __name__ == "__main__":

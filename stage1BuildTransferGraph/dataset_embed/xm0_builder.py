@@ -488,6 +488,7 @@ def load_or_update_family_vocab(
     vocab_path : CSV with columns ['family', 'family_id']; created if absent,
                  appended to on later runs. This file IS the identity of the
                  nn.Embedding rows — keep it next to the model checkpoint.
+                 An unchanged mapping retains the existing file bytes.
     min_count  : admission threshold for dynamically extracted families
 
     Returns
@@ -501,12 +502,17 @@ def load_or_update_family_vocab(
             vocab[fam] = len(vocab)
 
     # ── load prior vocab (append-only contract: ids must match) ───────────────
+    prior_vocab = None
     if vocab_path is not None:
         vocab_path = Path(vocab_path)
         if vocab_path.exists():
-            prior = pd.read_csv(vocab_path)
+            # "nan" and "null" are real family names in the frozen lake.
+            # Parsing them as missing values would collapse distinct IDs.
+            prior = pd.read_csv(vocab_path, keep_default_na=False)
+            prior_vocab = {}
             for fam, fid in zip(prior["family"], prior["family_id"]):
                 fam, fid = str(fam), int(fid)
+                prior_vocab[fam] = fid
                 if fam in vocab:
                     assert vocab[fam] == fid, (
                         f"family vocab conflict for '{fam}': file says {fid}, "
@@ -533,7 +539,9 @@ def load_or_update_family_vocab(
         print(f"[load_or_update_family_vocab] admitted {len(new_fams)} new families: {new_fams}")
 
     # ── persist ────────────────────────────────────────────────────────────────
-    if vocab_path is not None:
+    # Avoid rewriting an identical frozen mapping: CSV serialization can
+    # change CRLF to LF across platforms and invalidate its SHA-256 binding.
+    if vocab_path is not None and prior_vocab != vocab:
         vocab_path.parent.mkdir(parents=True, exist_ok=True)
         pd.DataFrame(
             {"family": list(vocab.keys()), "family_id": list(vocab.values())}

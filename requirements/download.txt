@@ -1,0 +1,2 @@
+# Immutable Hugging Face dataset archive download; CPython 3.11.
+huggingface-hub==1.16.1

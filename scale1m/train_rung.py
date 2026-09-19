@@ -61,6 +61,7 @@ RUNGS = {
     "100k": {"expect_n": 100_000, "anchor_gold10": None},
     "500k": {"expect_n": None, "anchor_gold10": None},
     "full": {"expect_n": 3_016_439, "anchor_gold10": None},
+    "live": {"expect_n": None, "anchor_gold10": None},
 }
 
 
@@ -162,7 +163,7 @@ def _git(*a):
     recorded no commit at all while the tree was in fact dirty."""
     try:
         r = subprocess.run(["git", *a], cwd=_GIT_ROOT, capture_output=True,
-                           text=True, timeout=30)
+                           text=True, encoding="utf-8", errors="replace", timeout=30)
     except (OSError, subprocess.SubprocessError):
         return None
     return r.stdout.strip() if r.returncode == 0 else None
@@ -367,7 +368,9 @@ def main(argv=None):
         print("[run-dir] reusing a non-empty run directory; prior contents: %s"
               % ", ".join(prior_contents), flush=True)
     ckpt_dir = os.path.join(out, "smoke_ckpt" if args.smoke_only else "ckpt")
-    expect_n = args.expect_n or RUNGS[args.rung]["expect_n"]
+    expect_n = args.expect_n if args.expect_n is not None else RUNGS[args.rung]["expect_n"]
+    if expect_n is not None and expect_n <= 0:
+        raise ValueError("--expect-n must be positive")
 
     a0_graph_verification = None
     if os.path.isdir(args.graph):
@@ -388,6 +391,9 @@ def main(argv=None):
     root_of = udi["root"].astype(str).tolist()
 
     n_models = int(data["model"].num_nodes)
+    if args.rung == "live" and expect_n is None:
+        # Bind the observed lake size in the run manifest for later export.
+        expect_n = n_models
     if expect_n is not None:
         # plan §1 rule 3, checked before anything expensive runs rather than at
         # the end when the compute is already spent
@@ -411,10 +417,10 @@ def main(argv=None):
         ck = CK.load(resume_path)
         reject_smoke_checkpoint(ck)
         bad = CK.validate(ck, binding)
-        if a0_graph_verification is not None and not args.smoke_only:
+        if (a0_graph_verification is not None or args.rung == "live") and not args.smoke_only:
             bad.extend(CK.validate(ck, binding, cfg=cfg, strict_cfg=True))
             if ck.get("extra", {}).get("run_id") != meta["run_id"]:
-                bad.append("A0 resume checkpoint belongs to a different formal run")
+                bad.append("Resume checkpoint belongs to a different formal run")
         if bad:
             raise CK.IncompatibleCheckpoint(
                 "cannot resume from %s:\n  %s" % (resume_path, "\n  ".join(bad)))
@@ -575,6 +581,9 @@ def main(argv=None):
         "anchor_gold10": RUNGS[args.rung]["anchor_gold10"],
         "metadata": meta,
     }
+    if args.rung == "live":
+        manifest.update(evidence_mode="live_hf_only", run_purpose="live_hf_reproduction",
+                        historical_a0_result=False)
     if args.smoke_only:
         manifest.update(run_purpose="smoke_only", smoke_only=True,
                         formal_training_eligible=False, evaluation_performed=False,

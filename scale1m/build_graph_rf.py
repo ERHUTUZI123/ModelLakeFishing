@@ -234,7 +234,7 @@ def build(ladder_dir, feats_dir, rf_dir, cards_path, out_dir,
     src_x = os.path.join(feats_dir, "x_m.npy")
     dst_x = os.path.join(out_dir, "x_model.npy")
     if not os.path.exists(dst_x) or sha256_of(src_x) != sha256_of(dst_x):
-        print("[write] copying x_m.npy (5.41 GB) ...", flush=True)
+        print("[write] copying x_m.npy (%.3f GB) ..." % (os.path.getsize(src_x) / 1e9), flush=True)
         shutil.copyfile(src_x, dst_x)
     np.save(os.path.join(out_dir, "x_dataset.npy"), xd)
 

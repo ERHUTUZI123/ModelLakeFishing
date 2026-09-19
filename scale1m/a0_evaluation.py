@@ -87,7 +87,8 @@ def verify_producer_envelope(record, expected, label):
         _require(envelope.get(key) == value, f"{label} A0 producer binding mismatch: {key}")
 
 
-def verify_chunked_export(meta):
+def verify_chunked_export(meta, *, n_models=None):
+    n_models = E.N_TOTAL if n_models is None else n_models
     gates = [gate for gate in meta.get("gates", []) if gate.get("gate") == "G-F7d"]
     _require(len(gates) == 1, "A0 export requires one newly measured G-F7d chunked agreement gate")
     gate = gates[0]
@@ -97,7 +98,7 @@ def verify_chunked_export(meta):
     _require({"model", "dataset"} <= set(deltas)
              and all(isinstance(v, (float, int)) and np.isfinite(v) and 0 <= v < 1e-5 for v in deltas.values()),
              "A0 chunked agreement raw deltas fail the original threshold")
-    _require(gate.get("n_models") == min(100000, E.N_TOTAL) and meta.get("chunk") == 50000,
+    _require(gate.get("n_models") == min(100000, n_models) and meta.get("chunk") == 50000,
              "A0 chunked agreement scope differs from the original 100K-node/50K-chunk check")
     return gate
 
@@ -507,7 +508,8 @@ def save_npz(out, name, **arrays):
     os.replace(temporary, target)
 
 
-def label_arrays(queries, candidates, roots, prior):
+def label_arrays(queries, candidates, roots, prior, *, n_models=None):
+    n_models = E.N_TOTAL if n_models is None else n_models
     ids, values, offsets = [], [], [0]
     for query in queries:
         c, a = candidates[int(query)]
@@ -519,13 +521,14 @@ def label_arrays(queries, candidates, roots, prior):
             "task_id": np.asarray([prior.task_id[int(q)] for q in queries], dtype=np.int64),
             "observed_offsets": np.asarray(offsets, dtype=np.int64),
             "observed_ids": np.concatenate(ids), "observed_values": np.concatenate(values),
-            "n_models": np.asarray(E.N_TOTAL, dtype=np.int64)}
+            "n_models": np.asarray(n_models, dtype=np.int64)}
 
 
-def pool_arrays(ids, scores, queries, candidates, roots, prior, tie_rank):
+def pool_arrays(ids, scores, queries, candidates, roots, prior, tie_rank, *, n_models=None):
+    n_models = E.N_TOTAL if n_models is None else n_models
     ids, scores = np.asarray(ids, dtype=np.int64), np.asarray(scores, dtype=np.float32)
     _require(ids.shape == scores.shape == (len(queries), E.POOL_K), "invalid A0 pool shape")
-    _require(ids.min(initial=0) >= 0 and ids.max(initial=0) < E.N_TOTAL, "pool IDs out of range")
+    _require(ids.min(initial=0) >= 0 and ids.max(initial=0) < n_models, "pool IDs out of range")
     _require(np.isfinite(scores).all(), "pool scores must be finite")
     row, per, top10 = E._pool_metrics(ids, scores, list(map(int, queries)), candidates, roots, prior, tie_rank)
     priors = np.stack([prior.values(int(q), ids[i]) for i, q in enumerate(queries)])
@@ -536,7 +539,7 @@ def pool_arrays(ids, scores, queries, candidates, roots, prior, tie_rank):
     position = counts[:, 0] + 1
     position[position > E.POOL_K] = 0
     row["gold_retrieved_query_count"] = int(np.count_nonzero(position))
-    row["candidate_universe_N"] = E.N_TOTAL
+    row["candidate_universe_N"] = n_models
     row["rerank_K"] = E.POOL_K
     row["return_k"] = 10
     return row, {"model": ids, "score": scores, "prior": priors, "fused": fused,
@@ -659,8 +662,9 @@ def recall_by_query(ids, exact):
                        for a, b in zip(ids, exact)], dtype=np.float64)
 
 
-def calibrate(index, zq, queries, exact_ids, threads, save_attempt):
+def calibrate(index, zq, queries, exact_ids, threads, save_attempt, *, n_models=None):
     """No gold arguments. Stop at first pass; otherwise retain maximum-ef data."""
+    n_models = E.N_TOTAL if n_models is None else n_models
     trace, chosen = [], None
     for ef in GRID:
         index.set_ef(ef)
@@ -668,7 +672,7 @@ def calibrate(index, zq, queries, exact_ids, threads, save_attempt):
         ids = np.asarray(ids, dtype=np.int64)
         score = (np.float32(1) - dist).astype(np.float32)
         _require(ids.shape == exact_ids.shape and np.isfinite(score).all(), "invalid ANN calibration output")
-        _require(ids.min(initial=0) >= 0 and ids.max(initial=0) < E.N_TOTAL
+        _require(ids.min(initial=0) >= 0 and ids.max(initial=0) < n_models
                  and all(len(np.unique(row)) == E.POOL_K for row in ids), "invalid calibration IDs")
         per_query = recall_by_query(ids, exact_ids)
         value = float(per_query.mean())

@@ -121,20 +121,28 @@ def load_rf(rf_dir):
     return out
 
 
-def merge(rf_dir, cap=EDGE_CAP_PER_NODE, source_dir=G):
-    rep = {"sources": {}}
+def merge(rf_dir, cap=EDGE_CAP_PER_NODE, source_dir=G, hf_only=False):
+    rep = {"sources": {}, "evidence_mode": "live_hf_only" if hf_only else "historical_and_hf"}
     frames = []
-    for key, fname, _prio in SOURCES:
+    for key, fname, _prio in ([] if hf_only else SOURCES):
         df, meta = load_source(key, fname, source_dir=source_dir)
         rep["sources"][key] = meta
         frames.append(df)
-    hist = pd.concat(frames, ignore_index=True)
-    hist["metric"] = "unknown_curated"
-    hist["direction"] = "curated"
-
     rf = load_rf(rf_dir)
     rep["sources"][RF_SOURCE] = {"edges": int(len(rf))}
-    allrows = pd.concat([hist, rf], ignore_index=True)
+    if frames:
+        hist = pd.concat(frames, ignore_index=True)
+        hist["metric"] = "unknown_curated"
+        hist["direction"] = "curated"
+        allrows = pd.concat([hist, rf], ignore_index=True)
+    else:
+        # HF model-index is self-reported evidence. Preserve the canonical
+        # metric direction; never relabel it as a historical curated source.
+        allrows = rf.copy()
+    if allrows.empty:
+        raise ValueError("No usable performance evidence; HF model-index records are required")
+    if not np.isfinite(allrows["value"].to_numpy(dtype=float)).all():
+        raise ValueError("Non-finite canonical performance evidence")
     allrows["node"] = allrows["dataset"] + NODE_SEP + allrows["task"]
     rep["rows_in"] = int(len(allrows))
 
@@ -230,7 +238,7 @@ def model_table(edges, crawl_dir):
     return crawl, rows
 
 
-def write_rules(out_dir, cap):
+def write_rules(out_dir, cap, hf_only=False):
     rules = {
         "version": RULES_VERSION,
         "written_at": utcnow(),
@@ -267,6 +275,14 @@ def write_rules(out_dir, cap):
                      "splittable by source",
         "split": {"group_by": "dataset owner and base name", "seeds": [0, 1, 2]},
     }
+    if hf_only:
+        rules.update(
+            evidence_mode="live_hf_only",
+            candidate_pool="all model IDs observed in this completed live HF crawl; no historical-only candidates",
+            sources_in_priority_order=[RF_SOURCE],
+            sources_excluded_as_redundant={},
+            direction={"hf_model_index": "self-reported; metric direction from scale1m/metric_semantics.py"},
+            reporting="observed results on this recorded live HF crawl; not the frozen A0 benchmark")
     path = os.path.join(out_dir, "rf_gold_rules.json")
     write_json_atomic(path, rules)
     return path, sha256_of(path)
@@ -277,6 +293,8 @@ def main(argv=None) -> int:
     p.add_argument("--rf", required=True, help="the F2 phase-1 output dir")
     p.add_argument("--candidates", default=None)
     p.add_argument("--cap", type=int, default=EDGE_CAP_PER_NODE)
+    p.add_argument("--hf-only", action="store_true",
+                   help="use only this crawl's HF model-index evidence; never load historical graphs")
     p.add_argument(
         "--source-dir",
         default=os.path.join(data_root(), "data1m", "historical_graphs"),
@@ -286,19 +304,22 @@ def main(argv=None) -> int:
     args = p.parse_args(argv)
     crawl_dir = args.candidates or os.path.join(data_root(), "data1m", "candidates_full")
 
-    print("[merge] loading six sources ...", flush=True)
-    missing = [fname for _key, fname, _priority in SOURCES
+    print("[merge] loading HF model-index only ..." if args.hf_only else "[merge] loading six sources ...", flush=True)
+    missing = [fname for _key, fname, _priority in ([] if args.hf_only else SOURCES)
                if not os.path.isfile(os.path.join(args.source_dir, fname))]
     if missing:
         raise FileNotFoundError(
             "missing frozen historical graph inputs in %s: %s" %
             (args.source_dir, ", ".join(missing)))
     edges, nodes, conflicts, rep = merge(
-        args.rf, cap=args.cap, source_dir=args.source_dir)
-    rep["historical_source_dir"] = os.path.abspath(args.source_dir)
+        args.rf, cap=args.cap, source_dir=args.source_dir, hf_only=args.hf_only)
+    if not args.hf_only:
+        rep["historical_source_dir"] = os.path.abspath(args.source_dir)
 
     print("[merge] model table ...", flush=True)
     crawl, extra = model_table(edges, crawl_dir)
+    if args.hf_only and len(extra):
+        raise ValueError("HF-only supervision references models absent from this crawl")
     rep["candidates"] = {"snapshot": len(crawl), "historical_only": int(len(extra)),
                          "total": len(crawl) + int(len(extra))}
 
@@ -307,7 +328,7 @@ def main(argv=None) -> int:
     nodes.to_parquet(os.path.join(out, "dataset_nodes_merged.parquet"), index=False)
     conflicts.to_parquet(os.path.join(out, "supervision_conflicts.parquet"), index=False)
     extra.to_parquet(os.path.join(out, "models_out_of_snapshot.parquet"), index=False)
-    rules_path, sha = write_rules(args.rf, args.cap)
+    rules_path, sha = write_rules(args.rf, args.cap, hf_only=args.hf_only)
     rep["rules"] = {"path": os.path.basename(rules_path), "sha256": sha,
                     "version": RULES_VERSION}
     write_json_atomic(os.path.join(args.rf, "F2_MERGE_REPORT.json"),

@@ -6,6 +6,10 @@ from pathlib import Path
 
 import pytest
 
+# The retired release tool is intentionally absent from reviewer checkouts.
+# Current A0 download/run contracts are covered in test_reproduction_cli.py.
+pytest.importorskip("repro.archive", reason="Optional archived release tooling")
+
 from repro.archive import (
     MultipartReader,
     MultipartWriter,

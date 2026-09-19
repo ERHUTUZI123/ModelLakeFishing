@@ -335,22 +335,26 @@ def _probe_metadata(queries, candidates):
 
 
 def evaluate_exact_seed(export_dir, prior, candidates, roots, tie_rank, device,
-                        model_chunk=50_000, query_chunk=16, protocol="legacy"):
+                        model_chunk=50_000, query_chunk=16, protocol="legacy",
+                        n_universe=None):
     import torch
 
+    n_universe = N_TOTAL if n_universe is None else n_universe
     started = time.time()
     zm_np = np.load(os.path.join(export_dir, "z_m_eval.npy"), mmap_mode="r")
     zd_np = np.load(os.path.join(export_dir, "z_d_eval.npy"), mmap_mode="r")
-    if zm_np.shape[0] != N_TOTAL:
+    if zm_np.shape[0] != n_universe:
         raise AssertionError("candidate pool is %d, expected %d" %
-                             (zm_np.shape[0], N_TOTAL))
+                             (zm_np.shape[0], n_universe))
+    if n_universe < POOL_K or len(tie_rank) != n_universe or not candidates:
+        raise ValueError("exact evaluation requires >=1000 models, matching tie ranks and eligible queries")
     zm = torch.as_tensor(np.asarray(zm_np), dtype=torch.float32)
     zd = torch.as_tensor(np.asarray(zd_np), dtype=torch.float32)
     zm = (zm / zm.norm(dim=1, keepdim=True).clamp_min(1e-12)).to(device)
     zd = (zd / zd.norm(dim=1, keepdim=True).clamp_min(1e-12)).to(device)
     tie_t = torch.as_tensor(tie_rank, dtype=torch.long, device=device)
     queries = sorted(candidates)
-    names = ("G_dense", "G_full_task") if protocol == "a0" else (
+    names = ("G_dense", "G_full_task") if protocol in ("a0", "live") else (
         "G_dense", "G_full_task", "P_task_only")
     all_counts = {name: np.zeros((len(queries), 3), dtype=np.int64)
                   for name in names}
@@ -366,14 +370,14 @@ def evaluate_exact_seed(export_dir, prior, candidates, roots, tie_rank, device,
         fcol_t = torch.as_tensor(fcol, dtype=torch.long, device=device)
         q_t = torch.as_tensor(block, dtype=torch.long, device=device)
         zq = zd[q_t]
-        if protocol == "a0":
+        if protocol in ("a0", "live"):
             # Use the exact same float32 GEMM shape/reduction as the full scan.
             # Elementwise dot reduction can differ by one ULP and make even
             # identical vectors rank ahead of their own probe. No tolerance,
             # score rounding or dtype change is introduced by this correction.
             raw_probe = torch.empty(flat_t.numel(), dtype=torch.float32, device=device)
-            for ps in range(0, N_TOTAL, model_chunk):
-                here = (flat_t >= ps) & (flat_t < min(ps + model_chunk, N_TOTAL))
+            for ps in range(0, n_universe, model_chunk):
+                here = (flat_t >= ps) & (flat_t < min(ps + model_chunk, n_universe))
                 if bool(here.any()):
                     block_probe = zm[ps:ps + model_chunk] @ zq.t()
                     raw_probe[here] = block_probe[flat_t[here] - ps, fcol_t[here]]
@@ -410,7 +414,7 @@ def evaluate_exact_seed(export_dir, prior, candidates, roots, tie_rank, device,
         BV_t = torch.as_tensor(BV, dtype=torch.float32, device=device)
 
         probe_columns = torch.arange(flat_t.numel(), device=device)
-        for ms in range(0, N_TOTAL, model_chunk):
+        for ms in range(0, n_universe, model_chunk):
             raw = zm[ms:ms + model_chunk] @ zq.t()
             c = raw.size(0)
             boost = torch.zeros((c, b), dtype=torch.float32, device=device)
@@ -421,6 +425,9 @@ def evaluate_exact_seed(export_dir, prior, candidates, roots, tie_rank, device,
             block_tie = tie_t[ms:ms + c].unsqueeze(1)
 
             dense_cmp = raw[:, fcol_t] > raw_probe.unsqueeze(0)
+            if protocol == "live":
+                dense_cmp |= ((raw[:, fcol_t] == raw_probe.unsqueeze(0)) &
+                              (block_tie < tie_probe.unsqueeze(0)))
             fused_score = fused[:, fcol_t]
             fused_cmp = ((fused_score > fused_probe.unsqueeze(0)) |
                          ((fused_score == fused_probe.unsqueeze(0)) &
@@ -440,9 +447,10 @@ def evaluate_exact_seed(export_dir, prior, candidates, roots, tie_rank, device,
             greater["G_full_task"] += fused_cmp.sum(0)
             if "P_task_only" in greater:
                 greater["P_task_only"] += prior_cmp.sum(0)
-            dense_buf = _topk_update(*dense_buf, raw, ms, POOL_K)
+            dense_buf = _topk_update(*dense_buf, raw, ms, POOL_K,
+                                     tie_rank=tie_t if protocol == "live" else None)
             fused_buf = _topk_update(*fused_buf, fused, ms, 10,
-                                     tie_rank=tie_t if protocol == "a0" else None)
+                                     tie_rank=tie_t if protocol in ("a0", "live") else None)
             del raw, boost, fused, dense_cmp, fused_cmp, prior_cmp
 
         for name in all_counts:
@@ -464,7 +472,7 @@ def evaluate_exact_seed(export_dir, prior, candidates, roots, tie_rank, device,
 
     rows = {}
     for name, counts in all_counts.items():
-        rows[name], _ = _aggregate(counts, queries, candidates, roots)
+        rows[name], _ = _aggregate(counts, queries, candidates, roots, n_universe=n_universe)
     pool_row, _pool_per, pool_top10 = _pool_metrics(
         exact_ids, exact_scores, queries, candidates, roots, prior, tie_rank)
     full_in_pool = [len(set(full_top10[i].tolist()) & set(exact_ids[i].tolist())) / 10.0
@@ -475,7 +483,7 @@ def evaluate_exact_seed(export_dir, prior, candidates, roots, tie_rank, device,
             "exact_pool_ids": exact_ids, "exact_pool_scores": exact_scores,
             "exact_top10": pool_top10, "full_top10": full_top10,
             "seconds": time.time() - started}
-    if protocol == "a0":
+    if protocol in ("a0", "live"):
         result["full_counts"] = all_counts["G_full_task"]
         result["dense_counts"] = all_counts["G_dense"]
     return result

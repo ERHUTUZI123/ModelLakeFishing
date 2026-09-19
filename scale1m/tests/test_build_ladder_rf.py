@@ -43,7 +43,7 @@ def _row(mid, fam="bert"):
 
 def test_snapshot_stays_an_exact_prefix_and_history_is_appended(tmp_path, monkeypatch):
     monkeypatch.setattr(B, "family_from_history",
-                        lambda models: {m: ("llama", "history:modellens_v2")
+                        lambda models, source_dir=None: {m: ("llama", "history:modellens_v2")
                                         for m in models})
     rf = _rf_dir(tmp_path / "rf", [_row("a/1"), _row("a/2"), _row("a/3")],
                  ["z/old", "y/older"], sup_models=["a/1", "z/old"])
@@ -57,7 +57,7 @@ def test_snapshot_stays_an_exact_prefix_and_history_is_appended(tmp_path, monkey
 
 def test_appended_rows_carry_no_size_and_a_recovered_family(tmp_path, monkeypatch):
     monkeypatch.setattr(B, "family_from_history",
-                        lambda models: {"z/old": ("llama", "history:modellens_v2")})
+                        lambda models, source_dir=None: {"z/old": ("llama", "history:modellens_v2")})
     rf = _rf_dir(tmp_path / "rf", [_row("a/1")], ["z/old", "q/unknown"],
                  sup_models=["a/1"])
     ladder, _n, rep = B.build(rf, str(tmp_path / "out"))
@@ -71,7 +71,7 @@ def test_appended_rows_carry_no_size_and_a_recovered_family(tmp_path, monkeypatc
 
 def test_a_supervised_model_missing_from_the_ladder_is_caught(tmp_path, monkeypatch):
     """Edges pointing at a model with no row would index into nothing."""
-    monkeypatch.setattr(B, "family_from_history", lambda models: {})
+    monkeypatch.setattr(B, "family_from_history", lambda models, source_dir=None: {})
     rf = _rf_dir(tmp_path / "rf", [_row("a/1")], [],
                  sup_models=["a/1", "ghost/model"])
     _l, _n, rep = B.build(rf, str(tmp_path / "out"))
@@ -79,7 +79,7 @@ def test_a_supervised_model_missing_from_the_ladder_is_caught(tmp_path, monkeypa
 
 
 def test_duplicate_ids_between_snapshot_and_history_are_caught(tmp_path, monkeypatch):
-    monkeypatch.setattr(B, "family_from_history", lambda models: {})
+    monkeypatch.setattr(B, "family_from_history", lambda models, source_dir=None: {})
     rf = _rf_dir(tmp_path / "rf", [_row("a/1")], ["a/1"], sup_models=["a/1"])
     _l, _n, rep = B.build(rf, str(tmp_path / "out"))
     assert rep["checks"]["appended_rows_are_not_in_the_snapshot"] is False
@@ -87,7 +87,7 @@ def test_duplicate_ids_between_snapshot_and_history_are_caught(tmp_path, monkeyp
 
 
 def test_dataset_side_gets_its_own_contiguous_order(tmp_path, monkeypatch):
-    monkeypatch.setattr(B, "family_from_history", lambda models: {})
+    monkeypatch.setattr(B, "family_from_history", lambda models, source_dir=None: {})
     nodes = pd.DataFrame({"node": ["b\tt", "a\tt", "c\tt"],
                           "n_models": [3, 4, 5],
                           "gold_eligible": [True, True, False]})
@@ -100,7 +100,7 @@ def test_dataset_side_gets_its_own_contiguous_order(tmp_path, monkeypatch):
 
 
 def test_report_records_a_sha256_for_both_artifacts(tmp_path, monkeypatch):
-    monkeypatch.setattr(B, "family_from_history", lambda models: {})
+    monkeypatch.setattr(B, "family_from_history", lambda models, source_dir=None: {})
     rf = _rf_dir(tmp_path / "rf", [_row("a/1")], [], sup_models=["a/1"])
     _l, _n, rep = B.build(rf, str(tmp_path / "out"))
     assert len(rep["sha256"]["full_model_ids.parquet"]) == 64
