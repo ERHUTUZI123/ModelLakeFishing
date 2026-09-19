@@ -8,10 +8,16 @@ plan.md
 **/embedded_dataset/
 **/backup_before_family_pack/
 *.log
-release_assets/
+release_assets_outdated/
 tmp/
 stage1BuildTransferGraph/d0_lake_cache/
-
+legacy/
+configs/
+docs/
+data/
+repro/
+scripts/
+tmp/
 # Stage-1 release-managed inputs
 stage1BuildTransferGraph/dataset_embed/data/records.csv
 stage1BuildTransferGraph/dataset_embed/data/model_config_dataset.csv
@@ -50,3 +56,4 @@ stage2TrainGraphSAGE/artifacts
 /docs/1M/A0_runs/frozen/git_head_to_index.patch.gz
 /docs/1M/A0_runs/frozen/git_head_to_worktree.patch.gz
 /docs/1M/A0_runs/frozen/git_index_to_worktree.patch.gz
+/data/

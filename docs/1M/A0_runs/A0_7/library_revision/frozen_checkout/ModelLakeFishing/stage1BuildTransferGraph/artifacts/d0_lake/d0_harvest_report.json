@@ -1,7 +1,0 @@
-{
-  "datasets_kept": 732,
-  "models_planned": 5584,
-  "models_fetched_new": 908,
-  "model_fetch_failures": 6,
-  "cache_dir": "D:\\research\\model_lake\\codes\\ModelLakeFishing\\stage1BuildTransferGraph\\d0_lake_cache"
-}

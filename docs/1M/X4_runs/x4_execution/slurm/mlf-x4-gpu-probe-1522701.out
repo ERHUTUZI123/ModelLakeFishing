@@ -1,3 +1,0 @@
-[env] selected /dev/shm: available=387806036K env=3944622K
-torch 2.12.0+cu130 cuda True count 1
-device NVIDIA RTX 6000 Ada Generation total_gb 47.4

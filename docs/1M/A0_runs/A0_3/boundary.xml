@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="1" failures="0" skipped="0" tests="1" time="5.292" timestamp="2026-09-12T21:48:12.509362-04:00" hostname="LAPTOP-MFQ6O7IF"><testcase classname="" name="scale1m.tests.test_a03_information_boundary" time="0.000"><error message="collection failure">ImportError while importing test module 'D:\research\model_lake\codes\ModelLakeFishing\scale1m\tests\test_a03_information_boundary.py'.
-Hint: make sure your test modules/packages have valid Python names.
-Traceback:
-C:\Users\17982\AppData\Local\Programs\Python\Python313\Lib\importlib\__init__.py:88: in import_module
-    return _bootstrap._gcd_import(name[level:], package, level)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-scale1m\tests\test_a03_information_boundary.py:11: in &lt;module&gt;
-    from ModelLakeFishing.stage2TrainGraphSAGE import ablation as A
-E   ModuleNotFoundError: No module named 'ModelLakeFishing'</error></testcase></testsuite></testsuites>
