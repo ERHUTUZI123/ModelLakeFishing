@@ -1,17 +1,8 @@
-"""Tests for T4 feature construction (scale1m/embed_lake.py).
-
-The things that can go wrong here are all silent: a moved family-vocab row, a
-row-order shift between the ladder and x_m, a CORE prefix that got re-embedded
-instead of copied. So the tests are mostly about those, not about shapes.
-"""
-
 import numpy as np
 import pytest
 
 from scale1m import embed_lake as el
 
-
-# ── descriptors: iron rule 2 ─────────────────────────────────────────────────
 
 def test_halo_descriptor_is_cores_function():
     from scale.modellens_build_graph import model_descriptor
@@ -21,8 +12,6 @@ def test_halo_descriptor_is_cores_function():
 
 
 def test_descriptor_drops_the_size_clause_when_size_is_nan():
-    """F-T2-3: this is why size coverage is a text-distribution channel that
-    'same function' does not protect against."""
     with_size = el.halo_descriptors(["a/b"], ["bert"], [0.11])[0]
     without = el.halo_descriptors(["a/b"], ["bert"], [float("nan")])[0]
     assert "params" in with_size and "params" not in without
@@ -34,12 +23,7 @@ def test_text_stats_counts_the_size_clause():
     assert st["with_family_clause"] == 1.0
 
 
-# ── family vocab: append-only ────────────────────────────────────────────────
-
 def _toy_core_vocab(*dynamic):
-    """A vocab shaped like CORE's: Other, then KNOWN_FAMILIES in table order,
-    then dynamically admitted families. load_or_update_family_vocab reseeds the
-    static block on every call, so anything else is not a valid prior."""
     from dataset_embed.utils.fetch_metadata import KNOWN_FAMILIES
     vocab = {"Other": 0}
     for fam in list(KNOWN_FAMILIES) + list(dynamic):
@@ -50,7 +34,6 @@ def _toy_core_vocab(*dynamic):
 def test_family_vocab_appends_and_never_moves_core_rows(tmp_path):
     core_vocab = _toy_core_vocab("bert")
     path = tmp_path / "family_vocab.csv"
-    # 'newfam' clears FAMILY_MIN_COUNT=3, 'rare' does not
     halo = ["bert"] * 5 + ["newfam"] * 3 + ["rare"] * 2
     after, n_new = el.extend_family_vocab(core_vocab, halo, str(path))
 
@@ -76,8 +59,6 @@ def test_rare_family_falls_back_to_other_id_zero(tmp_path):
     assert list(build_family_ids(["rare", "bert"], after)) == [0, core_vocab["bert"]]
 
 
-# ── row order ────────────────────────────────────────────────────────────────
-
 def test_row_order_gate_catches_a_shifted_halo_block():
     models = ["core/a", "core/b"] + ["halo/%d" % i for i in range(40)]
     n_core = 2
@@ -98,13 +79,11 @@ def test_core_verbatim_gate_is_bytewise():
     x_core = torch.randn(5, el.X_DIM)
     x = np.concatenate([x_core.numpy(), np.zeros((3, el.X_DIM), np.float32)], 0)
     assert el.gate_core_verbatim(x, x_core)
-    x[6, 0] += 1.0                       # HALO side may change freely
+    x[6, 0] += 1.0
     assert el.gate_core_verbatim(x, x_core)
-    x[0, 0] = np.float32(x[0, 0]) + np.float32(1e-6)   # CORE side may not
+    x[0, 0] = np.float32(x[0, 0]) + np.float32(1e-6)
     assert not el.gate_core_verbatim(x, x_core)
 
-
-# ── separability probe (G-B4) ────────────────────────────────────────────────
 
 def test_separability_auc_is_half_on_identically_distributed_halves():
     rng = np.random.default_rng(0)

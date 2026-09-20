@@ -1,4 +1,3 @@
-"""Live-HF and archived A0 pipelines with separate inputs and new outputs."""
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -27,7 +26,6 @@ def module(*args) -> tuple[str, ...]:
 
 
 def live_steps(source: Path, work: Path, device: str) -> list[Step]:
-    """Rebuild the method using only this online HF acquisition's evidence."""
     rf, ladder, feats = work / "rf", work / "ladder", work / "features"
     graph, exports = work / "graph", work / "exports"
     nodes = rf / "canon/dataset_nodes_merged.parquet"
@@ -192,9 +190,6 @@ def run(profile: str, data: Path, work: Path, device: str, *, resume=False, inpu
         state = json.loads(state_path.read_text(encoding="utf-8"))
         if state["identity"] != identity:
             raise ValueError("Cannot resume with changed code, inputs, paths, or commands")
-        # Later stages intentionally replace a few earlier outputs (e.g. the
-        # merged rule file). Verify the most recent completed owner of each
-        # path, rather than demanding a superseded intermediate version.
         current_outputs = {}
         for step in plan:
             previous = state["steps"].get(step.name, {})
@@ -210,7 +205,6 @@ def run(profile: str, data: Path, work: Path, device: str, *, resume=False, inpu
     env = os.environ.copy()
     env.update(MLF_DATA_DIR=str(data), MLF_RUNS_DIR=str(work / "runs"),
                PYTHONUNBUFFERED="1", PYTHONUTF8="1", PYTHONDONTWRITEBYTECODE="1")
-    # Imported dependencies and model weights also stay inside this data tree.
     env["HF_HOME"] = str(data / ".hf_home")
     for step in plan:
         previous = state["steps"].get(step.name, {})
@@ -218,8 +212,6 @@ def run(profile: str, data: Path, work: Path, device: str, *, resume=False, inpu
             print("[verified complete] " + step.name, flush=True)
             continue
         argv = list(step.argv)
-        # Training supports a genuine checkpoint resume; other stages never
-        # treat mere directory existence as successful completion.
         if resume and previous and step.name.startswith("train-"):
             last = step.outputs[0] / "ckpt/last.pt"
             if last.is_file():

@@ -1,28 +1,3 @@
-"""
-test_t0_scale.py -- the T0 acceptance tests for docs/1M/100kplan.md §3.
-
-One test (or group) per changed item, each pinning the SAME property the 100K
-runbook's gate asks for:
-
-  1 fanout      : subgraph size is bounded by seeds x fan-out, not by N, and the
-                  supervision the batch was built around survives intact
-  2 sparse M    : SparseMembership.to_dense() is element-wise equal to the dense
-                  build, through every access pattern the training path uses;
-                  pool_membership_by_root agrees with a literal reference
-  3 sampled neg : with n_neg=None the sampled contrastive loss is EXACTLY the
-                  dense contrastive_loss -- so sampling is the only difference
-                  D-14 measures; batch_positive_pairs equals the dense pos_mask
-  4 chunked     : chunked_forward == whole-graph forward, max|delta| < 1e-5,
-                  including chunk_size=1 (row order cannot hide there)
-  5 streaming   : from_embeddings_streaming == from_embeddings per query, and
-                  five_metric_eval's --expect-n assertion actually fires
-  7 iso-recall  : tune_ef_for_recall returns an ef that meets the target
-
-Run:
-  ModelLakeFishing/.venv/Scripts/python.exe -m pytest \
-      ModelLakeFishing/stage2TrainGraphSAGE/tests/test_t0_scale.py -q
-"""
-
 import os
 import sys
 
@@ -36,26 +11,22 @@ _REPO_ROOT = os.path.abspath(os.path.join(_HERE, "..", "..", ".."))
 if _REPO_ROOT not in sys.path:
     sys.path.insert(0, _REPO_ROOT)
 
-from ModelLakeFishing.stage2TrainGraphSAGE.losses import (  # noqa: E402
+from ModelLakeFishing.stage2TrainGraphSAGE.losses import (
     TRAINED_ON, SparseMembership, high_performer_membership, topk_membership,
     pool_membership_by_root, global_positive_density, per_dataset_density,
     lineage_components, contrastive_loss, contrastive_loss_sampled,
 )
-from ModelLakeFishing.stage2TrainGraphSAGE.sampling import (  # noqa: E402
+from ModelLakeFishing.stage2TrainGraphSAGE.sampling import (
     LightLinkLoader, build_csr, batch_contrastive_masks, batch_positive_pairs,
 )
-from ModelLakeFishing.stage2TrainGraphSAGE.model import HeteroGraphSAGE  # noqa: E402
-from ModelLakeFishing.stage2TrainGraphSAGE.inference import chunked_forward  # noqa: E402
-from ModelLakeFishing.stage2TrainGraphSAGE.top1_eval import five_metric_eval  # noqa: E402
-from ModelLakeFishing.scale import global_metrics as GM  # noqa: E402
-from ModelLakeFishing.scale.export_ours import tune_ef_for_recall  # noqa: E402
+from ModelLakeFishing.stage2TrainGraphSAGE.model import HeteroGraphSAGE
+from ModelLakeFishing.stage2TrainGraphSAGE.inference import chunked_forward
+from ModelLakeFishing.stage2TrainGraphSAGE.top1_eval import five_metric_eval
+from ModelLakeFishing.scale import global_metrics as GM
+from ModelLakeFishing.scale.export_ours import tune_ef_for_recall
 
-
-# ── fixtures ────────────────────────────────────────────────────────────────
 
 def toy_graph(n_m=400, n_d=60, seed=0, frozen_dim=16, ds_dim=12):
-    """A dense-ish hetero graph: dense enough that an uncapped 2-hop closure
-    swallows nearly everything, which is the whole point of item 1."""
     g = torch.Generator().manual_seed(seed)
     data = HeteroData()
     data["model"].x = torch.randn(n_m, frozen_dim, generator=g)
@@ -97,8 +68,6 @@ def toy_model(data, seed=0):
         hidden_channels=16, out_dim=8, num_layers=2).eval()
 
 
-# ── item 1: fan-out capped loader ───────────────────────────────────────────
-
 def test_build_csr_matches_edge_index():
     data = toy_graph()
     ei = data[TRAINED_ON].edge_index
@@ -110,18 +79,11 @@ def test_build_csr_matches_edge_index():
 
 
 def test_fanout_bounded():
-    """Subgraph size is bounded by (seeds x fan-out x relation directions),
-    a function of the batch and NOT of N -- and far below the full closure.
-
-    The plan sketched the bound as B*(1+k+k^2); that holds for a single
-    relation direction. This graph has 5 relations walked in both directions,
-    so the honest per-hop branching factor is R*k, and the assertion uses it.
-    """
     data = toy_graph()
     ei = data[TRAINED_ON].edge_index
     eli, elabel = ei[:, :128], data[TRAINED_ON].edge_attr[:128]
     B = 64
-    R = 2 * len(data.edge_types)          # every relation walked both ways
+    R = 2 * len(data.edge_types)
     k = 2
 
     capped = LightLinkLoader(data, eli, elabel, num_hops=2, batch_size=B,
@@ -130,18 +92,15 @@ def test_fanout_bounded():
 
     b_cap = next(iter(capped))
     b_full = next(iter(full))
-    seeds = 2 * B                         # <= B model seeds + B dataset seeds
+    seeds = 2 * B
     bound = seeds * (1 + R * k + (R * k) ** 2)
     total = b_cap["model"].num_nodes + b_cap["dataset"].num_nodes
     assert total <= bound, f"{total} > analytic bound {bound}"
     assert b_cap["model"].num_nodes < b_full["model"].num_nodes
-    # the uncapped closure really does swallow the graph -- that is the problem
     assert b_full["model"].num_nodes > 0.9 * data["model"].num_nodes
 
 
 def test_fanout_preserves_supervision():
-    """Fan-out caps MESSAGE edges. Supervision rides in edge_label_index and
-    must arrive complete and correctly remapped to local ids."""
     data = toy_graph()
     ei = data[TRAINED_ON].edge_index
     eli, elabel = ei[:, :128], data[TRAINED_ON].edge_attr[:128]
@@ -156,15 +115,12 @@ def test_fanout_preserves_supervision():
 
 
 def test_fanout_lineage_gets_higher_cap():
-    """Lineage is a cold-start model's only edge: it takes the larger fan-out."""
     data = toy_graph()
     ei = data[TRAINED_ON].edge_index
     loader = LightLinkLoader(data, ei[:, :16], data[TRAINED_ON].edge_attr[:16],
                              num_hops=2, batch_size=16, fanout=[3, 3])
     assert loader.fanout_lineage == [6, 6]
 
-
-# ── item 2: sparse membership ───────────────────────────────────────────────
 
 def _dense_and_sparse(data, top_frac=0.1):
     ti = data[TRAINED_ON].edge_index
@@ -181,7 +137,6 @@ def test_sparse_M_equivalence():
     dense, sparse, _ = _dense_and_sparse(data)
     assert torch.equal(sparse.to_dense(), dense)
     assert sparse.nnz == int(dense.sum())
-    # every access pattern the training / eval path uses
     assert torch.equal(sparse.sum(0), dense.sum(0))
     for d in (0, 3, 11, dense.shape[1] - 1):
         assert torch.equal(sparse[:, d], dense[:, d])
@@ -196,7 +151,6 @@ def test_sparse_M_equivalence():
 
 
 def test_sparse_M_dedupes_repeated_pairs():
-    """Duplicate trained_on edges must not turn a 1.0 into a 2."""
     m = SparseMembership(torch.tensor([1, 1, 2]), torch.tensor([0, 0, 1]), (4, 3))
     assert m.nnz == 2
     assert m.to_dense().max().item() == 1.0
@@ -215,9 +169,8 @@ def test_pool_membership_by_root_equivalence():
     data = toy_graph()
     dense, sparse, _ = _dense_and_sparse(data)
     n_d = dense.shape[1]
-    root_ids = torch.arange(n_d) // 4                    # roots of 4 datasets
+    root_ids = torch.arange(n_d) // 4
     got = pool_membership_by_root(dense, root_ids)
-    # literal reference: OR the columns of each root, broadcast back
     ref = torch.zeros_like(dense)
     for r in torch.unique(root_ids).tolist():
         cols = (root_ids == r).nonzero().flatten()
@@ -230,7 +183,7 @@ def test_pool_membership_by_root_equivalence():
 def test_pool_membership_singleton_roots_unchanged():
     data = toy_graph()
     dense, sparse, _ = _dense_and_sparse(data)
-    root_ids = torch.arange(dense.shape[1])              # every root a singleton
+    root_ids = torch.arange(dense.shape[1])
     assert torch.equal(pool_membership_by_root(dense, root_ids), dense)
     assert torch.equal(pool_membership_by_root(sparse, root_ids).to_dense(), dense)
 
@@ -239,19 +192,15 @@ def test_density_diagnostics_agree():
     data = toy_graph()
     dense, sparse, ti = _dense_and_sparse(data)
     assert per_dataset_density(ti, dense) == pytest.approx(per_dataset_density(ti, sparse))
-    # sampled branch: same generator seed -> same pairs -> same estimate
     a = global_positive_density(dense, max_dense=0, n_sample=5000,
                                 generator=torch.Generator().manual_seed(3))
     b = global_positive_density(sparse, max_dense=0, n_sample=5000,
                                 generator=torch.Generator().manual_seed(3))
     assert a == pytest.approx(b)
-    # and the chunking is not what decides the answer
     c = global_positive_density(sparse, max_dense=0, n_sample=5000, pair_chunk=17,
                                 generator=torch.Generator().manual_seed(3))
     assert a == pytest.approx(c)
 
-
-# ── item 3: sampled contrastive negatives ───────────────────────────────────
 
 def _batch_and_masks(sparse_M=False):
     data = toy_graph()
@@ -276,8 +225,6 @@ def test_batch_positive_pairs_matches_dense_mask():
 
 
 def test_contrastive_sampled_equals_dense_when_not_sampling():
-    """n_neg=None => every batch model is a negative => same number as the
-    dense loss. This is what makes the D-14 A/B a clean single-variable test."""
     batch, M, comp = _batch_and_masks()
     torch.manual_seed(0)
     z = torch.nn.functional.normalize(torch.randn(batch["model"].num_nodes, 8), dim=-1)
@@ -296,7 +243,7 @@ def test_contrastive_sampled_hard_negative_weight_matters():
     cb = comp[batch["model"].n_id]
     a = contrastive_loss_sampled(z, pairs, cb, n_neg=None, hard_neg_weight=1.0)
     b = contrastive_loss_sampled(z, pairs, cb, n_neg=None, hard_neg_weight=8.0)
-    assert float(b) > float(a)          # heavier same-hub negatives cost more
+    assert float(b) > float(a)
 
 
 def test_contrastive_sampled_is_bounded_and_differentiable():
@@ -332,8 +279,6 @@ def test_batch_positive_pairs_cap():
     assert capped <= full
 
 
-# ── item 4: chunked inference ───────────────────────────────────────────────
-
 @pytest.mark.parametrize("chunk", [1, 7, 128, 10_000])
 def test_chunked_forward_matches_full(chunk):
     data = toy_graph(n_m=200, n_d=40)
@@ -348,9 +293,6 @@ def test_chunked_forward_matches_full(chunk):
 
 
 def test_chunked_forward_row_order_is_by_global_id():
-    """A chunked writer that used chunk offsets instead of node ids would still
-    pass on the first chunk. Compare EVERY row against the whole-graph forward
-    with a chunk size that does not divide N, and check a hand-picked late row."""
     data = toy_graph(n_m=200, n_d=40)
     model = toy_model(data)
     with torch.no_grad():
@@ -359,7 +301,6 @@ def test_chunked_forward_row_order_is_by_global_id():
     assert torch.allclose(got, ref, atol=1e-5)
     for i in (0, 36, 37, 199):
         assert torch.allclose(got[i], ref[i], atol=1e-5)
-        # and row i must NOT match a different row (embeddings are distinct)
         j = (i + 1) % 200
         assert not torch.allclose(got[i], ref[j], atol=1e-5)
 
@@ -377,8 +318,6 @@ def test_chunked_forward_one_layer():
     got = chunked_forward(model, data, chunk_size=32)
     assert (got["model"] - ref["model"]).abs().max().item() < 1e-5
 
-
-# ── item 5: streaming scoring ───────────────────────────────────────────────
 
 def _cands(rng, N, D, n_q=40):
     cands = {}
@@ -407,7 +346,6 @@ def test_streaming_metrics_equal_dense():
 
 
 def test_streaming_matches_five_metric_eval():
-    """G-A3: the two harnesses must still agree per query after the rewrite."""
     rng = np.random.default_rng(1)
     N, D, dim = 600, 40, 12
     z_m = rng.standard_normal((N, dim)).astype(np.float32)
@@ -422,15 +360,13 @@ def test_streaming_matches_five_metric_eval():
 
 
 def test_five_metric_expect_n_fires():
-    """IRON RULE 3: the pool-size assertion is the whole defence against
-    silently scoring only the CORE slice at 100K."""
     rng = np.random.default_rng(2)
     N, D, dim = 100, 10, 8
     z_m = rng.standard_normal((N, dim)).astype(np.float32)
     z_d = rng.standard_normal((D, dim)).astype(np.float32)
     cands = _cands(rng, N, D, n_q=5)
     z = {"model": torch.from_numpy(z_m), "dataset": torch.from_numpy(z_d)}
-    five_metric_eval(z, cands, expect_n=N)                 # passes
+    five_metric_eval(z, cands, expect_n=N)
     with pytest.raises(AssertionError):
         five_metric_eval(z, cands, expect_n=N + 1)
 
@@ -449,12 +385,7 @@ def test_five_metric_gpu_cpu_rank_parity():
         assert a[d]["gold_rank"] == b[d]["gold_rank"]
 
 
-# ── integration: the whole switched-on training path ────────────────────────
-
 def test_train_loop_with_all_switches():
-    """items 1+2+3 together inside the real training loop: it runs, the loss is
-    finite and descends, and both learnable tables still get gradient (the
-    Stage-2 mechanism gate from CLAUDE.md, unchanged by any of this)."""
     from ModelLakeFishing.stage2TrainGraphSAGE.losses import PerfScorer, accuracy_lookup
     from ModelLakeFishing.stage2TrainGraphSAGE.train import train
 
@@ -479,12 +410,10 @@ def test_train_loop_with_all_switches():
     assert hist[-1]["total"] < hist[0]["total"]
     assert model.model_encoder.size_embedding.weight.grad.abs().sum() > 0
     assert model.model_encoder.family_embedding.weight.grad.abs().sum() > 0
-    assert data["model"].x.grad is None          # frozen half still frozen
+    assert data["model"].x.grad is None
 
 
 def test_train_loop_switches_off_is_the_legacy_path():
-    """Defaults must reproduce the historical path exactly -- that is what lets
-    every pre-T0 config keep its published numbers."""
     from ModelLakeFishing.stage2TrainGraphSAGE.losses import PerfScorer
     from ModelLakeFishing.stage2TrainGraphSAGE.train import train
 
@@ -506,8 +435,6 @@ def test_train_loop_switches_off_is_the_legacy_path():
     assert run() == run(fanout=False, contrast_n_neg=None)
 
 
-# ── item 7: iso-recall ef tuning ────────────────────────────────────────────
-
 def test_tune_ef_for_recall():
     hnswlib = pytest.importorskip("hnswlib")
     rng = np.random.default_rng(0)
@@ -523,7 +450,5 @@ def test_tune_ef_for_recall():
     ef, rec, trace = tune_ef_for_recall(idx, zm, zd, qd, target=0.99, K=50)
     assert rec >= 0.99
     assert ef >= 50 and len(trace) >= 1
-    # the returned ef is the search's minimum: the largest probed FAILING ef
-    # must be below it
     failing = [t["ef"] for t in trace if t["recall"] < 0.99]
     assert all(f < ef for f in failing)

@@ -1,9 +1,3 @@
-"""
-Mechanism tests for the D1 §5.3 feature rework (F0-F4 variants).
-
-Run: ../.venv/Scripts/python.exe -m pytest tests/test_d1_features.py -q
-"""
-
 import os
 import sys
 
@@ -16,12 +10,12 @@ _REPO_ROOT = os.path.abspath(os.path.join(_HERE, "..", "..", ".."))
 if _REPO_ROOT not in sys.path:
     sys.path.insert(0, _REPO_ROOT)
 
-from ModelLakeFishing.stage1BuildTransferGraph.dataset_embed.model_node_encoder import (  # noqa: E402
+from ModelLakeFishing.stage1BuildTransferGraph.dataset_embed.model_node_encoder import (
     ModelNodeEncoder,
 )
-from ModelLakeFishing.stage2TrainGraphSAGE import learnable as L  # noqa: E402
-from ModelLakeFishing.stage2TrainGraphSAGE.model import HeteroGraphSAGE, load_hgraph  # noqa: E402
-from ModelLakeFishing.stage2TrainGraphSAGE.d1_features import (  # noqa: E402
+from ModelLakeFishing.stage2TrainGraphSAGE import learnable as L
+from ModelLakeFishing.stage2TrainGraphSAGE.model import HeteroGraphSAGE, load_hgraph
+from ModelLakeFishing.stage2TrainGraphSAGE.d1_features import (
     attach_model_task_ids, load_model_task_vocab,
 )
 
@@ -45,22 +39,17 @@ def test_legacy_default_is_unchanged():
     assert enc_new.out_dim == FROZEN + 16 + 16
     x, sid, fid, _ = _inputs()
     out = enc_new(x, sid, fid)
-    # frozen block rides through bit-identical in the legacy path
     assert torch.equal(out[:, :FROZEN], x)
 
 
 def test_variant_out_dims():
-    # F1: cut desc -> name64 + size16 + fam16
     e = ModelNodeEncoder(FROZEN, 15, 185, name_dim=NAME, use_desc=False)
     assert e.out_dim == 64 + 16 + 16
-    # F2: + cut family
     e = ModelNodeEncoder(FROZEN, 15, 185, name_dim=NAME, use_desc=False, use_family=False)
     assert e.out_dim == 64 + 16 and e.family_embedding is None
-    # F3: + e_task
     e = ModelNodeEncoder(FROZEN, 15, 185, name_dim=NAME, use_desc=False,
                          use_family=False, num_model_tasks=9)
     assert e.out_dim == 64 + 16 + 16
-    # F4: + name JL 64->16  => [16 || 16 || 16] = 48
     e = ModelNodeEncoder(FROZEN, 15, 185, name_dim=NAME, use_desc=False,
                          use_family=False, num_model_tasks=9, name_proj_dim=16)
     assert e.out_dim == 16 + 16 + 16
@@ -73,7 +62,7 @@ def test_slicing_uses_name_half_only():
     x, sid, fid, _ = _inputs()
     out1 = e(x, sid, fid)
     x2 = x.clone()
-    x2[:, NAME:] = 999.0                     # perturb desc only
+    x2[:, NAME:] = 999.0
     assert torch.equal(out1, e(x2, sid, fid))
 
 
@@ -82,14 +71,12 @@ def test_name_projection_frozen_deterministic_and_scaled():
                           use_family=False, name_proj_dim=16, name_proj_seed=42)
     e2 = ModelNodeEncoder(FROZEN, 15, 185, name_dim=NAME, use_desc=False,
                           use_family=False, name_proj_dim=16, name_proj_seed=42)
-    assert torch.equal(e1.name_proj, e2.name_proj)          # same seed -> same P
+    assert torch.equal(e1.name_proj, e2.name_proj)
     e3 = ModelNodeEncoder(FROZEN, 15, 185, name_dim=NAME, use_desc=False,
                           use_family=False, name_proj_dim=16, name_proj_seed=7)
     assert not torch.equal(e1.name_proj, e3.name_proj)
-    # buffer, not parameter: excluded from the optimizer param group
     assert all("name_proj" not in n for n, _ in e1.named_parameters())
     assert "name_proj" in dict(e1.named_buffers())
-    # JL scaling: E||xP||^2 == ||x||^2 (check within tolerance over a big batch)
     x = torch.randn(4096, NAME)
     r = (x @ e1.name_proj).pow(2).sum(1).mean() / x.pow(2).sum(1).mean()
     assert 0.5 < float(r) < 1.6
@@ -102,11 +89,9 @@ def test_gradient_boundary():
     x.requires_grad_(True)
     out = e(x, sid, fid, tid)
     out.sum().backward()
-    # learnable tables all received gradients
     assert e.size_embedding.weight.grad.abs().sum() > 0
     assert e.family_embedding.weight.grad.abs().sum() > 0
     assert e.task_embedding.weight.grad.abs().sum() > 0
-    # projection buffer has no grad; only the NAME half of x is on the grad path
     assert getattr(e.name_proj, "grad", None) is None
     assert x.grad[:, NAME:].abs().sum() == 0
     assert x.grad[:, :NAME].abs().sum() > 0
@@ -140,7 +125,6 @@ def test_attach_and_full_model_roundtrip(tmp_path):
     z = model(data)
     assert z["model"].shape == (data["model"].num_nodes, 128)
 
-    # checkpoint roundtrip binds the model task vocab; wrong vocab is refused
     p = os.path.join(tmp_path, "f4.pt")
     L.save_checkpoint(model, xm0["family_vocab"], p, model_task_vocab=vocab)
     m2, _fv, repro = L.load_checkpoint(p)
@@ -152,7 +136,7 @@ def test_attach_and_full_model_roundtrip(tmp_path):
     with pytest.raises(ValueError):
         L.save_checkpoint(model, xm0["family_vocab"], p, model_task_vocab=bad)
     with pytest.raises(ValueError, match="model_task_vocab"):
-        L.save_checkpoint(model, xm0["family_vocab"], p)   # table without vocab
+        L.save_checkpoint(model, xm0["family_vocab"], p)
 
 
 @pytest.mark.skipif(not os.path.exists(GRAPH), reason="shipped graph not present")

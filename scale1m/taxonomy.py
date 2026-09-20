@@ -1,38 +1,8 @@
-"""
-taxonomy.py -- the shared, versioned vocabulary every T2-v2 stage annotates
-against: supertask, language bucket, source type, quantization, family,
-near-duplicate key, metadata quality.
-
-Runbook: docs/1M/T2.md (v2 redesign), docs/1M/100kplan.md 5-6.
-
-DESIGN RULE (Step 3 of the T2 v2 instructions, and the reason this file exists
-at all): **authoritative metadata first, heuristics second, and every value
-carries the name of the signal that produced it.** Every `*_of()` function
-returns `(value, source, confidence)`, never a bare value. A downstream report
-that cannot say WHERE a label came from cannot be audited, and a heuristic that
-cannot be told apart from metadata will silently be treated as ground truth.
-
-REUSED, NOT REDEFINED
-    Architecture family (`arch_family`) is the EXISTING xm0 notion and comes
-    from `dataset_embed.utils.fetch_metadata._infer_one_family` -- the same
-    rules that produced CORE's `family_id`. It is NOT the same thing as this
-    module's lineage `family_id` / `canonical_root`, which is a base_model
-    closure. Two different questions ("what architecture is this?" vs "what
-    is this a derivative of?"), so two different fields, both kept.
-"""
-
 import re
 from collections import Counter
 
-# --- version -------------------------------------------------------------
-# Bump when any mapping below changes; annotated artifacts record it so a
-# selection can never be silently compared against a different taxonomy.
 TAXONOMY_VERSION = "t2v2.1"
 
-
-# =========================================================================
-# supertask
-# =========================================================================
 
 SUPERTASKS = (
     "text-generation-chat",
@@ -55,9 +25,6 @@ SUPERTASKS = (
     "unknown",
 )
 
-# HF pipeline_tag is the authoritative signal when present. Every one of the
-# 56 pipeline tags observed in the 150K head shard is mapped here; an
-# unmapped tag falls through to "other" and is COUNTED (see unmapped_tags()).
 PIPELINE_TO_SUPERTASK = {
     "text-generation": "text-generation-chat",
     "text2text-generation": "text-generation-chat",
@@ -117,8 +84,6 @@ PIPELINE_TO_SUPERTASK = {
     "other": "other",
 }
 
-# Library is a weaker but still structured signal, used only when pipeline_tag
-# is absent. `transformers` is deliberately absent -- it says nothing.
 LIBRARY_TO_SUPERTASK = {
     "sentence-transformers": "embedding-retrieval",
     "pylate": "embedding-retrieval",
@@ -144,8 +109,6 @@ LIBRARY_TO_SUPERTASK = {
     "litert-lm": "text-generation-chat",
 }
 
-# config.model_type is authoritative structured metadata (it comes from
-# config.json, not from a name), so it outranks tag guessing.
 MODEL_TYPE_TO_SUPERTASK = {
     "llama": "text-generation-chat", "qwen2": "text-generation-chat",
     "qwen3": "text-generation-chat", "mistral": "text-generation-chat",
@@ -173,12 +136,11 @@ MODEL_TYPE_TO_SUPERTASK = {
     "idefics": "vision-language", "blip": "vision-language",
 }
 
-# Coarse tag hints, last structured resort before the name heuristic.
 TAG_TO_SUPERTASK = {
     "text-generation-inference": "text-generation-chat",
     "conversational": "text-generation-chat",
     "stable-diffusion": "image-generation",
-    "lora": None,           # says source type, not task -- deliberately not a task hint
+    "lora": None,
     "colpali": "embedding-retrieval",
     "mteb": "embedding-retrieval",
     "sentence-transformers": "embedding-retrieval",
@@ -197,13 +159,6 @@ def _tokens(model_id: str):
 
 
 def supertask_of(rec: dict):
-    """-> (supertask, source, confidence in [0,1]).
-
-    Precedence: pipeline_tag > config.model_type > library_name > tags > name.
-    `code` is a cross-cut: it overrides a text-generation label only, because a
-    code model IS a text generator and the distinction is what we want to
-    balance on. It never overrides a vision/audio label.
-    """
     pt = str(rec.get("pipeline_tag") or "").strip().lower()
     task, source, conf = None, None, 0.0
     if pt:
@@ -240,34 +195,18 @@ def supertask_of(rec: dict):
     return task, source, conf
 
 
-# =========================================================================
-# language
-# =========================================================================
-
 LANGUAGE_BUCKETS = ("english-primary", "multilingual-with-english",
                     "non-english", "language-neutral", "unknown")
 
-# The ">= 75% English" rule is a statement about the LANGUAGE MIX, so its
-# denominator is the models a language can be attributed to. A ViT or a
-# time-series forecaster has no language; counting it against the English
-# share does not measure anything, and it puts the rule in direct conflict
-# with task balance (the language-neutral supertasks alone want >25% of the
-# population under the task quota). Measured on the 537K pool, that conflict
-# is what capped the balanced HALO at ~60K.
 LANGUAGE_APPLICABLE = frozenset({"english-primary", "multilingual-with-english",
                                  "non-english", "unknown"})
 ENGLISH_SIDE = frozenset({"english-primary", "multilingual-with-english"})
 
-# Supertasks whose models are genuinely language-neutral. Step 7 is explicit:
-# do NOT label these "unknown" just because they carry no language tag.
 LANGUAGE_NEUTRAL_TASKS = frozenset({
     "image-classification", "detection-segmentation", "image-generation",
     "audio-classification", "tabular-timeseries-rl",
 })
 
-# ISO-639-1 (all) plus the ISO-639-3 codes HF actually uses heavily. Kept as an
-# explicit allowlist because a bare `^[a-z]{2,3}$` regex over `tags` matches
-# junk: the 150K head shard produced "trl", "sft", "tf", "jax", "mms", "mtp".
 ISO_639_1 = frozenset("""
 aa ab ae af ak am an ar as av ay az ba be bg bh bi bm bn bo br bs ca ce ch co
 cr cs cu cv cy da de dv dz ee el en eo es et eu fa ff fi fj fo fr fy ga gd gl
@@ -292,20 +231,12 @@ zul nan wuu hak gan hsn
 LANG_CODES = ISO_639_1 | ISO_639_3_COMMON
 ENGLISH_CODES = frozenset({"en", "eng"})
 
-# `multilingual` is a real HF tag, not a language code.
 MULTILINGUAL_TAGS = frozenset({"multilingual", "multi"})
 
 _LANG_TAG_RE = re.compile(r"^([a-z]{2,3})(?:[-_][A-Za-z]{2,4})?$")
 
 
 def languages_of(rec: dict):
-    """-> (sorted language codes, source).
-
-    Authoritative order: cardData.language > bare language tags > `lang:xx`
-    tags. Repository-name inference is NOT used at all here -- Step 7 allows it
-    only as a labeled last resort, and in practice it produces more false
-    positives (every "-de-" is not German) than it resolves.
-    """
     out, src = set(), None
     card = (rec.get("cardData") or {}).get("language")
     if isinstance(card, str):
@@ -339,7 +270,6 @@ def languages_of(rec: dict):
 
 
 def language_bucket_of(rec: dict, supertask: str):
-    """-> (bucket, languages, source, confidence)."""
     langs, src = languages_of(rec)
     has_multi_tag = "multilingual" in langs
     codes = [l for l in langs if l != "multilingual"]
@@ -355,14 +285,9 @@ def language_bucket_of(rec: dict, supertask: str):
         return bucket, langs, src, 0.9
 
     if supertask in LANGUAGE_NEUTRAL_TASKS:
-        # Genuinely language-neutral, not missing metadata (Step 7, explicit).
         return "language-neutral", [], "supertask_neutral", 0.7
     return "unknown", [], "none", 0.0
 
-
-# =========================================================================
-# quantization / source type
-# =========================================================================
 
 QUANT_METHODS = {
     "gguf": ("gguf", ("gguf", "ggml", "q4_k_m", "q5_k_m", "q8_0", "imatrix", "i1")),
@@ -381,12 +306,6 @@ _BITS_RE = re.compile(r"(?:^|[^a-z0-9])(?:q|int|w|fp)(\d{1,2})(?:[^0-9]|$)", re.
 
 
 def quantization_of(rec: dict):
-    """-> (method, bits, source). ('none', None, ...) when not a quantization.
-
-    Authoritative signals first: the `gguf` expand block and library_name are
-    repository facts; tags are curated by the author; the repo name is the
-    labeled last resort and marks itself as such in `source`.
-    """
     if rec.get("gguf"):
         return "gguf", _bits(rec.get("id", "")), "gguf_block"
     lib = str(rec.get("library_name") or "").strip().lower()
@@ -420,18 +339,9 @@ SOURCE_TYPES = ("original-base", "official-derivative", "community-finetune",
                 "adapter-lora", "official-quantized", "quantized-conversion",
                 "unknown-derivative")
 
-# `official-quantized` and `quantized-conversion` are BOTH quantizations, and
-# separating them is not cosmetic. `Qwen/Qwen3-8B-GGUF` is a first-party
-# release of a model its publisher trained; `somebody/Qwen3-8B-i1-GGUF` is a
-# third-party repackaging of someone else's weights. Lumping them together
-# either throws away legitimate first-party releases or lets a conversion mill
-# ride in under the same quota. The distinguishing fact is structural and
-# available: does the quantization's author equal the base model's author?
 THIRD_PARTY_QUANT = "quantized-conversion"
 OFFICIAL_QUANT = "official-quantized"
 
-# HF `baseModels.relation` values, mapped to our source types. This is
-# AUTHORITATIVE metadata -- the whole point of pulling the `baseModels` expand.
 RELATION_TO_SOURCE = {
     "quantized": THIRD_PARTY_QUANT,
     "adapter": "adapter-lora",
@@ -442,15 +352,6 @@ RELATION_TO_SOURCE = {
 
 def source_type_of(quant_method, quant_src, library_name, tags,
                    base_ids, relation, same_author_as_base):
-    """-> (source_type, source, confidence).
-
-    Takes the already-derived quantization verdict rather than a raw record:
-    the caller has computed it once, and re-deriving it here is how the two
-    could silently disagree.
-
-    `official-*` is defined structurally: a derivative whose author is the same
-    as its base model's author. That is a fact, not a judgement call.
-    """
     if quant_method != "none" and quant_src != "name_heuristic":
         if same_author_as_base:
             return OFFICIAL_QUANT, "quant:" + quant_src + "+author", 0.9
@@ -482,17 +383,7 @@ def source_type_of(quant_method, quant_src, library_name, tags,
     return "original-base", "no_declared_parent", 0.5
 
 
-# =========================================================================
-# metadata quality
-# =========================================================================
-
 def metadata_quality_of(rec: dict, supertask: str, task_source: str):
-    """-> (score in [0,1], flags list).
-
-    Positive: recognized task, structured architecture, model card, structured
-    language, declared parent, safetensors/model-index. Negative: gated/
-    disabled/private, no task AND no architecture AND no card.
-    """
     flags, score = [], 0.0
     card = rec.get("cardData") or {}
     cfg = rec.get("config") or {}
@@ -542,13 +433,6 @@ def metadata_quality_of(rec: dict, supertask: str, task_source: str):
 METADATA_QUALITY_THRESHOLD = 0.35
 
 
-# =========================================================================
-# near-duplicate key / repo stem
-# =========================================================================
-
-# Tokens stripped when reducing a repo name to its "stem": they describe the
-# CONVERSION, not the model. Deliberately a superset of xm0's _SKIP_TOKENS on
-# the quantization side, because that is what floods this lake.
 _STEM_STRIP = frozenset("""
 gguf ggml gptq awq bnb nf4 int4 int8 fp8 fp16 bf16 fp32 4bit 8bit 2bit 3bit
 6bit q2 q3 q4 q5 q6 q8 k m s l xs xxs i1 imatrix mlx onnx openvino ov exl2
@@ -560,7 +444,6 @@ _VER_TOK_RE = re.compile(r"^v?\d+(\.\d+)*$")
 
 
 def repo_stem(model_id: str) -> str:
-    """Normalized repo name with conversion/quantization tokens removed."""
     repo = (model_id or "").split("/")[-1].lower()
     keep = []
     for tok in re.split(r"[-_.\s]+", repo):
@@ -571,17 +454,6 @@ def repo_stem(model_id: str) -> str:
 
 
 def param_scale_bucket(size_b):
-    """Coarse parameter band for duplicate grouping (NOT the xm0 size bucket).
-
-    Deliberately coarser than xm0's half-decade buckets: two 7B and 8B
-    conversions of the same base are near-duplicates for sampling purposes.
-
-    The `!= size_b` test catches float('nan'), which is what a missing size
-    looks like once the column has been through pandas. Without it every
-    unknown-size model falls through every `<` comparison and is labelled
-    ">=90B" -- measured: that silently merged 16,267 unrelated models into one
-    duplicate group and capped the whole selection.
-    """
     if size_b is None or size_b != size_b:
         return "unknown"
     for hi, name in ((0.1, "<0.1B"), (0.5, "0.1-0.5B"), (1.5, "0.5-1.5B"),
@@ -594,17 +466,6 @@ def param_scale_bucket(size_b):
 
 def near_duplicate_key(canonical_root, supertask, size_b, language_bucket,
                        quant_method, quant_bits, source_type, stem):
-    """Coarse group: 'the same thing, packaged again'.
-
-    Two levels are used by the selector (Step 5):
-      * this key                 -> max 3 representatives
-      * this key + quant level   -> max 2 (same base, same method, same level)
-
-    A model with no resolved lineage root falls back to its own repo stem, so
-    unrelated singletons never share a group. `canonical_root or stem` is NOT
-    enough: after a pandas round-trip a missing root is float('nan'), which is
-    truthy, and every singleton then collapses onto the literal string "nan".
-    """
     root = canonical_root if (isinstance(canonical_root, str) and canonical_root) else stem
     return "|".join([
         str(root), supertask, param_scale_bucket(size_b), language_bucket,
@@ -613,34 +474,15 @@ def near_duplicate_key(canonical_root, supertask, size_b, language_bucket,
 
 
 def near_duplicate_key_exact(base_key, quant_method, quant_bits, model_id):
-    """The tighter Step-5 rule: same base, same quantization METHOD, same bit
-    level -> at most 1-2 representatives.
-
-    It applies ONLY to quantizations. An unquantized model gets a key unique to
-    itself, so the tighter cap cannot bind on it: appending a constant "na"
-    instead would silently lower every unquantized model's cap from 3 to 2,
-    which is not what Step 5 says and cost ~8,000 of measured capacity.
-    """
     if quant_method == "none":
         return "%s|__unq__|%s" % (base_key, model_id)
     return "%s|%s|%s" % (base_key, quant_method, quant_bits)
 
 
-# =========================================================================
-# mirror / conversion publisher score
-# =========================================================================
-
 MIRROR_SCORE_THRESHOLD = 0.60
 
 
 def mirror_score_of(author_stats: dict):
-    """-> (score in [0,1], reasons).
-
-    `author_stats` (built by annotate_candidates over the whole pool):
-        n_repos, quant_frac, distinct_upstream_authors, original_frac,
-        stem_repeat_frac
-    Generic by construction -- no username is hard-coded anywhere (Step 9).
-    """
     n = author_stats.get("n_repos", 0)
     quant_frac = author_stats.get("quant_frac", 0.0)
     upstream = author_stats.get("distinct_upstream_authors", 0)
@@ -686,20 +528,13 @@ def mirror_score_of(author_stats: dict):
     return min(1.0, score), why
 
 
-# =========================================================================
-# popularity
-# =========================================================================
-
 POPULARITY_STRATA = ("head", "mid", "long-tail", "recent")
 
-# Step 11's scoring function. Coefficients kept here (not scattered) and
-# recorded into the run manifest.
 POPULARITY_WEIGHTS = {"downloads": 0.55, "likes": 0.20, "recency": 0.15,
                       "metadata": 0.10}
 
 
 def unmapped_pipeline_tags(records):
-    """Audit helper: which pipeline tags fell through to 'other'."""
     c = Counter()
     for r in records:
         pt = (r.get("pipeline_tag") or "").strip().lower()

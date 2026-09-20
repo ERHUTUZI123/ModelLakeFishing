@@ -1,9 +1,3 @@
-"""Minimal training-free baselines for the 3M-candidate X6 comparison.
-
-The four-row experiment is defined in ``docs/1M/X6.md``. This module contains
-only the three training-free scorers; the trained no-graph row is exported and
-evaluated as embeddings through the existing RF harness.
-"""
 import os
 import re
 
@@ -18,11 +12,6 @@ _WORD = re.compile(r"[a-z0-9]+")
 
 
 def fixed_tie_break(n):
-    """A fixed bijection of mappedID values, used only inside score ties.
-
-    Multiplication by an odd integer is a permutation modulo 2**64. It avoids
-    the crawl-order bias of mappedID while remaining label- and query-blind.
-    """
     ids = np.arange(int(n), dtype=np.uint64)
     with np.errstate(over="ignore"):
         return ids * np.uint64(11400714819323198485) + np.uint64(0xD1B54A32D192ED03)
@@ -73,7 +62,6 @@ def popularity(ctx):
 
 
 class BM25:
-    """BM25 over model id, tags and pipeline tag; no supervised field is read."""
 
     name = "L_bm25"
     K1 = 1.5
@@ -113,7 +101,6 @@ class BM25:
 
 
 class FrozenMiniLM:
-    """Cosine retrieval using only the shared 384-d MiniLM text slice."""
 
     name = "S_frozen_minilm"
 

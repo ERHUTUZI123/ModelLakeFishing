@@ -1,4 +1,3 @@
-"""Live acquisition correctness without a Hub account or a large crawl."""
 from __future__ import annotations
 
 import json
@@ -53,13 +52,12 @@ def test_complete_public_streams_dedupe_and_bind(monkeypatch, tmp_path):
     assert "DO_NOT_STORE_THIS_TOKEN" not in manifest_text
     for path in tmp_path.rglob("*.json"):
         assert "DO_NOT_STORE_THIS_TOKEN" not in path.read_text()
-    # Existing compatible downstream readers can consume the new shards.
     from scale1m.verify_raw import iter_records
     prov = json.loads((tmp_path / "models/PROVENANCE.json").read_text())
     assert [r["id"] for _, r in iter_records(str(tmp_path / "models"), prov["shards"])] == ["org/a", "org/b"]
     assert prov["stats"]["private_skipped"] == 1
     assert prov["stats"]["duplicates_skipped"] == 1
-    assert L.download(tmp_path) == L.verify(tmp_path)  # no network after completion
+    assert L.download(tmp_path) == L.verify(tmp_path)
     assert len(calls) == 3
 
 
@@ -228,7 +226,6 @@ def test_fetch_retry_exhaustion_does_not_become_empty_page(monkeypatch):
 
 
 def test_live_native_cards_feed_hf_only_preprocessing_pipeline(monkeypatch, tmp_path):
-    """Production CLI arguments consume raw acquisition, with history forbidden."""
     import importlib
 
     import pandas as pd
@@ -263,8 +260,6 @@ def test_live_native_cards_feed_hf_only_preprocessing_pipeline(monkeypatch, tmp_
     source, work = tmp_path / "snapshot", tmp_path / "work"
     captured = L.download(source)
     assert captured["counts"] == {"models": 76, "datasets": 15}
-    # Invoke each actual stage's argument parser with the exact live plan's
-    # arguments. Checkpoint/test-specific fixture writers are not substituted.
     for step in live_steps(source, work, "cpu")[:5]:
         module = importlib.import_module(step.argv[2])
         assert module.main(list(step.argv[3:])) == 0, step.name

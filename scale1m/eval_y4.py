@@ -1,9 +1,3 @@
-"""Y4: candidate-pool size curve for the frozen Y2 two-stage system.
-
-The experiment is specified in ``docs/1M/Y4.md``.  It changes only the
-first-stage pool size: X4-GD embeddings, the task prior, splits, scoring and
-tie-breaking are inherited from Y2.
-"""
 import argparse
 import gc
 import json
@@ -78,8 +72,6 @@ def _validate_nested(ids, scores, ks=KS):
     for row in ids:
         if len(np.unique(row)) != len(row):
             raise AssertionError("exact top-%d contains duplicate mappedID" % max(ks))
-    # Smaller pools are represented only as prefixes of this one array.  Keep
-    # this explicit in the returned views so a caller cannot silently rescan.
     return {k: (ids[:, :k], scores[:, :k]) for k in ks}
 
 
@@ -286,7 +278,6 @@ def run_exact(args):
 
 
 def _materialize_frozen_pool(source, target, expected_sha256):
-    """Expose a hash-checked release artifact at the normal stage location."""
     source = os.path.abspath(source)
     target = os.path.abspath(target)
     source_hash = _sha256(source)
@@ -310,13 +301,6 @@ def _materialize_frozen_pool(source, target, expected_sha256):
 
 
 def run_replay_exact(args):
-    """Recompute the exact-pool curve from frozen, hash-bound top-10K pools.
-
-    The expensive 3M-vector scan produced these pools.  This stage does not
-    trust an archived metric report: it re-applies the current fixed fusion,
-    tie-break, gold definitions, root macro aggregation, and paired tests to
-    every query.  The release manifest authenticates the pool arrays.
-    """
     if not args.frozen_pools:
         raise SystemExit("--frozen-pools is required for replay-exact")
     os.makedirs(args.out, exist_ok=True)
@@ -557,7 +541,6 @@ def _curve_summary(report):
 
 
 def _deployment_decision(pool_useful, deployable):
-    """Separate the preregistered K rule from the frozen actual system."""
     return {
         "pool_expansion_closes_half_gap": bool(pool_useful),
         "preregistered_rule_K": min(deployable) if deployable else None,
@@ -570,8 +553,6 @@ def _deployment_decision(pool_useful, deployable):
 def finalize_report(args):
     report_path = os.path.join(args.out, "Y4_REPORT.json")
     report = _load_json(report_path)
-    # Finalization is intentionally idempotent: a completed archived report can
-    # be revalidated without rerunning the HNSW stage.
     if report.get("stage") not in ("hnsw-complete", "complete"):
         raise SystemExit("Y4 HNSW stage is incomplete or failed recall gate")
     curve = _curve_summary(report)
@@ -593,8 +574,6 @@ def finalize_report(args):
         if pool_useful and preserves_gain and latency_ok:
             deployable.append(k)
 
-    # The post-experiment system decision retains the Y2 operating point:
-    # +0.0069 gold@10 at K=2000 was not worth changing the actual default.
     report["decision"] = _deployment_decision(pool_useful, deployable)
     report["gates"].update({
         "exact_K10000_gap_closed_all_nonnegative":

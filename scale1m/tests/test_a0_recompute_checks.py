@@ -1,4 +1,3 @@
-"""Raw correctness bridge fixtures: tiny graph and synthetic bytes, no training."""
 import json
 from pathlib import Path
 

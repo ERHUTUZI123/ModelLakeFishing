@@ -1,41 +1,3 @@
-"""
-embed_lake_rf.py -- F4: the frozen model-feature matrix for the full lake.
-
-Runbook: docs/1M/1Mplan.md 5 (F4). Guide: docs/1M/F4GPU.md. Record: docs/1M/F4.md.
-
-WHAT IT BUILDS
-    x_m.npy            [N, 448] float32 = [e_name 64 || e_desc 384]
-    size_bucket_id.npy [N] int64
-    family_id.npy      [N] int64
-    family_vocab.csv   the only credential for e_fam row identity
-    FEATS_REPORT.json  gates, text statistics, sha256
-
-WHY NOT scale1m/embed_lake.py
-    That one builds a rung with a frozen CORE prefix: it requires --core, copies
-    the first 30,183 rows verbatim, and reports the CORE/HALO separability AUC.
-    This lake has no CORE and no two populations (D-56/D-63), so the prefix copy
-    and the AUC have nothing to act on. The descriptor, the encoder, the name
-    seed and the batch shape are identical, so the two are comparable where it
-    matters.
-
-ONE DESCRIPTOR FOR THE WHOLE LAKE (constraint 2)
-    Every row goes through scale.modellens_build_graph.model_descriptor, the
-    same function every earlier rung used. It drops the "<x>B params" clause
-    when size_b is missing and the "family <x>" clause when family is empty, so
-    clause coverage is reported rather than assumed. The 12,680 rows appended by
-    F3 have no HF record and therefore no size clause; that is a property of the
-    lake, not a bug, and it is in the report.
-
-ROW ORDER IS THE CONTRACT
-    x_m[i] belongs to the model at ladder mappedID i. Nothing downstream
-    re-checks this, so the builder samples rows from BOTH segments -- the
-    snapshot prefix and the appended tail -- recomputes e_name from the id, and
-    compares. The tail is the segment F3 introduced and the one most likely to
-    be mis-joined.
-
-Run (from ModelLakeFishing/):
-    python -m scale1m.embed_lake_rf --ladder <ladder.parquet> --out <feats dir>
-"""
 import argparse
 import json
 import os
@@ -55,11 +17,10 @@ from scale1m.embed_lake import (DEFAULT_BATCH, ENCODER, ENCODER_REVISION,
                                 name_embeddings, sha256_of)
 from scale1m.hf_crawl import utcnow, write_json_atomic
 
-SHARD_ROWS = 1_000_000        # one .npy part per million rows, resumable
+SHARD_ROWS = 1_000_000
 
 
 def descriptors(models, families, sizes):
-    """The single descriptor function, applied to every row."""
     from scale.modellens_build_graph import model_descriptor
     out = []
     for mid, fam, sz in zip(models, families, sizes):
@@ -89,12 +50,6 @@ def _part(out_dir, i):
 
 
 def encode_desc(ladder, out_dir, batch_size, device, resume=True):
-    """MiniLM over every descriptor, one .npy per SHARD_ROWS, resumable.
-
-    Descriptors are generated per shard rather than all at once: three million
-    Python strings are a few hundred MB that would sit alongside the matrix for
-    no reason. Only the statistics survive each shard.
-    """
     n = len(ladder)
     n_parts = (n + SHARD_ROWS - 1) // SHARD_ROWS
     dev_used = None
@@ -151,14 +106,6 @@ def stats_from_arrays(lens, has_size, has_family, lo=0, hi=None):
 
 
 def assemble(out_dir, n_parts, models, chunk=250_000):
-    """[e_name || e_desc] written straight into an on-disk float32 array.
-
-    The matrix is 5.41 GB at full scale, which does not fit in this machine's
-    free RAM alongside the ladder and the descriptors. It is therefore built as
-    a memmap and filled in chunks: e_name is computed 250k ids at a time, and
-    e_desc is copied part by part. Nothing here ever holds more than a few
-    hundred MB.
-    """
     n = len(models)
     xpath = os.path.join(out_dir, "x_m.npy")
     x = np.lib.format.open_memmap(xpath, mode="w+", dtype=np.float32,
@@ -181,7 +128,6 @@ def assemble(out_dir, n_parts, models, chunk=250_000):
 
 
 def finite_and_nonzero(x, chunk=250_000):
-    """Chunked so the checks never materialise a second copy of the matrix."""
     finite, zero_rows = True, 0
     norms = np.empty(x.shape[0], dtype=np.float32)
     for lo in range(0, x.shape[0], chunk):
@@ -195,7 +141,6 @@ def finite_and_nonzero(x, chunk=250_000):
 
 
 def gate_row_order(x, models, n_snapshot, k=100, seed=0):
-    """Sample from BOTH segments and recompute e_name from the id."""
     rng = np.random.default_rng(seed)
     idx = np.concatenate([
         rng.choice(n_snapshot, size=min(k, n_snapshot), replace=False),

@@ -1,20 +1,3 @@
-r"""P5 list-quality evaluation for Model Lake and retrained ModelLens.
-
-The existing global harness measures survival of one gold or near-gold model.
-This module adds metrics for the complete top-K list, score ordering, an
-evidence-based task-compatibility proxy, and ModelLens pointwise calibration.
-
-The task proxy is deliberately conservative and auditable. A recommended
-model is compatible when it has at least one non-held-out observation on the
-query task. It is off-task when it has training observations, all on other
-tasks. Models without training-task evidence remain unknown.
-
-Run from the repository root:
-
-  .\.venv\Scripts\python.exe -m scale.list_quality_metrics \
-      --graph stage1BuildTransferGraph/hgraph_ml_v2_sub.pt
-"""
-
 from __future__ import annotations
 
 import argparse
@@ -51,13 +34,6 @@ def _safe_corr(fn, x: np.ndarray, y: np.ndarray) -> float | None:
 
 
 def labeled_ndcg_at_k(scores: np.ndarray, accuracy: np.ndarray, k: int = 10) -> float:
-    """NDCG after restricting the universe to models with observed accuracy.
-
-    Accuracy is min-max normalized within each query before applying a linear
-    gain. This prevents the absolute scale of one dataset from dominating the
-    macro average. A constant-accuracy query has no ordering error and returns
-    1.0.
-    """
     scores = np.asarray(scores, dtype=float)
     accuracy = np.asarray(accuracy, dtype=float)
     if scores.size == 0:
@@ -83,7 +59,6 @@ def query_list_metrics(
     k: int = 10,
     near_delta: float = GM.GAP_DELTA,
 ) -> dict:
-    """Compute full-list and labeled-ranking metrics for one query."""
     scores_all = np.asarray(scores_all, dtype=float)
     candidates = np.asarray(candidates, dtype=int)
     accuracy = np.asarray(accuracy, dtype=float)
@@ -129,7 +104,6 @@ def query_list_metrics(
 
 
 def regression_ece(prediction: np.ndarray, target: np.ndarray, bins: int = 10) -> dict:
-    """Equal-width regression ECE over [0, 1]."""
     prediction = np.clip(np.asarray(prediction, dtype=float), 0.0, 1.0)
     target = np.asarray(target, dtype=float)
     edges = np.linspace(0.0, 1.0, int(bins) + 1)

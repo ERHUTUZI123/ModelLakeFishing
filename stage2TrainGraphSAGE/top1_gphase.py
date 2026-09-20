@@ -1,21 +1,3 @@
-"""
-top1_gphase.py -- Phase 1 rows of the Top-1/global guide (G1, G2), evaluated with
-the five-metric evaluator on the provenance-fixed graph, gated per the guide:
-
-  promote iff full2k_gold@10 improves on all 3 splits (or paired CI excludes 0)
-  AND observed_hit@1 / top3_hit@1 drop <= 0.02 AND regret@1 rise <= 0.005.
-
-Control = T0/R_mg02 (same splits, same candidate sets). One structural change per
-row:
-
-  G1     : R_mg02 + uniformly sampled task-incompatible global negatives
-           (reliable only; 24/60 supervised datasets have non-empty pools;
-           unknown-task datasets are skipped -- composition logged)
-  G2     : G1 + known-low reliable negatives + hard mining (hard_frac 0.5)
-
-Run:  python -m ModelLakeFishing.stage2TrainGraphSAGE.top1_gphase --rows G1 G2
-"""
-
 import argparse
 import json
 import os
@@ -28,9 +10,9 @@ _REPO_ROOT = os.path.abspath(os.path.join(_HERE, "..", ".."))
 if _REPO_ROOT not in sys.path:
     sys.path.insert(0, _REPO_ROOT)
 
-from ModelLakeFishing.stage2TrainGraphSAGE.top1_audit import configs  # noqa: E402
-from ModelLakeFishing.stage2TrainGraphSAGE.top1_baselines import run_configs, OUT  # noqa: E402
-from ModelLakeFishing.stage2TrainGraphSAGE.eval_harness import paired_bootstrap  # noqa: E402
+from ModelLakeFishing.stage2TrainGraphSAGE.top1_audit import configs
+from ModelLakeFishing.stage2TrainGraphSAGE.top1_baselines import run_configs, OUT
+from ModelLakeFishing.stage2TrainGraphSAGE.eval_harness import paired_bootstrap
 
 PRIMARY = ["observed_hit1", "top3_hit1", "regret1", "full2k_gold@1", "full2k_gold@10"]
 
@@ -42,7 +24,7 @@ def g_configs(rows):
         c = dict(base); c.update(lambda_global=1.0, global_known_low=False,
                                  global_hard_frac=0.0)
         out["G1"] = c
-    if "G1w" in rows:                                  # weight fallback (same structure)
+    if "G1w" in rows:
         c = dict(base); c.update(lambda_global=0.25, global_known_low=False,
                                  global_hard_frac=0.0)
         out["G1w"] = c
@@ -55,8 +37,6 @@ def g_configs(rows):
                                  global_hard_frac=0.5)
         out["G2w"] = c
     if "G1dm" in rows:
-        # one change on the ACCEPTED G1 row: add P6's dataset->model contrastive
-        # (the strongest clean local baseline) -- global + local objectives together
         c = dict(base); c.update(lambda_global=1.0, global_known_low=False,
                                  global_hard_frac=0.0, lambda_dm_contrast=1.0)
         out["G1dm"] = c
@@ -69,7 +49,6 @@ def load_pooled(tag):
 
 
 def gate(control_pooled, cand_pooled, control_agg, cand_agg, control_splits, cand_splits):
-    """Apply the guide's acceptance rule. Returns (verdict, details)."""
     d = {}
     bb = paired_bootstrap(control_pooled, cand_pooled, metric="full2k_gold@10")
     d["gold10_bootstrap"] = bb

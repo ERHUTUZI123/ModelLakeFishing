@@ -1,27 +1,3 @@
-"""
-ablation.py -- the single experiment driver for the Kendall action guide.
-
-Runs ONE config (a point on the ablation ladder B0..B9) over fixed splits with a
-separated init_seed, evaluates it with the shared eval_harness (per-dataset tau,
-exact z_d->z_m head retrieval, collapse / participation), and writes a per-dataset
-metric artifact plus an aggregate. Two configs run here can be compared with a
-paired bootstrap over the identical test datasets (eval_harness.paired_bootstrap).
-
-Design rules enforced (guide, "Split discipline"):
-  * fixed splits materialized once per split_seed, reused for every config;
-  * split_seed is SEPARATE from init_seed -- a config never changes its test set;
-  * contrastive membership M is built from TRAIN-VISIBLE edges only (no leakage);
-  * the evaluation universe (held-out observed candidates) is stated in the report.
-
-A config is a plain dict. Phase flags are added as each phase lands; unknown keys
-fall back to the B0 baseline behaviour so old configs keep reproducing.
-
-Run a single config (defaults reproduce the B0 baseline on hf1000d/2000m):
-  python -m ModelLakeFishing.stage2TrainGraphSAGE.ablation \
-      --pt ModelLakeFishing/stage1BuildTransferGraph/hgraph_hf1000d_2000m_xm0_xd0.pt \
-      --name B0 --seeds 3 --epochs 25
-"""
-
 import argparse
 import json
 import os
@@ -35,26 +11,23 @@ _REPO_ROOT = os.path.abspath(os.path.join(_HERE, "..", ".."))
 if _REPO_ROOT not in sys.path:
     sys.path.insert(0, _REPO_ROOT)
 
-from ModelLakeFishing.stage2TrainGraphSAGE.model import HeteroGraphSAGE, load_hgraph  # noqa: E402
-from ModelLakeFishing.stage2TrainGraphSAGE.losses import (  # noqa: E402
+from ModelLakeFishing.stage2TrainGraphSAGE.model import HeteroGraphSAGE, load_hgraph
+from ModelLakeFishing.stage2TrainGraphSAGE.losses import (
     TRAINED_ON, PerfScorer, accuracy_lookup, perf_supervision,
     topk_membership, lineage_components, global_positive_density, per_dataset_density,
 )
-from ModelLakeFishing.stage2TrainGraphSAGE.train import train, train_grouped, collapse_report  # noqa: E402
-from ModelLakeFishing.stage2TrainGraphSAGE.learnable import save_checkpoint, load_checkpoint  # noqa: E402
-from ModelLakeFishing.stage2TrainGraphSAGE.eval_harness import (  # noqa: E402
+from ModelLakeFishing.stage2TrainGraphSAGE.train import train, train_grouped, collapse_report
+from ModelLakeFishing.stage2TrainGraphSAGE.learnable import save_checkpoint, load_checkpoint
+from ModelLakeFishing.stage2TrainGraphSAGE.eval_harness import (
     make_fixed_splits, per_dataset_tau, head_retrieval, dataset_to_model_hnsw_recall,
 )
-from ModelLakeFishing.stage2TrainGraphSAGE.graph_surgery import apply_similar_to_mode  # noqa: E402
+from ModelLakeFishing.stage2TrainGraphSAGE.graph_surgery import apply_similar_to_mode
 
 ARTIFACTS = os.path.join(_HERE, "artifacts", "ablation")
 
-# B0 baseline config (current production candidate: 1-layer, top_frac 0.10,
-# rank+contrast both 1, dot scorer, hinge ranking, shared head, edge-attr ignored).
 B0 = dict(
     num_layers=1, top_frac=0.10, lambda_rank=1.0, lambda_contrast=1.0,
     lambda_mse=0.0, lambda_uniform=0.0, scorer="dot",
-    # Phase 1 graph-construction knobs (default = the built dense graph = B0)
     similar_to_mode="dense", similar_to_k=10,
 )
 
@@ -75,19 +48,6 @@ def participation_ratio(Z):
 
 
 def build_models(data, xm0, xd0, cfg, *, device="cpu"):
-    """Construct (model, scorer) from a resolved config.
-
-    Factored out of train_eval_one so that T7's exporter builds the architecture
-    through the SAME code path that training used. Rebuilding it independently
-    would mean a future cfg key changes the trained architecture while the
-    exporter keeps constructing the old one; load_state_dict would then either
-    raise on a good checkpoint or -- worse, with strict=False anywhere -- load
-    a subset and export embeddings from a partly random model.
-
-    Does NOT seed: seeding is the caller's business (training seeds init_seed
-    here; the exporter overwrites every parameter from the checkpoint anyway).
-    """
-    # D1 §5.3 feature-variant kwargs (one change per row; absent keys = legacy)
     fkw = {}
     if cfg.get("drop_desc"):
         fkw.update(use_desc=False, name_dim=xm0["name_dim"])
@@ -101,7 +61,6 @@ def build_models(data, xm0, xd0, cfg, *, device="cpu"):
             "(see d1_features.py) and xm0['num_model_tasks'] set")
         fkw["num_model_tasks"] = xm0["num_model_tasks"]
     if cfg.get("dataset_frozen_proj_dim"):
-        # v3 Z1: learnable projection of the frozen xd0 views inside the encoder
         fkw["dataset_frozen_proj_dim"] = cfg["dataset_frozen_proj_dim"]
     model = HeteroGraphSAGE(
         metadata=data.metadata(), frozen_dim=data["model"].x.shape[1],
@@ -119,14 +78,6 @@ def build_models(data, xm0, xd0, cfg, *, device="cpu"):
 
 def train_eval_one(data, xm0, xd0, cfg, split, *, init_seed, epochs, device="cpu",
                    smoke_only=False):
-    """Train one config on a FIXED split, evaluate with the shared harness.
-
-    split : (train_data, val_data, test_data) from make_fixed_splits.
-    Returns (agg_row, per_dataset_tau, per_dataset_head, model, scorer).
-    smoke_only runs the same single training epoch and checkpoint callback,
-    then returns before all test/full inference and evaluation. It is a driver
-    option, deliberately separate from the resolved training recipe.
-    """
     if smoke_only and (epochs != 1 or cfg.get("resume_state") is not None
                        or cfg.get("history0") or cfg.get("early_stop", False)
                        or cfg.get("grouped", False)):
@@ -135,22 +86,17 @@ def train_eval_one(data, xm0, xd0, cfg, split, *, init_seed, epochs, device="cpu
     device = torch.device(device)
     lookup = accuracy_lookup(data)
 
-    # supervision + TRAIN-VISIBLE membership (no test leakage into geometry)
     eli, target = perf_supervision(train_data[TRAINED_ON], lookup)
     ti = torch.cat([train_data[TRAINED_ON].edge_index, eli], dim=1)
     ta = torch.cat([train_data[TRAINED_ON].edge_attr.float(), target], dim=0)
     M = topk_membership(data, top_frac=cfg["top_frac"], trained_on_index=ti,
                         trained_on_attr=ta, sparse=cfg.get("sparse_M", False))
     if cfg.get("root_pool_positives") and cfg.get("root_ids") is not None:
-        # v6 S1: pool the global-term positive sets within each root (train-visible
-        # only; test roots stay all-zero). z_d learns root-invariant preference.
         from ModelLakeFishing.stage2TrainGraphSAGE.losses import pool_membership_by_root
         root_ids = torch.as_tensor(cfg["root_ids"], dtype=torch.long)
         M = pool_membership_by_root(M, root_ids)
     comp = lineage_components(data, data["model"].num_nodes)
 
-    # init_seed is separate from the split: only the model/scorer init + training
-    # RNG depend on it; the test edges are already fixed by split_seed.
     torch.manual_seed(init_seed); np.random.seed(init_seed)
     model, scorer = build_models(data, xm0, xd0, cfg, device=device)
 
@@ -163,13 +109,10 @@ def train_eval_one(data, xm0, xd0, cfg, split, *, init_seed, epochs, device="cpu
                   rank_temperature=cfg.get("rank_temperature", 0.1),
                   rank_min_gap=cfg.get("rank_min_gap", 0.0),
                   rank_gap_weighted=cfg.get("rank_gap_weighted", False), device=device)
-    # T0 items 1 + 3: bounded subgraphs and a bounded contrastive denominator.
-    # Both default OFF so every historical config still reproduces bit-for-bit.
     scale_kw = dict(fanout=cfg.get("fanout", False),
                     contrast_n_neg=cfg.get("contrast_n_neg"),
                     contrast_max_pos_per_dataset=cfg.get("contrast_max_pos_per_dataset"))
     if grouped:
-        # the dataset->model contrastive (Phase 6) needs the train-visible ti + full M
         common.update(ti=ti, lambda_dm_contrast=cfg.get("lambda_dm_contrast", 0.0),
                       dm_temperature=cfg.get("dm_temperature", 0.1),
                       dm_hard_neg_weight=cfg.get("dm_hard_neg_weight", 1.0),
@@ -177,9 +120,6 @@ def train_eval_one(data, xm0, xd0, cfg, split, *, init_seed, epochs, device="cpu
         hist, _ = train_grouped(model, scorer, train_data, eli, target, M.to(device),
                                 comp.to(device), **common)
     else:
-        # T6 (100kplan §9.3): checkpoint/resume hooks ride in on cfg so the
-        # champion config stays a plain dict and every historical caller, which
-        # sets none of these, gets the identical code path.
         common.update(resume_state=cfg.get("resume_state"),
                       history0=cfg.get("history0"),
                       on_epoch_end=cfg.get("on_epoch_end"))
@@ -196,7 +136,6 @@ def train_eval_one(data, xm0, xd0, cfg, split, *, init_seed, epochs, device="cpu
                         n_neg=cfg.get("global_n_neg", 64),
                         n_datasets=cfg.get("global_n_datasets", 16))
             if cfg.get("global_mode", "pools") == "lake":
-                # v3 L1: whole-lake logQ-corrected sampled softmax (+L2 mining)
                 from ModelLakeFishing.stage2TrainGraphSAGE.losses import build_lake_logq
                 q, logq = build_lake_logq(
                     ti, data["model"].num_nodes,
@@ -215,13 +154,11 @@ def train_eval_one(data, xm0, xd0, cfg, split, *, init_seed, epochs, device="cpu
                             hard_k=cfg.get("hard_k", 20),
                             n_hard=cfg.get("n_hard", 16))
                 if cfg.get("pos_ipw_beta", 0.0) > 0:
-                    # v4 L4: inverse-propensity positive weights (logQ's dual)
                     w = (deg.float() + 1.0) ** (-cfg["pos_ipw_beta"])
                     gctx["pos_ipw"] = w
                     print(f"    [pos IPW] beta={cfg['pos_ipw_beta']} "
                           f"w_range=[{w.min():.3f},{w.max():.3f}]")
                 if cfg.get("hard_alibi"):
-                    # v4 L2b: alibi context for the one-shot miner
                     from ModelLakeFishing.stage2TrainGraphSAGE.losses import build_model_task_profiles
                     gctx["alibi"] = dict(
                         deg=deg,
@@ -230,7 +167,6 @@ def train_eval_one(data, xm0, xd0, cfg, split, *, init_seed, epochs, device="cpu
                             ti, data["dataset"].task_type_id),
                         deg_quantile=cfg.get("alibi_deg_quantile", 0.9))
             else:
-                # Top-1 guide Phase 1: reliable global negatives (train-visible only)
                 from ModelLakeFishing.stage2TrainGraphSAGE.losses import build_global_negative_pools
                 pools, pool_stats = build_global_negative_pools(
                     data["dataset"].task_type_id, ti, ta, M,
@@ -240,8 +176,6 @@ def train_eval_one(data, xm0, xd0, cfg, split, *, init_seed, epochs, device="cpu
                 gctx.update(pools=pools, hard_frac=cfg.get("global_hard_frac", 0.0))
             common.update(global_ctx=gctx)
         if cfg.get("lambda_zpush", 0.0) > 0:
-            # v3 Z2: dataset-dataset push-apart (uses train_data task_type_id,
-            # repaired upstream when cfg['repair_dataset_task'] is set)
             known = int((data["dataset"].task_type_id > 0).sum())
             print(f"    [zpush] known-task datasets={known} "
                   f"margin={cfg.get('zpush_margin', 0.2)}")
@@ -257,12 +191,10 @@ def train_eval_one(data, xm0, xd0, cfg, split, *, init_seed, epochs, device="cpu
         return {"run_purpose": "smoke_only", "evaluation_performed": False,
                 "epochs_completed": len(hist)}, {}, {}, model, scorer
 
-    # ── evaluate on the FIXED test split (z computed on the test message graph) ──
     model.eval()
     chunk = cfg.get("infer_chunk")
     with torch.no_grad():
         if chunk:
-            # T0 item 4: bounded-memory inference (exact; see inference.py)
             from ModelLakeFishing.stage2TrainGraphSAGE.inference import chunked_forward
             z_test = chunked_forward(model, test_data, chunk_size=chunk, device=device)
             z_full = chunked_forward(model, data, chunk_size=chunk,
@@ -272,8 +204,6 @@ def train_eval_one(data, xm0, xd0, cfg, split, *, init_seed, epochs, device="cpu
             z_full = model(data.clone().to(device))["model"].cpu()
     scorer_cpu = scorer.cpu()
 
-    # T0 item 6: the diagnostics block is the expensive half of the row at scale
-    # (a density estimate over 200K sampled pairs + an HNSW build per run).
     skip_diag = cfg.get("skip_diagnostics", False)
     macro_tau, per_tau = per_dataset_tau(scorer_cpu, z_test, test_data, lookup)
     head_macro, per_head = head_retrieval(z_test, test_data, lookup)
@@ -302,8 +232,6 @@ def run(graph_path, cfg, *, name, split_seeds, init_seeds, epochs, device="cpu",
     if device == "auto":
         device = "cuda" if torch.cuda.is_available() else "cpu"
 
-    # Phase 1 graph surgery on the dataset `similar_to` relation (message structure
-    # only; trained_on supervision + lineage untouched). Default 'dense' = B0.
     mode = cfg.get("similar_to_mode", "dense")
     SIM = ("dataset", "similar_to", "dataset")
     before = data[SIM].edge_index.size(1)
@@ -324,8 +252,6 @@ def run(graph_path, cfg, *, name, split_seeds, init_seeds, epochs, device="cpu",
         for isd in init_seeds:
             row, per_tau, per_head, model, _scorer = train_eval_one(
                 data, xm0, xd0, cfg, split, init_seed=isd, epochs=epochs, device=device)
-            # save the accepted candidate as a NEW artifact (never overwrite the
-            # production checkpoint) + verify checkpoint roundtrip (guide test #10)
             if save_ckpt and ss == split_seeds[0] and isd == init_seeds[0]:
                 tt_vocab = xd0["task_type_vocab"] if xd0 else None
                 save_checkpoint(model.to("cpu"), xm0["family_vocab"], save_ckpt, task_type_vocab=tt_vocab)
@@ -349,7 +275,6 @@ def run(graph_path, cfg, *, name, split_seeds, init_seeds, epochs, device="cpu",
                   f"hit@10={row['head'].get('hit@10', float('nan')):.3f} "
                   f"ndcg@50={row['head'].get('ndcg@50', float('nan')):.3f}")
 
-    # aggregate
     def agg(key):
         vals = [r[key] for r in rows if not (isinstance(r[key], float) and np.isnan(r[key]))]
         return (float(np.mean(vals)), float(np.std(vals))) if vals else (float("nan"), float("nan"))
@@ -393,7 +318,6 @@ def main():
     ap.add_argument("--init_seeds", type=int, default=1, help="init seeds per split (0..N-1)")
     ap.add_argument("--epochs", type=int, default=25)
     ap.add_argument("--device", default="auto", choices=["auto", "cuda", "cpu"])
-    # config overrides (default = B0)
     ap.add_argument("--num_layers", type=int, default=B0["num_layers"])
     ap.add_argument("--top_frac", type=float, default=B0["top_frac"])
     ap.add_argument("--lambda_rank", type=float, default=B0["lambda_rank"])
@@ -430,9 +354,9 @@ def main():
     args = ap.parse_args()
 
     if args.weighted_relations is None:
-        wr = None                                   # all relations weighted
+        wr = None
     elif args.weighted_relations.strip().lower() == "none":
-        wr = []                                     # weight nothing (control)
+        wr = []
     else:
         wr = [r for r in args.weighted_relations.split(",") if r]
     cfg = dict(num_layers=args.num_layers, top_frac=args.top_frac, lr=args.lr,

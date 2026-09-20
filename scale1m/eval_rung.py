@@ -39,26 +39,14 @@ _REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(_HERE), ".."))
 if _REPO_ROOT not in sys.path:
     sys.path.insert(0, _REPO_ROOT)
 
-from scale1m.hf_crawl import utcnow, write_json_atomic          # noqa: E402
+from scale1m.hf_crawl import utcnow, write_json_atomic
 
-# P4's measured ModelLens O(N) scan (docs/scale/P4/P4_EXECUTION.md): the MLP
-# mixes query and candidate, so it cannot be indexed and every query scans the
-# pool. Two anchor points, used ONLY to extrapolate, and always labelled as
-# extrapolation per D-16.
-MODELLENS_ANCHORS = [(1_000, 1.96), (12_000, 16.6)]      # (N, p50 ms)
+MODELLENS_ANCHORS = [(1_000, 1.96), (12_000, 16.6)]
 
-WARM_MIN_DEG = 10                                        # §11.3 layer bounds
+WARM_MIN_DEG = 10
 
-
-# ── layers (§11.3) ───────────────────────────────────────────────────────────
 
 def model_layers(data, n_models):
-    """warm / cool / cold / frozen by supervised degree and lineage presence.
-
-    The split is on `trained_on` degree because that is what "has supervision"
-    means here; lineage separates the two zero-degree groups, which is exactly
-    the r_mm' claim -- a model with no labels but a parent should still be
-    placeable, and one with neither has only its own features."""
     from ModelLakeFishing.stage2TrainGraphSAGE.losses import TRAINED_ON
     deg = np.zeros(n_models, dtype=np.int64)
     ei = data[TRAINED_ON].edge_index[0].numpy()
@@ -79,8 +67,6 @@ def model_layers(data, n_models):
 
 
 def participation_ratio(Z):
-    """Effective dimension: (sum s^2)^2 / sum s^4 on centred rows. 1.0 means the
-    layer collapsed onto a line; d means it fills the space."""
     if len(Z) < 2:
         return float("nan")
     X = Z - Z.mean(0, keepdims=True)
@@ -90,10 +76,6 @@ def participation_ratio(Z):
 
 
 def layer_geometry(z_m, layer, rng, max_sample=4000):
-    """Per-layer mean pairwise cosine and effective dimension.
-
-    Sampled, because 53k choose 2 pairs is not worth materialising and the mean
-    converges quickly; the sample size is reported so the number is auditable."""
     zn = z_m / (np.linalg.norm(z_m, axis=1, keepdims=True) + 1e-12)
     out = {}
     for name in ("warm", "cool", "cold", "frozen"):
@@ -108,7 +90,6 @@ def layer_geometry(z_m, layer, rng, max_sample=4000):
             rec["effective_dim"] = participation_ratio(Z)
             rec["sampled"] = int(len(Z))
         out[name] = rec
-    # distance of each layer's centroid from warm's, in the same normalised space
     warm = np.flatnonzero(layer == "warm")
     if warm.size:
         c_warm = zn[warm].mean(0)
@@ -122,12 +103,6 @@ def layer_geometry(z_m, layer, rng, max_sample=4000):
 
 
 def sibling_vs_random_cosine(z_m, data, rng, n_pairs=20_000):
-    """§11.3 question 3: did the lineage edges pull derivatives together --
-    and did they pull them all the way onto one point?
-
-    gold@10 cannot answer this: gold labels live only in CORE while lineage is
-    almost entirely inside HALO, so both cold and frozen score ~0 and the
-    comparison reads as a tie that means nothing. Representation geometry can."""
     zn = z_m / (np.linalg.norm(z_m, axis=1, keepdims=True) + 1e-12)
     pairs = None
     for et in data.edge_types:
@@ -149,8 +124,6 @@ def sibling_vs_random_cosine(z_m, data, rng, n_pairs=20_000):
             "separation": float(sib.mean() - rnd.mean())}
 
 
-# ── B axis ───────────────────────────────────────────────────────────────────
-
 def _recall_at(idx, qvecs, brute, K, ef):
     idx.set_ef(int(ef))
     r = []
@@ -162,13 +135,6 @@ def _recall_at(idx, qvecs, brute, K, ef):
 
 def bench_rung(z_m, z_d_eval, query_ids, index_path, *, target=0.99, K=50,
                warmup=100, reps=1000, n_query=300, threads=8, labels=None):
-    """§11.2's protocol, in order: fix recall, then time, single-threaded.
-
-    `labels` is for an index built over a SUBSET of a larger embedding matrix:
-    row i of `z_m` was added under label `labels[i]`, so the brute-force
-    reference has to be expressed in the same label space or every recall reads
-    as zero. None (the default) means row i was added under label i, which is
-    what every historical rung did."""
     import hnswlib
     zm = z_m / (np.linalg.norm(z_m, axis=1, keepdims=True) + 1e-12)
     zd = z_d_eval / (np.linalg.norm(z_d_eval, axis=1, keepdims=True) + 1e-12)
@@ -192,7 +158,7 @@ def bench_rung(z_m, z_d_eval, query_ids, index_path, *, target=0.99, K=50,
         e *= 2
     if ef is None:
         ef, rec = 2048, trace[-1]["recall"]
-    else:                                   # bisect down to the smallest ef
+    else:
         lo, hi = (ef // 2 if ef > K else K), ef
         while hi - lo > 1:
             mid = (lo + hi) // 2
@@ -216,7 +182,6 @@ def bench_rung(z_m, z_d_eval, query_ids, index_path, *, target=0.99, K=50,
         idx.knn_query(q, k=K)
         lat.append((time.perf_counter_ns() - t) / 1e6)
 
-    # the O(N) baseline: same embeddings, same queries, same machine, same run
     zf = zm.astype(np.float32)
     for i in range(min(warmup, 20)):
         _ = zf @ qvecs[i % len(qvecs)]
@@ -248,16 +213,12 @@ def bench_rung(z_m, z_d_eval, query_ids, index_path, *, target=0.99, K=50,
 
 
 def modellens_extrapolated(N):
-    """D-16: extrapolated, never measured. Linear fit on P4's two anchors."""
     (n1, t1), (n2, t2) = MODELLENS_ANCHORS
     slope = (t2 - t1) / (n2 - n1)
     return slope * N + (t1 - slope * n1)
 
 
 def fit_curves(points):
-    """p50 vs N under a log law and a power law. Three points is not enough to
-    decide between them -- §17 says so -- so this reports both and the caller
-    is expected to say 'not yet decidable' rather than pick a winner."""
     if len(points) < 3:
         return {"note": "need >= 3 rungs"}
     N = np.array([p[0] for p in points], float)
@@ -275,18 +236,8 @@ def fit_curves(points):
     return out
 
 
-# ── A axis extras ────────────────────────────────────────────────────────────
-
 def displacement_composition(z_m_eval, z_d_eval, gold, layer, n_core, rng,
                              max_q=400):
-    """§11.1: who is ranked ABOVE the gold model?
-
-    The plan wants the displacers' true accuracy compared with gold's. That join
-    needs per-(HALO model, dataset) accuracies, which T3 recorded only as a
-    `layer` flag, not as values -- so what is reported here is the COMPOSITION
-    of the displacers (CORE vs HALO, and by cold-start layer). That answers "is
-    gold being pushed down by unlabelled noise or by plausible candidates"
-    without pretending to an accuracy comparison the data does not support."""
     zm = z_m_eval / (np.linalg.norm(z_m_eval, axis=1, keepdims=True) + 1e-12)
     zd = z_d_eval / (np.linalg.norm(z_d_eval, axis=1, keepdims=True) + 1e-12)
     qs = list(gold.keys())
@@ -321,8 +272,6 @@ def displacement_composition(z_m_eval, z_d_eval, gold, layer, n_core, rng,
             "note": "composition only; per-displacer accuracy needs a "
                     "(HALO model, dataset) accuracy join T3 did not materialise"}
 
-
-# ── driver ───────────────────────────────────────────────────────────────────
 
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__,
@@ -376,8 +325,6 @@ def main(argv=None):
             "displacement": displacement_composition(
                 z_m_eval, z_d_eval, gold, layer, n_core, rng),
         }
-        # per-layer gold@10: only CORE carries gold, so this is reported with
-        # its own denominator rather than as a lake-wide number
         gold_layer = {}
         for d, (cand, acc) in gold.items():
             if len(cand) == 0:

@@ -1,37 +1,3 @@
-"""
-eval_harness.py -- Phase 0: the ONE evaluation path every ablation reuses.
-
-The Kendall action guide demands a single, fixed, leakage-free evaluation path so
-that configs are compared on identical splits with a paired uncertainty estimate,
-and so the SERVING relation (z_d -> z_m exact-dot retrieval) is measured directly
--- not the z_m -> z_m diagnostic that train.hnsw_recall used to report.
-
-What this module provides:
-
-  * make_fixed_splits         -- materialize train/val/test ONCE per split_seed and
-                                 reuse for every config. split_seed is separate from
-                                 the model init_seed (a config never silently changes
-                                 its own test set).
-  * per_dataset_tau           -- within-dataset Kendall tau + candidate/pair counts,
-                                 returned PER DATASET so configs can be compared with
-                                 a paired test (not just an aggregate).
-  * head_retrieval            -- exact z_d . z_m retrieval over the OBSERVED held-out
-                                 candidates of each test dataset: Hit@K, Recall@K for
-                                 true top-3 / top-10%, NDCG@K, regret@K. Per dataset
-                                 then macro-averaged. This is the production query.
-  * dataset_to_model_hnsw_recall -- ANN fidelity: index ALL z_m, query with z_d,
-                                 overlap of HNSW top-K with exact-dot top-K. (The old
-                                 train.hnsw_recall queried z_m with z_m -- a different
-                                 relation; kept under model_to_model_hnsw_recall.)
-  * paired_bootstrap          -- 95% paired bootstrap CI for delta of a per-dataset
-                                 metric between two configs over the SAME datasets.
-
-Evaluation universe (state it plainly): for a test dataset d, the candidate set is
-the set of models that have a HELD-OUT (test-split) trained_on edge to d -- i.e.
-models whose true performance on d we observe but did not train on. Metrics over
-this observed set are NOT full-lake recall; they are leakage-free held-out ranking.
-"""
-
 import os
 import sys
 
@@ -45,39 +11,21 @@ _REPO_ROOT = os.path.abspath(os.path.join(_HERE, "..", ".."))
 if _REPO_ROOT not in sys.path:
     sys.path.insert(0, _REPO_ROOT)
 
-from ModelLakeFishing.stage2TrainGraphSAGE.losses import (  # noqa: E402
+from ModelLakeFishing.stage2TrainGraphSAGE.losses import (
     TRAINED_ON, perf_supervision, split_trained_on,
 )
 
 DEFAULT_KS = (10, 50, 100, 200)
 
 
-# ── split discipline ─────────────────────────────────────────────────────────
-
 def make_fixed_splits(data, *, split_seed, num_val=0.1, num_test=0.2,
                       neg_ratio=1.0, disjoint_train_ratio=0.3):
-    """Materialize (train, val, test) ONCE for a split_seed. Reuse the returned
-    objects for every config so paired comparisons are on identical test edges.
-
-    Returns (train_data, val_data, test_data). The split is a pure function of
-    split_seed (split_trained_on seeds torch's RNG internally); the caller sets a
-    SEPARATE init_seed right before model construction.
-    """
     return split_trained_on(
         data, num_val=num_val, num_test=num_test, neg_ratio=neg_ratio,
         disjoint_train_ratio=disjoint_train_ratio, seed=split_seed)
 
 
-# ── per-dataset within-dataset Kendall tau ───────────────────────────────────
-
 def per_dataset_tau(scorer, z_dict, split_data, lookup, *, min_per_dataset=3):
-    """Within-dataset Kendall tau on a split's POSITIVE trained_on edges.
-
-    Returns (macro_tau, per_dataset) where per_dataset maps dataset_idx ->
-    {tau, n_candidates, n_comparable_pairs}. n_comparable_pairs counts non-tied
-    pairs (the pairs Kendall actually scores). Datasets with < min_per_dataset
-    scorable candidates or zero score/target variance are excluded (tau undefined).
-    """
     dev = z_dict["model"].device
     eli, target = perf_supervision(split_data[TRAINED_ON], lookup)
     eli = eli.to(dev)
@@ -93,7 +41,6 @@ def per_dataset_tau(scorer, z_dict, split_data, lookup, *, min_per_dataset=3):
         if n < min_per_dataset:
             continue
         tg_d, pr_d = tg[m], pred[m]
-        # non-tied comparable pairs in the TRUTH (what Kendall can score)
         diffs = tg_d[:, None] - tg_d[None, :]
         n_pairs = int((np.triu(diffs, 1) != 0).sum())
         if np.std(tg_d) == 0 or np.std(pr_d) == 0:
@@ -107,8 +54,6 @@ def per_dataset_tau(scorer, z_dict, split_data, lookup, *, min_per_dataset=3):
     return macro, per
 
 
-# ── exact-dot z_d -> z_m head retrieval (the production query) ────────────────
-
 def _dcg(gains):
     gains = np.asarray(gains, dtype=float)
     discounts = 1.0 / np.log2(np.arange(2, gains.size + 2))
@@ -117,21 +62,6 @@ def _dcg(gains):
 
 def head_retrieval(z_dict, split_data, lookup, *, ks=DEFAULT_KS,
                    min_per_dataset=3, top_frac=0.10):
-    """Exact z_d . z_m retrieval over each test dataset's OBSERVED held-out models.
-
-    For dataset d: candidates = models with a held-out trained_on edge to d;
-    true relevance = their normalized accuracy. Rank candidates by exact dot
-    score(d, m) = <z_d, z_m> (the score HNSW will rank by) and compute, per K:
-
-      hit@K        : true single best candidate is within the top-K retrieved
-      recall_top3  : fraction of the true top-3 candidates within top-K
-      recall_top10pct : fraction of the true top-ceil(top_frac*n) within top-K
-      ndcg@K       : DCG of retrieved order / ideal DCG, gain = accuracy
-      regret@K     : best true accuracy  -  best true accuracy among top-K retrieved
-
-    Per-dataset values are returned plus their macro average. Datasets with
-    < min_per_dataset candidates or no accuracy variance are skipped.
-    """
     dev = z_dict["model"].device
     z_m = F.normalize(z_dict["model"], p=2, dim=-1)
     z_d = F.normalize(z_dict["dataset"], p=2, dim=-1)
@@ -152,8 +82,8 @@ def head_retrieval(z_dict, split_data, lookup, *, ks=DEFAULT_KS,
         zd = z_d[int(d)].to(dev)
         zm = z_m[torch.as_tensor(cand, dtype=torch.long, device=dev)]
         score = (zm @ zd).detach().cpu().numpy()
-        order = np.argsort(-score)                 # retrieved ranking (best first)
-        truth_order = np.argsort(-a)               # ideal ranking by accuracy
+        order = np.argsort(-score)
+        truth_order = np.argsort(-a)
 
         best_acc = float(a.max())
         true_best = int(truth_order[0])
@@ -168,8 +98,6 @@ def head_retrieval(z_dict, split_data, lookup, *, ks=DEFAULT_KS,
             k = min(K, n)
             topk = order[:k]
             topk_set = set(topk.tolist())
-            # NDCG@K must divide by IDCG@K (best k), not the full-list DCG
-            # (Kendall/cold guide §6.2 correction).
             ideal_dcg_k = _dcg(a_sorted_desc[:k])
             row[f"hit@{K}"] = float(true_best in topk_set)
             row[f"recall_top3@{K}"] = len(top3 & topk_set) / len(top3)
@@ -184,15 +112,7 @@ def head_retrieval(z_dict, split_data, lookup, *, ks=DEFAULT_KS,
     return macro, per
 
 
-# ── ANN fidelity: index z_m, query z_d (the serving path) ─────────────────────
-
 def dataset_to_model_hnsw_recall(z_dict, *, k=50, query_datasets=None):
-    """Index ALL z_m in HNSW, query with z_d, compare HNSW top-K to exact-dot
-    top-K. This validates the SERVING path (z_d -> z_m). Returns mean ANN recall
-    over the queried datasets, or None if hnswlib is missing.
-
-    query_datasets : optional list of dataset indices to query (default: all).
-    """
     try:
         import hnswlib
     except Exception:
@@ -214,9 +134,6 @@ def dataset_to_model_hnsw_recall(z_dict, *, k=50, query_datasets=None):
 
 
 def model_to_model_hnsw_recall(z_model, near_hub, k=50):
-    """The ORIGINAL train.hnsw_recall, renamed: index z_m, query z_m, split
-    near-hub / away-hub. Kept as a structural diagnostic ONLY -- it does NOT
-    validate the z_d -> z_m serving path. Needs hnswlib."""
     try:
         import hnswlib
     except Exception:
@@ -245,15 +162,7 @@ def model_to_model_hnsw_recall(z_model, near_hub, k=50):
     return out
 
 
-# ── paired uncertainty over datasets ──────────────────────────────────────────
-
 def paired_bootstrap(per_a, per_b, metric="tau", *, n_boot=10000, seed=0):
-    """95% paired bootstrap CI for (b - a) of a per-dataset metric, over the
-    datasets BOTH configs scored. per_a / per_b map dataset_idx -> {metric: val}.
-
-    Returns {n_paired, mean_delta, ci_low, ci_high, prob_positive}. An interval
-    excluding zero is the guide's promotion gate.
-    """
     common = sorted(set(per_a) & set(per_b))
     if not common:
         return {"n_paired": 0, "mean_delta": float("nan"),

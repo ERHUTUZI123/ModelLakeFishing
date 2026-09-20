@@ -1,37 +1,3 @@
-"""
-utility_scorecard.py -- F9: the recommendation-utility scorecard.
-
-Runbook: docs/1M/RECOMMENDATION_UTILITY_EVALUATION_BRAINSTORM.md.
-Record: docs/1M/F9.md.
-
-WHY THIS EXISTS
-    F8's A axis reports `gold@10 = 0.060` and counts every other returned model
-    as a miss. An audit of the returned lists shows that about 93% of those
-    "misses" have no record on the query dataset at all, so `1 - gold@10` is not
-    an error rate -- it is mostly annotation coverage. Turning that observation
-    into a defensible number requires either re-evaluating thousands of models
-    (73.5 TB and ~5,300 GPU-hours, see RESOURCE_E_AXIS_DENSE_REEVALUATION.md) or
-    reporting what CAN be established without running anything. This file does
-    the second.
-
-WHAT IS AND IS NOT CLAIMED
-    Nothing here measures the true performance of an unlabelled model. Layer 1
-    measures recovery of historical records. Layer 2 measures whether a returned
-    model can be obtained and run at all. The task-evidence column measures
-    whether a returned model has been evaluated on the same task somewhere else,
-    which is a necessary condition for relevance and not a sufficient one.
-
-THE BASELINES ARE THE POINT
-    Every layer is computed for five ranking sources on the same queries. The
-    text-only baseline matters most: `x_m[:, 64:448]` and `x_d[:, 64:448]` are
-    both all-MiniLM-L6-v2 embeddings of the same descriptor functions, so their
-    cosine is exactly "retrieve by model-card text, no graph, no training". The
-    gap between it and our ranking is what the graph and the training bought.
-
-Run (from ModelLakeFishing/):
-    python -m scale1m.utility_scorecard --stage meta        # once, ~30 s
-    python -m scale1m.utility_scorecard --stage score
-"""
 import argparse
 import glob
 import gzip
@@ -49,15 +15,13 @@ _REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(_HERE), ".."))
 if _REPO_ROOT not in sys.path:
     sys.path.insert(0, _REPO_ROOT)
 
-from scale1m.hf_crawl import data_root, utcnow, write_json_atomic     # noqa: E402
+from scale1m.hf_crawl import data_root, utcnow, write_json_atomic
 
 K = 10
 SEEDS = (0, 1, 2)
 RUN_FMT = "RF_full_s%d_e25"
 NAME_DIM, DESC_DIM = 64, 384
 
-# HF pipeline tags appear as bare tags alongside library and language tags.
-# Only the ones that occur in this lake's supervision are needed.
 PIPELINE_TAGS = {
     "text-generation", "text-classification", "token-classification",
     "question-answering", "fill-mask", "summarization", "translation",
@@ -79,12 +43,7 @@ def norm_task(t):
     return re.sub(r"[\s_]+", "-", str(t).strip().lower())
 
 
-# ── stage: meta ──────────────────────────────────────────────────────────────
-
 def stage_meta(args):
-    """One pass over the snapshot, producing the per-model columns layer 2
-    needs. Everything here is a fact recorded on the Hub at crawl time; none of
-    it requires downloading a model."""
     t0 = time.time()
     lad = pd.read_parquet(args.ladder, columns=["model", "mappedID", "size_b",
                                                 "family", "in_snapshot"])
@@ -93,7 +52,7 @@ def stage_meta(args):
     row_of = pd.Series(lad["mappedID"].to_numpy(), index=lad["model"].astype(str))
 
     downloads = np.zeros(n, dtype=np.int64)
-    flags = np.zeros(n, dtype=np.uint8)          # 1 gated, 2 private, 4 disabled
+    flags = np.zeros(n, dtype=np.uint8)
     licensed = np.zeros(n, dtype=bool)
     endpoints = np.zeros(n, dtype=bool)
     safet = np.zeros(n, dtype=bool)
@@ -146,8 +105,6 @@ def stage_meta(args):
     return meta
 
 
-# ── ranking sources ──────────────────────────────────────────────────────────
-
 def topk_from_scores(score, k):
     idx = np.argpartition(-score, k)[:k]
     return idx[np.argsort(-score[idx])]
@@ -158,13 +115,6 @@ def rank_of(score, target):
 
 
 def ours_and_text(args, cands, node_of, meta):
-    """Two dense rankings on the same queries: the trained embeddings, and the
-    frozen MiniLM halves of the two feature matrices.
-
-    The text baseline is not an approximation of a text retriever -- it IS one.
-    Both halves come from all-MiniLM-L6-v2 over the descriptor functions the
-    builders used, so the cosine is a bona fide text-only retrieval score with
-    no graph and no training in it."""
     import torch
     dev = args.device
     d0 = os.path.join(args.exports, RUN_FMT % 0)
@@ -175,8 +125,8 @@ def ours_and_text(args, cands, node_of, meta):
 
     xm = np.load(os.path.join(args.feats, "x_m.npy"), mmap_mode="r")
     xd = np.load(os.path.join(args.graph, "x_dataset.npy"), mmap_mode="r")
-    qd = np.array(xd[:, NAME_DIM:NAME_DIM + DESC_DIM], dtype=np.float32)  # copy:
-    qd /= (np.linalg.norm(qd, axis=1, keepdims=True) + 1e-12)  # the memmap is read-only
+    qd = np.array(xd[:, NAME_DIM:NAME_DIM + DESC_DIM], dtype=np.float32)
+    qd /= (np.linalg.norm(qd, axis=1, keepdims=True) + 1e-12)
     qd_t = torch.from_numpy(qd).to(dev).half()
 
     qs = sorted(cands)
@@ -189,16 +139,13 @@ def ours_and_text(args, cands, node_of, meta):
     del zm, zd
     torch.cuda.empty_cache() if dev.startswith("cuda") else None
 
-    # text-only, streamed in fp16 so the 4.63 GB descriptor half never has to be
-    # resident all at once. The gold rows are gathered first so the pass can
-    # count top-K and beats-gold together instead of reading the matrix twice.
     N = xm.shape[0]
     gold_of = {q: int(cands[q][0][int(np.argmax(cands[q][1]))]) for q in qs}
     grows = np.array(sorted({gold_of[q] for q in qs}), dtype=np.int64)
     gvec = np.array(xm[grows, NAME_DIM:NAME_DIM + DESC_DIM], dtype=np.float32)
     gvec /= (np.linalg.norm(gvec, axis=1, keepdims=True) + 1e-12)
     gpos = {int(r): i for i, r in enumerate(grows)}
-    qt = qd_t[[q for q in qs]]                       # [Q, 384]
+    qt = qd_t[[q for q in qs]]
     gs = (torch.from_numpy(gvec).to(dev).half() @ qt.T).float().cpu().numpy()
     gold_score = {q: float(gs[gpos[gold_of[q]], j]) for j, q in enumerate(qs)}
 
@@ -209,7 +156,7 @@ def ours_and_text(args, cands, node_of, meta):
         blk = np.array(xm[lo:hi, NAME_DIM:NAME_DIM + DESC_DIM], dtype=np.float32)
         blk /= (np.linalg.norm(blk, axis=1, keepdims=True) + 1e-12)
         bt = torch.from_numpy(blk).to(dev).half()
-        sc = (bt @ qt.T).float().cpu().numpy()       # [chunk, Q]
+        sc = (bt @ qt.T).float().cpu().numpy()
         for j, q in enumerate(qs):
             col = sc[:, j]
             better[q] += int((col > gold_score[q]).sum())
@@ -225,9 +172,8 @@ def ours_and_text(args, cands, node_of, meta):
 
 
 def cheap_sources(args, cands, node_of, meta, sup_task_pool, rng):
-    """Popularity, same-task random, and whole-lake random."""
     dl = meta["downloads"].to_numpy()
-    pop = topk_from_scores(dl.astype(np.float64), K)     # query-independent
+    pop = topk_from_scores(dl.astype(np.float64), K)
     N = len(meta)
     out = {"popularity": {}, "random_task_pool": {}, "random_lake": {}}
     for q in sorted(cands):
@@ -240,8 +186,6 @@ def cheap_sources(args, cands, node_of, meta, sup_task_pool, rng):
         out["random_lake"][q] = (rng.integers(0, N, K), None)
     return out
 
-
-# ── the scorecard ────────────────────────────────────────────────────────────
 
 def score_source(name, ranked, cands, node_of, meta, observed, task_models, N):
     dl = meta["downloads"].to_numpy()
@@ -323,7 +267,6 @@ def stage_score(args):
     task_models = {t: np.unique(g["m_row"].to_numpy()) for t, g in sup.groupby("task")}
     by_node = {k: set(v) for k, v in sup.groupby(sup["node"].astype(str))["m_row"].apply(set).items()}
 
-    # de-duplicated queries across the three split seeds, seed 0's embeddings
     d0 = os.path.join(args.exports, RUN_FMT % 0)
     di = pd.read_parquet(os.path.join(d0, "dataset_ids.parquet")).sort_values("mappedID")
     nm = di.set_index("mappedID")["dataset"].astype(str)
@@ -344,9 +287,6 @@ def stage_score(args):
         rows.append(score_source(k, cheap[k], cands, node_of, meta,
                                  observed, task_models, N))
 
-    # freeze the t0 recommendation list for the temporal follow-up (brainstorm
-    # §3.4): the rankings exist now, the future records do not, so saving them
-    # today is what makes the later comparison independent of these labels.
     frozen = []
     for q in sorted(cands):
         for r, m in enumerate(ours[q][0], 1):

@@ -1,22 +1,3 @@
-"""
-top1_baselines.py -- T0 (and later G/L rows) of the Top-1/global guide.
-
-Runs configurations on the PROVENANCE-FIXED graph (dedup_trained_on: 12,205 rows
--> 7,056 distinct pairs; kills the duplicate-copy target leakage that put 44% of
-test pairs into the train message graph) and evaluates every one with the single
-five-metric evaluator (top1_eval.five_metric_eval). Adds analytic random
-baselines. Writes:
-
-  artifacts/ablation/top1/<tag>/<name>.json   (per-dataset records + hashes)
-  artifacts/ablation/top1/TOP1_BASELINES.json (aggregates, T0 tag)
-  artifacts/ablation/top1/TOP1_BASELINES.md
-
-Training, losses, split logic unchanged -- training simply runs on the deduped
-graph via the existing ablation.train_eval_one path.
-
-Run:  python -m ModelLakeFishing.stage2TrainGraphSAGE.top1_baselines [--tag T0]
-"""
-
 import argparse
 import hashlib
 import io
@@ -32,16 +13,16 @@ _REPO_ROOT = os.path.abspath(os.path.join(_HERE, "..", ".."))
 if _REPO_ROOT not in sys.path:
     sys.path.insert(0, _REPO_ROOT)
 
-from ModelLakeFishing.stage2TrainGraphSAGE.model import load_hgraph  # noqa: E402
-from ModelLakeFishing.stage2TrainGraphSAGE.losses import accuracy_lookup  # noqa: E402
-from ModelLakeFishing.stage2TrainGraphSAGE.eval_harness import make_fixed_splits, paired_bootstrap  # noqa: E402
-from ModelLakeFishing.stage2TrainGraphSAGE.graph_surgery import apply_similar_to_mode, dedup_trained_on  # noqa: E402
-from ModelLakeFishing.stage2TrainGraphSAGE.ablation import train_eval_one  # noqa: E402
-from ModelLakeFishing.stage2TrainGraphSAGE.top1_audit import (  # noqa: E402
+from ModelLakeFishing.stage2TrainGraphSAGE.model import load_hgraph
+from ModelLakeFishing.stage2TrainGraphSAGE.losses import accuracy_lookup
+from ModelLakeFishing.stage2TrainGraphSAGE.eval_harness import make_fixed_splits, paired_bootstrap
+from ModelLakeFishing.stage2TrainGraphSAGE.graph_surgery import apply_similar_to_mode, dedup_trained_on
+from ModelLakeFishing.stage2TrainGraphSAGE.ablation import train_eval_one
+from ModelLakeFishing.stage2TrainGraphSAGE.top1_audit import (
     GRAPH, SPLIT_SEEDS, INIT_SEED, EPOCHS, sha256_file, state_dict_sha256,
     model_names, candidates, configs,
 )
-from ModelLakeFishing.stage2TrainGraphSAGE.top1_eval import (  # noqa: E402
+from ModelLakeFishing.stage2TrainGraphSAGE.top1_eval import (
     five_metric_eval, aggregate, strata_aggregate, random_baselines, GOLD_KS,
 )
 
@@ -73,19 +54,15 @@ def run_configs(cfgs, *, tag, epochs=EPOCHS, extra_note=""):
             data, xm0, umi = load_hgraph(GRAPH)
             names = model_names(umi)
             if cfg.get("use_model_task"):
-                # D1 e_task: attach ids BEFORE the split so every split view
-                # carries the sliced task_id column (same ride as size/family)
                 from ModelLakeFishing.stage2TrainGraphSAGE.d1_features import attach_model_task_ids
                 vocab = attach_model_task_ids(data, umi)
                 xm0 = dict(xm0, num_model_tasks=len(vocab), model_task_vocab=vocab)
             xd0_cfg = xd0_full
             if cfg.get("repair_dataset_task"):
-                # v3 L3: apply the reviewed task_type enrichment patch (runtime
-                # override BEFORE the split; graph .pt untouched)
                 from ModelLakeFishing.stage2TrainGraphSAGE.d1_features import apply_dataset_task_repair
                 xd0_cfg, l3_stats = apply_dataset_task_repair(data, xd0_full)
                 print(f"    [L3 task repair] {l3_stats}")
-            data = dedup_trained_on(data)                              # provenance fix
+            data = dedup_trained_on(data)
             data = apply_similar_to_mode(data, cfg["similar_to_mode"], k=cfg["similar_to_k"])
             split = make_fixed_splits(data, split_seed=ss)
             _tr, _val, test_data = split
@@ -119,7 +96,6 @@ def run_configs(cfgs, *, tag, epochs=EPOCHS, extra_note=""):
                   f"top3={agg['top3_hit1']:.3f} regret={agg['regret1']:.4f} "
                   f"gold@1={agg['full2k_gold@1']:.3f} gold@10={agg['full2k_gold@10']:.3f} "
                   f"med_rank={agg['median_gold_rank']:.0f}")
-        # over-splits mean/std of every aggregate key
         keys = res["splits"][str(SPLIT_SEEDS[0])]["aggregate"].keys()
         res["aggregate_over_splits"] = {
             k: [float(np.mean([res["splits"][str(s)]["aggregate"][k] for s in SPLIT_SEEDS])),
@@ -129,7 +105,6 @@ def run_configs(cfgs, *, tag, epochs=EPOCHS, extra_note=""):
             json.dump(res, f, indent=2)
         results[name] = res
 
-    # candidate-set identity across configs, per split
     ref = list(cfgs)[0]
     identity = {str(ss): bool(all(cand_sig[ss][n] == cand_sig[ss][ref] for n in cfgs))
                 for ss in SPLIT_SEEDS}

@@ -1,22 +1,3 @@
-"""
-graph_surgery.py -- Phase 1: derive dataset-graph variants from a BUILT graph.
-
-The hf1000d/2000m graph was built with the (now-fixed) bug that forced
-threshold=1, so its `similar_to` relation is nearly complete (~130k edges,
-out-degree ~361) and its edge_attr already holds the full normalized
-dataset-dataset similarity. That means the Phase 1 ablations -- remove
-`similar_to`, top-k unweighted, weighted top-k -- can be produced by SURGERY on
-the loaded graph, identical to what the fixed stage-1 builder (attributes.py
-get_dataset_edge_index with top_k) would emit, WITHOUT re-running the heavy
-stage-1 embedding pipeline.
-
-Surgery operates ONLY on the dataset-dataset `similar_to` relation (message
-structure); it never touches trained_on supervision or lineage. Top-k keeps, per
-source dataset, its `k` highest-similarity targets (directed, self excluded),
-preserving similarity as edge_attr. A degree assertion fails loudly if a
-"sparse" variant comes out nearly complete.
-"""
-
 import torch
 
 SIMILAR_TO = ("dataset", "similar_to", "dataset")
@@ -25,23 +6,6 @@ REV_TRAINED_ON = ("dataset", "rev_trained_on", "model")
 
 
 def dedup_trained_on(data, *, reduce="max", verbose=False):
-    """Provenance fix (Top-1 guide Phase 0 item 8): collapse duplicate
-    (model, dataset) trained_on edge rows to ONE row per pair.
-
-    Why: the built hf1000d graph carries 12,205 trained_on rows but only 7,056
-    distinct pairs — get_finetuned_records concatenates records.csv (9,305
-    materialized rows, per-dataset-normalized accuracy) with model_config rows
-    (raw / mean-filled accuracy), and records.csv itself holds repeated runs.
-    5,143 duplicated pairs carry CONFLICTING accuracy values, and because
-    RandomLinkSplit permutes ROWS, a pair's duplicate copies straddle splits:
-    on split 0, 44% of test positive pairs also sat in the train message graph
-    (and 73% in the eval-time test message graph) — direct target leakage.
-
-    Fix at load time (graph construction untouched): group rows by pair, keep
-    `reduce` (default max = best observed normalized accuracy) as the single
-    value, and mirror the result onto rev_trained_on. After this, one pair is
-    one row, so no split can see a held-out pair through a duplicate copy.
-    """
     assert reduce in ("max", "mean")
     data = data.clone()
     ei = data[TRAINED_ON].edge_index
@@ -56,7 +20,6 @@ def dedup_trained_on(data, *, reduce="max", verbose=False):
         s = torch.zeros(n).scatter_add_(0, inv, ea)
         c = torch.zeros(n).scatter_add_(0, inv, torch.ones_like(ea))
         val = s / c
-    # rebuild (model, dataset) from the packed key
     base = int(ei[1].max()) + 1
     m = (uniq // base).to(torch.long)
     d = (uniq % base).to(torch.long)
@@ -82,7 +45,6 @@ def _set_similar_to(data, edge_index, edge_attr):
 
 
 def drop_similar_to(data):
-    """B1: remove the `similar_to` relation entirely (empty edge set)."""
     n = data["dataset"].num_nodes
     data = data.clone()
     _set_similar_to(data, torch.empty(2, 0, dtype=torch.long), torch.empty(0))
@@ -90,25 +52,16 @@ def drop_similar_to(data):
 
 
 def topk_similar_to(data, k, *, weighted=True):
-    """B2 (weighted=False) / B3 (weighted=True): keep each dataset's top-k
-    highest-similarity neighbours.
-
-    weighted=True keeps similarity in edge_attr; weighted=False sets all kept
-    edges to weight 1.0 (topology only). NOTE: until Phase 2 makes the GNN
-    edge-aware, weighted and unweighted are numerically identical in message
-    passing -- the distinction matters only once edge_attr is consumed.
-    """
     data = data.clone()
     n = data["dataset"].num_nodes
     ei = data[SIMILAR_TO].edge_index
     ea = getattr(data[SIMILAR_TO], "edge_attr", None)
     if ea is None:
         ea = torch.ones(ei.size(1))
-    # symmetric weight matrix from the existing (symmetrized) edges
     W = torch.full((n, n), float("-inf"))
     W[ei[0], ei[1]] = ea.float()
     W[ei[1], ei[0]] = ea.float()
-    W.fill_diagonal_(float("-inf"))               # never keep self edges
+    W.fill_diagonal_(float("-inf"))
 
     kk = int(min(k, n - 1))
     src, tgt, w = [], [], []
@@ -120,7 +73,6 @@ def topk_similar_to(data, k, *, weighted=True):
     edge_index = torch.tensor([src, tgt], dtype=torch.long)
     edge_attr = torch.tensor(w, dtype=torch.float) if weighted else torch.ones(len(w))
 
-    # degree assertions (guide Phase 1 step 5)
     if edge_index.numel():
         deg = torch.bincount(edge_index[0], minlength=n)
         assert int(deg.max()) <= kk, f"top-k degree {int(deg.max())} exceeds k={kk}"
@@ -130,12 +82,6 @@ def topk_similar_to(data, k, *, weighted=True):
 
 
 def apply_similar_to_mode(data, mode, *, k=10):
-    """Dispatch used by the ablation driver.
-      mode='dense' : leave the built (near-complete) graph as-is
-      mode='none'  : drop similar_to (B1)
-      mode='topk'  : top-k weighted (B3; numerically == B2 until Phase 2)
-      mode='topk_unweighted' : top-k topology only (B2)
-    """
     if mode == "dense":
         return data
     if mode == "none":
@@ -148,15 +94,6 @@ def apply_similar_to_mode(data, mode, *, k=10):
 
 
 def degree_cap_trained_on(data, *, quantile=0.95):
-    """v4 W3 / D2-P2 (mild degree cap): message-graph hygiene on trained_on.
-
-    tau = the `quantile` of the model out-degree distribution (labeled models
-    only). Models with deg > tau keep their tau HIGHEST-attr edges; every other
-    model is untouched. Supervision (edge_label_*) and lineage edges are never
-    touched -- this caps the MESSAGE graph only. REV mirrors the result.
-
-    Returns (data, stats). Deterministic (ties broken by edge order).
-    """
     out = data.clone()
     ei = out[TRAINED_ON].edge_index
     ea = out[TRAINED_ON].edge_attr.float().flatten()

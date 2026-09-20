@@ -1,22 +1,3 @@
-r"""Deployment-centred top-10 evaluation for Model Lake and released ModelLens.
-
-This evaluation deliberately targets the system a user can reproduce from the
-published ModelLens artifacts.  It does *not* substitute the locally retrained
-ModelLens surrogate for the shipped scorer.
-
-The primary metrics inspect the actual global top-10 list.  Missing benchmark
-results are not asserted to be poor performance; they contribute zero only to
-an explicitly named *certified lower bound*.  They are otherwise reported as
-unverified deployment risk.  Rank correlations and NDCG after filtering away
-unlabelled global distractors are intentionally excluded because they can be
-excellent while the returned list is unusable.
-
-Run from ModelLakeFishing/:
-
-    .\.venv\Scripts\python.exe -m scale.deployment_quality_metrics \
-        --graph stage1BuildTransferGraph/hgraph_ml_v2_sub.pt
-"""
-
 from __future__ import annotations
 
 import argparse
@@ -55,7 +36,6 @@ def query_deployment_metrics(
     k: int = K,
     near_delta: float = GM.GAP_DELTA,
 ) -> tuple[dict, tuple[int, ...]]:
-    """Metrics over the actual global top-k, without filtering distractors."""
     candidates = np.asarray(candidates, dtype=int)
     values = np.asarray(values, dtype=float)
     top = _topk(scores, k)
@@ -77,9 +57,6 @@ def query_deployment_metrics(
         else:
             unknown_task += 1
 
-    # This is a certified/deployment lower bound, not an assertion that
-    # unverified models have zero true utility.  Observed values are normalized
-    # to the query's observed optimum so task metrics remain comparable.
     if best > 1e-12:
         utility_lb = sum(max(0.0, min(1.0, v / best)) for v in observed_top) / k
     else:
@@ -150,7 +127,6 @@ def recommendation_specificity(
     signatures: dict[int, tuple[str, str]],
     n_models: int,
 ) -> dict:
-    """Measure catalogue collapse and dataset-insensitive list collisions."""
     lists = list(top_lists.values())
     slots = max(1, len(lists) * K)
     unique_models = set(m for row in lists for m in row)
@@ -200,7 +176,6 @@ def build_release_scores(
     node_to_task: dict[str, str],
     node_to_metric: dict[str, str],
 ) -> tuple[dict[int, np.ndarray], dict]:
-    """Published-checkpoint ModelLens path with the unpublished dataset slot blind."""
     model, _, device, missing, unexpected = MA.load_modellens()
     model2id, task2id, metric2id, family2id, profile, size_bucket = MA.build_vocabs()
     family_allowed = {str(k).strip().lower(): int(v) for k, v in family2id.items()}

@@ -1,27 +1,3 @@
-"""
-check_stage2_contract.py -- verify the graph -> training interface contract.
-
-The current full-lake path uses ``--sharded <graph_store>``. ``--pt`` remains
-available for historical single-file graphs.
-
-Checks (all hard):
-  1. payload carries data + unique_model_id + unique_dataset_id + xm0_meta
-  2. data['model'].x is the REAL frozen [e_name||e_desc] (dim == name_dim+desc_dim,
-     has negative entries) -- NOT a torch.rand smoke feature (all in [0,1))
-  3. data['model'].size_bucket_id / family_id present, shape [N], in range
-  4. xm0_meta: num_size_buckets, num_families, family_vocab; vocab is a contiguous
-     bijection with Other->0 and len == num_families
-  5. edge types present include trained_on, similar_to, the auto reverse edges,
-     and -- if lineage exists -- BOTH is_base_of and rev_is_base_of
-  6. ModelNodeEncoder gradient boundary: after a forward+backward, both learnable
-     tables get nonzero grad and the frozen x gets NONE
-  7. z_m row-order: a full-graph forward yields exactly N model rows (mappedID order)
-
-Run:
-  ../.venv/Scripts/python.exe -m ModelLakeFishing.stage1BuildTransferGraph.check_stage2_contract --pt <graph.pt>
-or  cd stage1BuildTransferGraph && ../.venv/Scripts/python.exe check_stage2_contract.py --pt hgraph_diverse_xm0.pt
-"""
-
 import argparse
 import os
 import sys
@@ -34,7 +10,7 @@ for _p in (_REPO_ROOT, _HERE):
     if _p not in sys.path:
         sys.path.insert(0, _p)
 
-from ModelLakeFishing.stage2TrainGraphSAGE.model import HeteroGraphSAGE  # noqa: E402
+from ModelLakeFishing.stage2TrainGraphSAGE.model import HeteroGraphSAGE
 
 BASE_EDGES = {
     ("model", "trained_on", "dataset"),
@@ -67,7 +43,6 @@ def main():
 
     print(f"=== Stage-2 contract check on {os.path.basename(args.pt)} ===")
 
-    # 1. payload completeness
     for k in ("data", "unique_model_id", "unique_dataset_id", "xm0_meta"):
         check(k in payload, f"payload has '{k}'")
     data = payload["data"]
@@ -76,7 +51,6 @@ def main():
     D = data["dataset"].num_nodes
     print(f"      models={N}  datasets={D}")
 
-    # 2. real frozen features, not smoke random
     x = data["model"].x
     name_dim = xm0.get("name_dim", 64)
     desc_dim = xm0.get("desc_dim", 384)
@@ -86,7 +60,6 @@ def main():
     check(bool((x.min() < 0).item()),
           f"model.x has negative entries (real e_name||e_desc, not torch.rand smoke); min={float(x.min()):.4f}")
 
-    # 3. learnable index columns
     check(hasattr(data["model"], "size_bucket_id") and data["model"].size_bucket_id.shape == (N,),
           "model.size_bucket_id present, shape [N]")
     check(hasattr(data["model"], "family_id") and data["model"].family_id.shape == (N,),
@@ -97,14 +70,12 @@ def main():
         check(int(data["model"].size_bucket_id.max()) < xm0.get("num_size_buckets", 0),
               "size_bucket_id values < num_size_buckets")
 
-    # 4. xm0 vocab bijection
     vocab = xm0.get("family_vocab", {})
     nf = xm0.get("num_families")
     check(len(vocab) == nf, f"family_vocab len ({len(vocab)}) == num_families ({nf})")
     check(set(vocab.values()) == set(range(nf or 0)), "family_vocab ids are a contiguous bijection 0..num_families-1")
     check(vocab.get("Other") == 0, "family_vocab['Other'] == 0 (zero-shot degradation row)")
 
-    # 5. edge types
     ets = set(data.edge_types)
     for e in BASE_EDGES:
         check(e in ets, f"edge type present: {e}")
@@ -119,7 +90,6 @@ def main():
     for et in sorted(ets):
         print(f"        {et}: {data[et].edge_index.shape[1]}")
 
-    # 6. gradient boundary via ModelNodeEncoder inside HeteroGraphSAGE
     print("  -- gradient boundary (one forward/backward) --")
     model = HeteroGraphSAGE(
         metadata=data.metadata(), frozen_dim=x.shape[1],

@@ -1,4 +1,3 @@
-"""Tiny fixtures only: never stream the real frozen snapshot in A0.2."""
 import gzip
 import json
 import sys

@@ -1,47 +1,3 @@
-"""Build the split-safe task-prior sidecar used by the 3M retrieval path.
-
-The current consumer is ``scale1m.eval_y2``. It retrieves a dense HNSW
-top-1,000 pool and looks up task-level historical evidence without loading the
-training graph. The sidecar carries:
-
-  trained_on : (model_mappedID, dataset_mappedID, norm_acc) lake supervision
-  root_id    : per dataset mappedID -> integer root code
-  task_id    : per dataset mappedID -> task group code
-All arrays use the exact mappedID row order of z_m / z_d and are checked against
-the export's ID snapshots.
-
-CURRENT FULL-LAKE SOURCE
-  --graph-store  a scale1m.graph_store directory. ID tables are parquet and
-                 node features do not need to be loaded.
-
-HISTORICAL COMPATIBILITY
-  --graph        a single-file .pt graph used by pre-3M experiments. The old
-                 consumer is archived under legacy/pre_3m/stage3HNSW.
-
-WHY --split-seed IS NOT OPTIONAL AT SCALE
-  Excluding only the query node is insufficient: its same-task group may contain
-  other test datasets. With --split-seed, the sidecar contains train+validation
-  edges only, recomputes the export's root-aware split, and asserts that no
-  surviving edge touches a test-side dataset.
-
-WHY task_id MAY NOT COME FROM THE GRAPH
-  Earlier code read `data["dataset"].task_type_id`. On the full-lake graph that
-  column is identically 0 -- build_graph_rf.py writes `np.zeros(n_d)` and
-  declares `num_task_types: 1`, because the RF dataset features are
-  [e_name || e_card || e_stats] with no probe views and no task vocabulary. A
-  literal port would therefore put all 18,729 datasets in ONE task group and the
-  "task prior" would degenerate into a global mean-accuracy prior. When the
-  graph's task ids are degenerate, --task-nodes supplies the grouping from the
-  canonical dataset table's `task` column instead, and prior_sidecar_meta.json
-  records which source was used.
-
-Run from the parent of the repository, once per split seed:
-  ModelLakeFishing/.venv/Scripts/python.exe -m ModelLakeFishing.stage3HNSW.build_prior_sidecar \
-      --graph-store <DATA>/data1m/graphs/hgraph_rf \
-      --export <DATA>/data1m/exports_rf/RF_full_s0_e25 --split-seed 0 \
-      --task-nodes <DATA>/data1m/rf/canon/dataset_nodes_merged.parquet
-"""
-
 import argparse
 import hashlib
 import json
@@ -63,16 +19,12 @@ _PACKAGE_ROOT = os.path.dirname(_HERE)
 if _PACKAGE_ROOT not in sys.path:
     sys.path.insert(0, _PACKAGE_ROOT)
 
-# Register the compatibility package before graph loading or the split code
-# imports historical ModelLakeFishing.* names. A freshly rebuilt graph has no
-# A0 archive marker, so a0_prior_context() may not import scale1m on that path.
-import scale1m  # noqa: E402,F401
+import scale1m
 
 TRAINED_ON = ("model", "trained_on", "dataset")
 
 
 def a0_prior_context(args):
-    """Verify producer graph/export bindings before creating an A0 sidecar."""
     if not args.graph_store:
         return None
     with open(os.path.join(args.graph_store,"meta.json"),encoding="utf-8") as handle:
@@ -102,7 +54,6 @@ def a0_prior_context(args):
 
 
 def graph_export_binding(args):
-    """Validate freshly built graph-store exports without historical markers."""
     if not args.graph_store:
         return None
     with open(os.path.join(args.graph_store, "meta.json"), encoding="utf-8") as handle:
@@ -139,7 +90,6 @@ def _norm_task(t):
 
 
 def _read_ids(export_dir, stem, col):
-    """The export's id snapshot, csv (D0) or parquet (graph_store rungs)."""
     csv = os.path.join(export_dir, stem + ".csv")
     if os.path.isfile(csv):
         return pd.read_csv(csv)[col].astype(str).tolist()
@@ -151,7 +101,6 @@ def _read_ids(export_dir, stem, col):
 
 
 def load_graph(args):
-    """Returns (data, unique_dataset_id df, unique_model_id df)."""
     if args.graph_store:
         from scale1m.graph_store import load_sharded
         payload = load_sharded(args.graph_store, mmap=True, verify_sha256=False)
@@ -168,13 +117,6 @@ def dataset_names(udi):
 
 
 def root_ids(udi):
-    """The root of every dataset node, as an integer code.
-
-    graph_store rungs carry an explicit `root` column and make_root_aware_splits
-    splits on exactly that column, so the sidecar must use it too or the sibling
-    groups and the split units would disagree. D0 has no such column and its
-    roots are the part before the first '/', which is what v6 used.
-    """
     if "root" in udi.columns:
         roots = udi["root"].astype(str)
         source = "unique_dataset_id.root"
@@ -186,7 +128,6 @@ def root_ids(udi):
 
 
 def task_ids(data, udi, task_nodes):
-    """Task group per dataset node, and where the grouping came from."""
     graph_ids = None
     if "task_type_id" in data["dataset"]:
         graph_ids = data["dataset"].task_type_id.numpy().astype("int64")
@@ -208,19 +149,12 @@ def task_ids(data, udi, task_nodes):
 
 
 def visible_edges(data, udi, split_seed):
-    """train + val trained_on edges under the export's own root-aware split.
-
-    test_data's MESSAGE graph is train + val by construction (d0_splits), which
-    is precisely the edge set a serving prior may read for a test query.
-    """
     from ModelLakeFishing.stage2TrainGraphSAGE.d0_splits import make_root_aware_splits
     from ModelLakeFishing.stage2TrainGraphSAGE.losses import REV_TRAINED_ON
     from torch_geometric.data import HeteroData
 
     roots = (udi["root"].astype(str).tolist() if "root" in udi.columns
              else dataset_names(udi).str.split("/").str[0].tolist())
-    # a skeleton: the split reads only these four things, and cloning the real
-    # graph would copy a 5.4 GB feature matrix three times to learn nothing
     sk = HeteroData()
     sk["model"].num_nodes = int(data["model"].num_nodes)
     sk["dataset"].num_nodes = int(data["dataset"].num_nodes)
@@ -263,7 +197,6 @@ def main(argv=None):
 
     data, udi, umi = load_graph(args)
 
-    # iron-rule check: sidecar row order must match the export's id snapshots
     assert _read_ids(args.export, "dataset_ids", "unique_dataset_id") == \
         dataset_names(udi).tolist(), "dataset id order != export"
     assert _read_ids(args.export, "model_ids", "unique_model_id") == \

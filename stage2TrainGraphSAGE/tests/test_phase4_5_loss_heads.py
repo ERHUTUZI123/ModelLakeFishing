@@ -1,13 +1,3 @@
-"""
-test_phase4_5_loss_heads.py -- Phase 4 & 5 required tests (Kendall action guide):
-  7. raw-dot RankNet loss orders raw dot products in the intended direction;
-     min_gap treats near-ties as ties; temperature must be positive.
-  8. separate heads still produce L2-normalized vectors, and the training score
-     (z_d . z_m) equals the HNSW query geometry (unit-vector inner product) exactly.
-
-Run:  python -m ModelLakeFishing.stage2TrainGraphSAGE.tests.test_phase4_5_loss_heads
-"""
-
 import os
 import sys
 
@@ -36,13 +26,11 @@ def check(cond, msg):
 def main():
     torch.manual_seed(0)
 
-    # --- Phase 4: RankNet trains raw dot in the right direction ---
     print("=== RankNet orders raw dot by accuracy ===")
-    # one dataset, 4 models; make z so the order is initially WRONG, then optimize
     dim = 8
     z_d = F.normalize(torch.randn(1, dim), dim=-1)
     z_m_raw = torch.randn(4, dim, requires_grad=True)
-    acc = torch.tensor([0.9, 0.7, 0.5, 0.3])              # model 0 best ... 3 worst
+    acc = torch.tensor([0.9, 0.7, 0.5, 0.3])
     eli = torch.stack([torch.arange(4), torch.zeros(4, dtype=torch.long)])
     opt = torch.optim.Adam([z_m_raw], lr=0.1)
     for _ in range(300):
@@ -52,11 +40,9 @@ def main():
         loss.backward(); opt.step()
     with torch.no_grad():
         s = (F.normalize(z_m_raw, dim=-1) @ z_d.t()).squeeze(-1)
-    # higher accuracy -> higher raw dot score (concordant order)
     order_ok = bool((s[0] > s[1] > s[2] > s[3]).item())
     check(order_ok, f"raw dot order matches accuracy order after training (s={s.tolist()})")
 
-    # min_gap treats near-ties as ties (no supervision -> zero loss)
     near = torch.tensor([0.5000, 0.5005, 0.4998, 0.5002])
     z = {"model": F.normalize(torch.randn(4, dim), dim=-1), "dataset": z_d}
     l_tie = raw_dot_ranknet_loss(z, eli, near, temperature=0.1, min_gap=0.01)
@@ -64,14 +50,12 @@ def main():
     l_notie = raw_dot_ranknet_loss(z, eli, near, temperature=0.1, min_gap=0.0)
     check(float(l_notie) > 0.0, "min_gap=0 keeps the same near-tie pairs (nonzero loss)")
 
-    # temperature must be positive
     try:
         raw_dot_ranknet_loss(z, eli, acc, temperature=-1.0)
         check(False, "negative temperature should raise")
     except AssertionError:
         check(True, "negative temperature raises (positivity enforced)")
 
-    # --- Phase 5: separate heads -> normalized + exact MIPS equality ---
     print("\n=== separate heads: normalized + score == HNSW geometry ===")
     data, xm0, _ = load_hgraph(GRAPH)
     xd0 = torch.load(GRAPH, map_location="cpu", weights_only=False).get("xd0_meta")
@@ -91,10 +75,9 @@ def main():
           "z_m unit-normalized under separate heads")
     check(torch.allclose(zd.norm(dim=-1), torch.ones(zd.size(0)), atol=1e-5),
           "z_d unit-normalized under separate heads")
-    # training score for a (model,dataset) pair == cosine == HNSW inner-product query
     d0 = 0
     train_score = (zm[:5] * zd[d0]).sum(-1)
-    hnsw_score = zm[:5] @ zd[d0]                       # exact MIPS the index ranks by
+    hnsw_score = zm[:5] @ zd[d0]
     check(torch.allclose(train_score, hnsw_score, atol=1e-6),
           "z_d . z_m training score == HNSW inner-product geometry (exact)")
 

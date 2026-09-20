@@ -1,8 +1,4 @@
-"""Canonical text serialization for dataset-card embeddings."""
-
-
 def dataset_descriptor(card_record, node_name):
-    """Return the frozen name/task/tag/description text used by F5."""
     base = node_name.replace("/", " ").replace("_", " ").replace("-", " ")
     if not card_record:
         return base

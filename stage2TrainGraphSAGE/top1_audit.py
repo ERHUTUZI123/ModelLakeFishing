@@ -1,28 +1,3 @@
-"""
-top1_audit.py -- EVALUATION-ONLY Top-1 audit for B0, B5_ranknet, R_mg02, P6_dm10.
-
-Does NOT change training, graph construction, losses, or fixed splits. It reuses
-`ablation.train_eval_one` (the exact training path) and the fixed splits from
-`eval_harness.make_fixed_splits`, then runs two evaluations on the embeddings
-produced from test_data:
-
-  A. Observed-candidate Top-1  -- candidates = positive held-out trained_on edges
-     of test_data (>=3 candidates, non-constant accuracy). Rank by exact
-     normalized dot z_d @ z_m. hit@1 / top3_hit@1 / regret@1, macro + by
-     candidate-count strata, random expectation, paired bootstrap (P6 vs others).
-
-  B. Full-2K gold-survival     -- gold = highest-accuracy held-out candidate; rank
-     ALL 2000 z_m by exact z_d @ z_m; gold_survival@{1,10,50,100}, exact/median/
-     mean rank, MRR. NOT full-lake precision (non-gold models are unlabeled).
-     Plus HNSW (faiss IndexHNSFlat over the same 2000 z_m, query z_d) ANN fidelity
-     vs exact-dot at K={1,10,50,100} -- reported separately from semantic metrics.
-
-Candidate sets are verified identical across configurations per split before any
-interpretation (they depend only on test_data + accuracy, not on the model).
-
-Run:  python -m ModelLakeFishing.stage2TrainGraphSAGE.top1_audit
-"""
-
 import hashlib
 import io
 import json
@@ -38,13 +13,13 @@ _REPO_ROOT = os.path.abspath(os.path.join(_HERE, "..", ".."))
 if _REPO_ROOT not in sys.path:
     sys.path.insert(0, _REPO_ROOT)
 
-from ModelLakeFishing.stage2TrainGraphSAGE.model import load_hgraph  # noqa: E402
-from ModelLakeFishing.stage2TrainGraphSAGE.losses import (  # noqa: E402
+from ModelLakeFishing.stage2TrainGraphSAGE.model import load_hgraph
+from ModelLakeFishing.stage2TrainGraphSAGE.losses import (
     TRAINED_ON, accuracy_lookup, perf_supervision,
 )
-from ModelLakeFishing.stage2TrainGraphSAGE.eval_harness import make_fixed_splits, paired_bootstrap  # noqa: E402
-from ModelLakeFishing.stage2TrainGraphSAGE.graph_surgery import apply_similar_to_mode  # noqa: E402
-from ModelLakeFishing.stage2TrainGraphSAGE.ablation import train_eval_one  # noqa: E402
+from ModelLakeFishing.stage2TrainGraphSAGE.eval_harness import make_fixed_splits, paired_bootstrap
+from ModelLakeFishing.stage2TrainGraphSAGE.graph_surgery import apply_similar_to_mode
+from ModelLakeFishing.stage2TrainGraphSAGE.ablation import train_eval_one
 
 GRAPH = os.path.join(_REPO_ROOT, "ModelLakeFishing", "stage1BuildTransferGraph",
                      "hgraph_hf1000d_2000m_xm0_xd0.pt")
@@ -57,7 +32,6 @@ KS = (1, 10, 50, 100)
 
 
 def _base_cfg():
-    # exactly the ablation B0 defaults (see ablation.py main() + B0 dict)
     return dict(num_layers=1, top_frac=0.10, lr=1e-2,
                 lambda_rank=1.0, lambda_contrast=1.0, lambda_mse=0.0, lambda_uniform=0.0,
                 scorer="dot", similar_to_mode="dense", similar_to_k=10,
@@ -92,7 +66,7 @@ def state_dict_sha256(model):
 
 
 def model_names(umi):
-    if hasattr(umi, "sort_values"):                       # pandas DataFrame
+    if hasattr(umi, "sort_values"):
         return umi.sort_values("mappedID")["model"].astype(str).tolist()
     if isinstance(umi, dict):
         return [str(umi[i]) for i in range(len(umi))]
@@ -100,9 +74,6 @@ def model_names(umi):
 
 
 def candidates(test_data, lookup):
-    """Qualifying test datasets -> (candidate model idx array, normalized acc array).
-    Candidate = positive held-out trained_on edge; require >=3 candidates and
-    non-constant accuracy. Config-independent (depends only on split + accuracy)."""
     eli, target = perf_supervision(test_data[TRAINED_ON], lookup)
     models, ds, acc = eli[0].numpy(), eli[1].numpy(), target.numpy()
     out = {}
@@ -127,8 +98,8 @@ def observed_top1(cands, z_m, z_d, names):
         max_acc = float(a.max())
         per[int(d)] = {
             "n_candidates": int(cand.size),
-            "hit1": float(a[sel_local] == max_acc),            # selected achieves top accuracy
-            "top3_hit1": float(sel_local in top3_local),        # selected among true top-3
+            "hit1": float(a[sel_local] == max_acc),
+            "top3_hit1": float(sel_local in top3_local),
             "regret1": float(max_acc - a[sel_local]),
             "selected_model_id": int(cand[sel_local]),
             "selected_model_name": names[int(cand[sel_local])],
@@ -160,10 +131,10 @@ def full2k_gold(cands, z_m, z_d):
     zd = F.normalize(z_d, dim=-1)
     per = {}
     for d, (cand, a) in cands.items():
-        gold = int(cand[int(np.argmax(a))])                 # highest-acc held-out candidate
-        scores = (zm @ zd[int(d)]).numpy()                  # all 2000 models
-        order = np.argsort(-scores)                         # exact-dot ranking
-        rank = int(np.where(order == gold)[0][0]) + 1       # 1-indexed
+        gold = int(cand[int(np.argmax(a))])
+        scores = (zm @ zd[int(d)]).numpy()
+        order = np.argsort(-scores)
+        rank = int(np.where(order == gold)[0][0]) + 1
         per[int(d)] = {
             "gold_model_id": gold,
             "gold_rank": rank,
@@ -178,14 +149,13 @@ def hnsw_fidelity(cands, z_m, z_d):
     zm = F.normalize(z_m, dim=-1).numpy().astype("float32")
     zd = F.normalize(z_d, dim=-1).numpy().astype("float32")
     dim = zm.shape[1]
-    index = faiss.IndexHNSWFlat(dim, 32)                    # HNSW, M=32
+    index = faiss.IndexHNSWFlat(dim, 32)
     index.hnsw.efConstruction = 200
-    index.add(zm)                                           # index all 2000 z_m
+    index.add(zm)
     index.hnsw.efSearch = 256
     q_ds = sorted(cands.keys())
     q = zd[np.asarray(q_ds)]
-    exact = q @ zm.T                                        # [nq, 2000] exact inner product
-    # unit vectors: L2-nearest (faiss HNSW default) == cosine/inner-product top-k
+    exact = q @ zm.T
     out = {}
     for K in KS:
         _, ann = index.search(q, K)
@@ -209,7 +179,7 @@ def run():
     xd0_full = torch.load(GRAPH, map_location="cpu", weights_only=False).get("xd0_meta")
 
     cfgs = configs()
-    cand_sig = {ss: {} for ss in SPLIT_SEEDS}               # split -> config -> signature
+    cand_sig = {ss: {} for ss in SPLIT_SEEDS}
     results = {name: {"config_name": name, "config": cfg, "init_seed": INIT_SEED,
                       "graph": os.path.basename(GRAPH), "graph_sha256": graph_sha,
                       "ann_backend": "faiss-cpu IndexHNSWFlat(M=32,efC=200,efS=256); "
@@ -218,24 +188,22 @@ def run():
                                         "all configs retrained exactly via ablation.train_eval_one",
                       "splits": {}}
                for name, cfg in cfgs.items()}
-    # per-config pooled per-dataset hit1/regret for paired bootstrap
     pooled = {name: {} for name in cfgs}
 
     for name, cfg in cfgs.items():
         for ss in SPLIT_SEEDS:
-            data, xm0, umi = load_hgraph(GRAPH)             # fresh load per (config,split)
+            data, xm0, umi = load_hgraph(GRAPH)
             names = model_names(umi)
             data = apply_similar_to_mode(data, cfg["similar_to_mode"], k=cfg["similar_to_k"])
             split = make_fixed_splits(data, split_seed=ss)
             _tr, _val, test_data = split
             lookup = accuracy_lookup(data)
 
-            # retrain EXACTLY (same code path as ablation); we only need the model
             _row, _pt, _ph, model, _scorer = train_eval_one(
                 data, xm0, xd0_full, cfg, split, init_seed=INIT_SEED, epochs=EPOCHS, device=device)
             model.eval()
             with torch.no_grad():
-                z = model(test_data.clone().to(device))      # embeddings from test_data
+                z = model(test_data.clone().to(device))
             z_m, z_d = z["model"].cpu(), z["dataset"].cpu()
 
             cands = candidates(test_data, lookup)
@@ -271,7 +239,6 @@ def run():
                   f"gold@10={macro(gold,'gold_survival@10'):.3f} med_rank={np.median(ranks):.0f} "
                   f"hnsw_r@1={fid['recall@1']:.3f}")
 
-    # ── candidate-set identity across configs, per split ──────────────────────
     identity = {}
     ref_name = "B0"
     for ss in SPLIT_SEEDS:
@@ -282,7 +249,6 @@ def run():
     for name in cfgs:
         results[name]["candidate_set_identity_across_configs"] = identity
 
-    # ── over-splits aggregate per config ──────────────────────────────────────
     for name in cfgs:
         S = results[name]["splits"]
         def agg(path):
@@ -308,7 +274,6 @@ def run():
         with open(os.path.join(OUT, f"{name}.json"), "w", encoding="utf-8") as f:
             json.dump(results[name], f, indent=2)
 
-    # ── paired bootstrap: P6_dm10 vs {B0, B5_ranknet, R_mg02} on observed hit@1 ─
     boots = {}
     for base in ("B0", "B5_ranknet", "R_mg02"):
         boots[f"P6_dm10_vs_{base}__hit1"] = paired_bootstrap(pooled[base], pooled["P6_dm10"], metric="hit1")

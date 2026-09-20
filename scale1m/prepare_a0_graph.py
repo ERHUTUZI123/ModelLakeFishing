@@ -44,7 +44,6 @@ def _digest(files):
 
 
 def verify_files(directory):
-    """Hash every required/listed file, reject missing/extra or unbound graph bytes."""
     directory = Path(directory).resolve(strict=True)
     meta = json.loads((directory / "meta.json").read_text(encoding="utf-8"))
     files = meta["files"]
@@ -83,7 +82,6 @@ def _validate_source(source, expected_source_digest, expected_shape):
     udi = pd.read_parquet(source / "unique_dataset_id.parquet")
     if len(udi) != nd or not np.array_equal(udi.mappedID.to_numpy(), np.arange(nd)):
         raise ValueError("Dataset mappedID is not the frozen physical row order")
-    # Derive the retained count from the existing node table, without labels.
     nodes = pd.DataFrame({"dataset": udi.dataset.astype(str).str.split("\t", n=1).str[0]})
     stats, roots = dataset_stats(nodes, None)
     if roots != udi.root.astype(str).tolist() or not np.array_equal(stats[:, 6], xd[:, 454]):
@@ -92,7 +90,6 @@ def _validate_source(source, expected_source_digest, expected_shape):
 
 
 def verify_prepared(source, out, *, expected_source_digest=SOURCE_GRAPH_DIGEST, expected_shape=SOURCE_SHAPE):
-    """Read-only verification, also used before atomic publication of a new graph."""
     source, out = Path(source).resolve(strict=True), Path(out).resolve(strict=True)
     original_meta, original_files, old_x, clean_stats = _validate_source(source, expected_source_digest, expected_shape)
     meta, files = verify_files(out)
@@ -123,7 +120,6 @@ def verify_prepared(source, out, *, expected_source_digest=SOURCE_GRAPH_DIGEST, 
         raise ValueError("A0 feature boundary violated")
     if repair["new_x_dataset_sha256"] != files["x_dataset.npy"]:
         raise ValueError("Feature repair report hash differs")
-    # Explicitly exercise the production loader, including actual file hashes.
     loaded = load_sharded(str(out), mmap=True, verify_sha256=True)
     if not np.array_equal(loaded["data"]["dataset"].x.numpy(), new_x):
         raise ValueError("Loader dataset view differs from persisted features")
@@ -157,7 +153,6 @@ def prepare_graph(source, out, *, expected_source_digest=SOURCE_GRAPH_DIGEST, ex
         raise ValueError("Mask and rebuilt statistics differ")
     out.parent.mkdir(parents=True, exist_ok=True)
     staged = out.with_name(out.name + ".a0-staging-" + uuid.uuid4().hex)
-    # The only directory rename is within the explicitly requested output parent.
     if staged.resolve().parent != out.parent or out.parent == source:
         raise ValueError("Unsafe staging destination")
     staged.mkdir(exist_ok=False)
@@ -188,13 +183,11 @@ def prepare_graph(source, out, *, expected_source_digest=SOURCE_GRAPH_DIGEST, ex
     provenance = dict(meta.get("provenance") or {})
     provenance["a0_source_graph"] = str(source)
     new_meta["provenance"] = provenance
-    # Write all graph artifacts first. The final file table contains their actual hashes.
     new_meta["files"] = {p.name: sha256_of(p) for p in sorted(staged.iterdir())}
     _json(staged / "meta.json", new_meta)
     result = verify_prepared(source, staged, expected_source_digest=expected_source_digest, expected_shape=expected_shape)
     if sha256_of(source / "meta.json") != original_meta_sha:
         raise ValueError("Source metadata changed during preparation")
-    # Copy+rehash established byte identity, with independent output storage.
     if out.exists() or staged.resolve().parent != out.resolve().parent:
         raise FileExistsError("Output became occupied or staging parent changed")
     os.rename(staged, out)

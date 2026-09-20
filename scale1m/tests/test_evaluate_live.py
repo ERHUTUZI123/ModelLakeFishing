@@ -1,4 +1,3 @@
-"""Actual exact/HNSW scoring of a small new lake, without historical A0 data."""
 import argparse
 import json
 import shutil
@@ -22,7 +21,6 @@ def write_json(path, value):
 
 @pytest.fixture
 def live_lake(tmp_path):
-    """Synthetic producer records are test fixtures, not a claimed training run."""
     nm, nd = 1007, 15
     rng = np.random.default_rng(31)
     nodes = pd.DataFrame({"node": [f"r{i // 2}/dataset{i}\tt{i % 2}" for i in range(nd)],
@@ -104,7 +102,7 @@ def test_real_exact_hnsw_three_dynamic_splits_without_a0_state(live_lake):
     assert report["status"] == "complete" and report["protocol"] == "live-hf"
     assert report["n_models"] == 1007 and report["n_datasets"] == 15
     assert report["n_performance_edges"] == 60 and report["all_ann_calibration_passed"]
-    assert L.E.N_TOTAL == 3_016_439  # Dynamic run never changes historical globals.
+    assert L.E.N_TOTAL == 3_016_439
     assert 0 < report["summary"]["quality"]["G_hnsw1000_task"]["gold@10"]["mean"] <= 1.
     assert report["summary"]["overall_retention"]["mean"] == 1.
     manifest = L.P.read_json(args.out / L.MANIFEST)

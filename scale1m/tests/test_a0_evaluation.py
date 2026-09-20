@@ -1,4 +1,3 @@
-"""A0 protocol/scoring fixtures; never runs training or a real HNSW index."""
 import argparse
 import gc
 import json
@@ -117,8 +116,6 @@ def test_tied_full_top10_matches_fixed_permutation_across_chunks():
 
 
 def test_actual_exact_duplicate_128d_vectors_have_consistent_rank_and_top10(tmp_path, monkeypatch):
-    # Before the A0 GEMM-probe correction this exact fixture reported rank 1024
-    # for the tie-winning gold while putting it first in fixed-tie full_top10.
     monkeypatch.setattr(E, "N_TOTAL", 1024)
     rng = np.random.default_rng(8)
     v = rng.normal(size=128).astype(np.float32)

@@ -1,39 +1,3 @@
-"""
-fast_lever_audit.py -- X1: the six measurements of GOLD10_FAST_LEVERS_AUDIT.md
-§7, hardened into one script and run on all three split seeds.
-
-WHY THIS FILE EXISTS
-    The audit of 2026-08-26 produced its numbers from six throwaway scripts on
-    seed 0 only, and said so (§7: "脚本尚未进仓库"). Three of those numbers could
-    not be reproduced from the repo without re-deriving the split, the proposal
-    distribution and the rank convention by hand -- and two of them turned out
-    to be wrong when they were. This file is the fixed form: the same six
-    measurements, one entry point, three seeds, and every rank counted the way
-    scale.global_metrics counts it.
-
-THE ONE RULE THAT MAKES M6 COMPARABLE
-    A probe's score computed by the gather path and by the matmul path can
-    differ in the last bit, which lets a probe out-rank ITSELF and shifts its
-    rank by one. `global_metrics.from_embeddings_streaming` masks that diagonal;
-    the audit's throwaway script did not, so every rank it printed was up to one
-    place pessimistic. Here the mask is applied for every variant, and --check
-    asserts per-query equality against global_metrics on the plain MIPS variant,
-    so the baseline row is the SAME number F7/F8 report, not an approximation.
-
-MEASUREMENTS
-    q       M1  proposal-mass decomposition of q(m) ∝ (deg+n0)^alpha (§3.2), per
-                rung, with the alpha sweep and the §4.3 mixture projection.
-    splits  M2  global-term coverage: steps/epoch, train-visible datasets, and
-                how many times each query dataset is touched in 25 epochs (§3.3).
-    task    M3  the serving-side task channel (§1, §4.1), M4 sibling coverage
-                (§4.2), M5 the near-duplicate leakage check (§6).
-    ranks   M6  full-lake gold-rank distribution and the zero-training re-ranks
-                (§3.4-§3.6), on GPU, with the diagonal masked.
-
-Run (from ModelLakeFishing/):
-    python -m scale1m.fast_lever_audit --stage all --check
-    python -m scale1m.fast_lever_audit --stage ranks --seeds 0 --check
-"""
 import argparse
 import json
 import math
@@ -52,40 +16,28 @@ _REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(_HERE), ".."))
 if _REPO_ROOT not in sys.path:
     sys.path.insert(0, _REPO_ROOT)
 
-from torch_geometric.data import HeteroData                          # noqa: E402
+from torch_geometric.data import HeteroData
 
-from scale1m.hf_crawl import data_root, utcnow, write_json_atomic    # noqa: E402
-from scale1m.utility_scorecard import PIPELINE_TAGS, norm_task       # noqa: E402
-from ModelLakeFishing.stage2TrainGraphSAGE.losses import (           # noqa: E402
+from scale1m.hf_crawl import data_root, utcnow, write_json_atomic
+from scale1m.utility_scorecard import PIPELINE_TAGS, norm_task
+from ModelLakeFishing.stage2TrainGraphSAGE.losses import (
     TRAINED_ON, REV_TRAINED_ON, build_lake_logq)
-from ModelLakeFishing.stage2TrainGraphSAGE.d0_splits import (        # noqa: E402
+from ModelLakeFishing.stage2TrainGraphSAGE.d0_splits import (
     make_root_aware_splits)
-from ModelLakeFishing.scale import global_metrics as GM              # noqa: E402
+from ModelLakeFishing.scale import global_metrics as GM
 
 SEEDS = (0, 1, 2)
 RUN_FMT = "RF_full_s%d_e25"
-SHRINK_K = 5.0                 # frozen task-prior shrinkage used by Y2
-BATCH_SIZE = 1024              # scale.export_ours.l1l3b_config(batch=1024)
+SHRINK_K = 5.0
+BATCH_SIZE = 1024
 EPOCHS = 25
-N_DATASETS_PER_STEP = 16       # ablation.py: cfg.get("global_n_datasets", 16)
-N_NEG = 256                    # export_ours.l1l3b_config: global_n_neg
+N_DATASETS_PER_STEP = 16
+N_NEG = 256
 RANK_KS = (1, 3, 10, 50, 100, 200, 500, 1000, 2000, 10000)
 PRIOR_KS = (1, 3, 10, 50, 100)
 
 
-# ── shared loaders ───────────────────────────────────────────────────────────
-
 def reduced_graph(gdir):
-    """The trained_on skeleton of a graph_store rung.
-
-    make_root_aware_splits clones `data` three times. On the full-lake rung the
-    real HeteroData carries a 5.4 GB x_model matrix, so cloning it to recompute
-    a split would cost 16 GB for information the split never reads. The split
-    depends on exactly four things -- the trained_on edge_index/edge_attr, the
-    two node counts and the root list -- so this hands it those and nothing
-    else. Its generator is seeded from split_seed alone, so the split produced
-    here is bit-identical to the one export_rf ran.
-    """
     with np.load(os.path.join(gdir, "edges.npz")) as z:
         ei = torch.from_numpy(z["model__trained_on__dataset__edge_index"].copy())
         ea = torch.from_numpy(z["model__trained_on__dataset__edge_attr"].copy())
@@ -104,19 +56,16 @@ def reduced_graph(gdir):
 
 
 def split_facts(gdir, seed):
-    """Everything the other measurements need out of one root-aware split."""
     d, roots, udi = reduced_graph(gdir)
     tr, _val, te = make_root_aware_splits(d, roots, split_seed=seed)
     pos = tr[TRAINED_ON].edge_label == 1
-    sup = tr[TRAINED_ON].edge_label_index[:, pos]              # disjoint part
-    msg = tr[TRAINED_ON].edge_index                            # train message
-    ti = torch.cat([msg, sup], dim=1)                          # ablation.py's ti
+    sup = tr[TRAINED_ON].edge_label_index[:, pos]
+    msg = tr[TRAINED_ON].edge_index
+    ti = torch.cat([msg, sup], dim=1)
     return {"data": d, "roots": roots, "udi": udi, "ti": ti,
             "n_sup_rows": int(sup.shape[1]),
             "n_label_rows": int(tr[TRAINED_ON].edge_label.numel()),
             "train_visible_datasets": int(torch.unique(ti[1]).numel()),
-            # test_data's MESSAGE graph is train + val by construction -- the
-            # exact edge set a serving prior is allowed to read at query time
             "visible": te[TRAINED_ON].edge_index,
             "visible_attr": te[TRAINED_ON].edge_attr,
             "test_pos": te[TRAINED_ON].edge_label_index[
@@ -150,16 +99,7 @@ def interval(vals):
     return {"min": min(v), "mean": float(np.mean(v)), "max": max(v), "per_seed": v}
 
 
-# ── M1: proposal mass (§3.2) ─────────────────────────────────────────────────
-
 def mixture_mass(deg, alpha, n0, gamma):
-    """§4.3's two-component proposal, as a mass rather than a sample.
-
-        q = (1-gamma) * (deg+n0)^alpha / Z  +  gamma * [deg>0] / n_labeled
-
-    Returns the share of q landing on a model with at least one train-visible
-    supervision edge -- the only negatives that can displace a gold model.
-    """
     w = (deg.double() + n0) ** alpha
     base = w / w.sum()
     lab = deg > 0
@@ -187,8 +127,6 @@ def stage_q(args):
                 m = float(q[deg_tr > 0].sum())
                 row["alpha_sweep"]["%.2f" % a] = {
                     "mass_on_supervised": m, "expected_supervised_in_256": m * N_NEG}
-            # the audit's own figure used the FULL-graph degree; training never
-            # sees the held-out edges, so both are recorded and the gap named
             qa, _ = build_lake_logq(f["data"][TRAINED_ON].edge_index, N,
                                     alpha=0.75, n0=1.0)
             row["audit_full_graph_deg_mass_alpha075"] = float(qa[deg_all > 0].sum())
@@ -223,8 +161,6 @@ def _rungs(args):
     return r
 
 
-# ── M2: global-term coverage (§3.3) ──────────────────────────────────────────
-
 def stage_splits(args):
     t0 = time.time()
     out = {}
@@ -233,10 +169,6 @@ def stage_splits(args):
         per_seed = {}
         for s in args.seeds:
             f = split_facts(gdir, s)
-            # train() drives make_link_loader over `eli` = the POSITIVE
-            # supervision rows only (perf_supervision drops edge_label == 0), so
-            # an epoch is ceil(n_sup / batch) steps -- half what the audit
-            # assumed when it counted the sampled negative rows as steps too.
             steps = math.ceil(f["n_sup_rows"] / BATCH_SIZE)
             vis = f["train_visible_datasets"]
             per_seed[s] = {
@@ -260,8 +192,6 @@ def stage_splits(args):
     return payload
 
 
-# ── M3 / M4 / M5: the serving-side task channel ──────────────────────────────
-
 _NONWORD = re.compile(r"[^0-9a-z]+")
 
 
@@ -271,13 +201,6 @@ def trigrams(name):
 
 
 def rank_with_ties(score, pool, gold):
-    """(strictly-better + 1, number of ties) for `gold` inside `pool`.
-
-    The first is the tie-safe convention scale.global_metrics uses everywhere. A
-    groupby prior puts thousands of models on identical scores, so the tie count
-    rides along and an expected-rank-under-random-tie-break is derived from it:
-    an optimistic rank on a massively tied score is not a retrieval result.
-    """
     sg = score[gold]
     sub = score[pool]
     return int((sub > sg).sum()) + 1, int((sub == sg).sum()) - 1
@@ -296,7 +219,6 @@ def stage_task(args):
     nodes["node"] = nodes["node"].astype(str)
     task_by_node = nodes.set_index("node")["task"]
     elig_by_node = nodes.set_index("node")["gold_eligible"]
-    # the three reasons canonicalize_rf can mark a node gold-ineligible
     reason_by_node = {
         "direction_unknown": nodes.set_index("node")["primary_direction"]
         .astype(str).eq("unknown"),
@@ -323,13 +245,9 @@ def stage_task(args):
         vis_m = f["visible"][0].numpy()
         vis_d = f["visible"][1].numpy()
         vis_a = f["visible_attr"].numpy().astype(np.float64)
-        # LEGALITY: root-aware puts a whole root on one side, so no train/val
-        # visible edge may touch a query dataset. Asserted, not assumed.
         assert not np.isin(vis_d, np.asarray(qids, dtype=np.int64)).any(), \
             "a train/val-visible edge lands on a query dataset -- the prior would leak"
 
-        # per-(task, dataset) aggregation of the visible edges; the (dd == d)
-        # skip serving_rerank._prior needs is discharged by the assertion above
         by_td = defaultdict(lambda: defaultdict(list))
         for m, d, a in zip(vis_m, vis_d, vis_a):
             by_td[task_of[d]][int(d)].append((int(m), float(a)))
@@ -388,7 +306,6 @@ def stage_task(args):
                 col["prior_ties"].append(0)
                 col["mips_pool_rank"].append(np.inf)
 
-            # M5: drop same-task datasets whose NAME is a near-duplicate of D's
             gq = trigrams(node_of[q].split("\t")[0])
             sm, cn, dropped = defaultdict(float), defaultdict(int), 0
             for dd, lst in by_td.get(t, {}).items():
@@ -479,8 +396,6 @@ def stage_task(args):
     return payload
 
 
-# ── M6: full-lake ranks and the zero-training re-ranks (§3.4-§3.6) ───────────
-
 def _topk_update(bv, bi, sc, offset, k):
     v, i = torch.topk(sc, min(k, sc.size(0)), dim=0)
     i = i + offset
@@ -532,9 +447,6 @@ def stage_ranks(args):
         zm = (zm / (zm.norm(dim=1, keepdim=True) + 1e-12)).to(torch.float32).to(dev)
         zd = (zd / (zd.norm(dim=1, keepdim=True) + 1e-12)).to(torch.float32).to(dev)
 
-        # r-bar for CSLS. The audit estimated it on the TEST queries, which is a
-        # transductive correction a serving system could not ship; the
-        # train-visible estimate is the deployable one, so both are measured.
         rng = np.random.default_rng(s)
         train_ds = np.unique(f["ti"][1].numpy())
         samp = np.sort(rng.choice(train_ds, size=min(Q, train_ds.size), replace=False))
@@ -554,8 +466,6 @@ def stage_ranks(args):
         sup_vis = torch.from_numpy(deg_vis > 0).to(dev)
         tag_m = torch.from_numpy(tag_of_model).to(dev)
         tag_q_np = np.array([tag_vocab.get(task_of[q], 0) for q in qids], dtype=np.int64)
-        # the pipeline-tag pool is only meaningful where the query's task IS an
-        # HF tag AND the gold declares it; elsewhere the variant is not scored
         tag_ok = (tag_q_np > 0) & (tag_of_model[gold_of] == tag_q_np)
         tag_q = torch.from_numpy(np.where(tag_q_np > 0, tag_q_np, -1)).to(dev)
 
@@ -577,7 +487,7 @@ def stage_ranks(args):
             fi = torch.as_tensor(np.concatenate(flat_ids), dtype=torch.long, device=dev)
             fq = torch.as_tensor(np.concatenate(flat_q), dtype=torch.long, device=dev)
             zq = zd[torch.as_tensor(blk, dtype=torch.long, device=dev)]
-            base = (zm[fi] * zq[fq]).sum(-1)                              # [P]
+            base = (zm[fi] * zq[fq]).sum(-1)
             probe = {"csls_test": 2 * base - rbar["test"][fi],
                      "csls_train": 2 * base - rbar["train"][fi]}
             tag_qb = tag_q[torch.as_tensor(
@@ -586,14 +496,14 @@ def stage_ranks(args):
             pcols = torch.arange(fi.numel(), device=dev)
             bv = bi = None
             for ms in range(0, N, args.model_chunk):
-                sc = zm[ms:ms + args.model_chunk] @ zq.t()                # [C, b]
+                sc = zm[ms:ms + args.model_chunk] @ zq.t()
                 c = sc.size(0)
                 bv, bi = _topk_update(bv, bi, sc, ms, 10)
-                scq = sc[:, fq]                                          # [C, P]
+                scq = sc[:, fq]
                 here = (fi >= ms) & (fi < ms + c)
                 hi, hc = fi[here] - ms, pcols[here]
                 cb = scq > base.unsqueeze(0)
-                cb[hi, hc] = False                    # the self-comparison mask
+                cb[hi, hc] = False
                 cnt["mips"] += cb.sum(0)
                 cnt["sup_pool_all"] += (cb & sup_all[ms:ms + c].unsqueeze(1)).sum(0)
                 cnt["sup_pool_visible"] += (cb & sup_vis[ms:ms + c].unsqueeze(1)).sum(0)
@@ -653,9 +563,6 @@ def stage_ranks(args):
                  slots["distinct_models"], slots["n_slots"]), flush=True)
 
         if args.check:
-            # global_metrics normalizes what it is handed, so it has to be
-            # handed the RAW export -- re-normalizing an already-normalized
-            # matrix moves the last bit and manufactures a mismatch.
             sub = {q: cands[q] for q in qids[:args.check_n]}
             agg, per = GM.from_embeddings_streaming(
                 np.load(os.path.join(exp, "z_m_eval.npy")),

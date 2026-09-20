@@ -1,38 +1,3 @@
-"""lake_ab.py -- the lake, and one query answered, as paper figures.
-
-A stripped rebuild of panels A and B of `galaxy_render.py`'s plate.  No poster
-header, no cascade, no rank panels, no footer: two boxes, a short title over
-each, and a legend strip underneath, the way a figure like this is normally
-set.
-
-    A   the whole lake, complete, with the family territories named and the
-        outline of the region B enlarges
-    B   one held-out query, the 1,000 candidates HNSW returned for it, the
-        ten that came back, and where the gold model landed
-
-They are two independent figures, not two halves of one, so each is drawn at
-its own natural aspect ratio rather than squeezed into a shared row.  That
-matters most for A: it takes whatever shape the lake's own percentile box
-turns out to have, because a frame of the figure's choosing is what left the
-lake small and structureless in the middle of white paper.  A shows the whole
-lake, and the rows its frame leaves out -- 64,086 of three million under A0,
-where the pre-A0 layout left out 4,416 -- are counted in the subtitle rather
-than quietly dropped.
-
-Legends and notes live in a strip *below* the panel, never inside the data
-area, so nothing can collide with the numbered discs.
-
-Everything is read from the same cache and archived products the plate uses,
-so no number here is typed by hand.  Outputs, into docs/1M/figures/:
-
-    lake_a      the lake
-    lake_b      one query, answered
-    lake_ab     the same two panels side by side, for a two-column float
-
-each as PDF, SVG and PNG.
-
-    python -m ModelLakeFishing.viz.lake_ab
-"""
 import json
 import os
 import re
@@ -55,18 +20,7 @@ from ModelLakeFishing.viz.galaxy_render import (
 
 OUTDIR = G.OUTDIR
 
-# Panel A shows the whole lake, so it is not cropped: the frame is the lake's
-# own percentile box and the panel is given that box's aspect ratio, whatever
-# that turns out to be.  The point is that no shape is imposed -- forcing the
-# lake into a box of the figure's choosing is what used to leave it small and
-# structureless in the middle of white paper.  Under A0 the box comes out very
-# nearly square (0.97); the pre-A0 layout was markedly portrait.
 LAKE_LO, LAKE_HI, LAKE_PAD = 0.10, 99.90, 0.04
-# The lake trails off downward with nothing but white between, and at plate
-# size that emptiness is most of the page.  The frame therefore starts at this
-# percentile of y: what it leaves out is counted under the figure, never
-# quietly dropped.  Under A0 the frame leaves out 64,086 rows, 2.1% -- more
-# than the pre-A0 layout's 4,416, because A0's lake has a longer sparse fringe.
 LAKE_Y_LO = 2.5
 
 NAMED = [("llama", "llama"), ("qwen", "qwen"), ("gemma", "gemma"),
@@ -77,11 +31,6 @@ NAMED = [("llama", "llama"), ("qwen", "qwen"), ("gemma", "gemma"),
          ("stablediffusion", "stable-diffusion"), ("flux", "flux"),
          ("blockassist", "blockassist")]
 
-# The lake is coloured the way the 3-D viewer colours it in "families" mode,
-# and by the same table: the palette is read out of lake3d/page.py and the
-# family order out of the pack the viewer ships, so a family is the same
-# colour here as it is there.  Copying the list by hand is what once left the
-# viewer painting bert the query's crimson, so nothing is copied.
 LAKE3D = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(
     os.path.abspath(__file__)))), "lake3d")
 LAKE3D_PACK = r"D:/research/model_lake/data/data1m/lake3d_a0/packed_meta.json"
@@ -90,7 +39,6 @@ N_FAMILIES = 26
 
 
 def lake3d_families():
-    """name -> colour, in the viewer's own order (biggest family first)."""
     src = open(os.path.join(LAKE3D, "page.py"), encoding="utf-8").read()
     pal = re.findall(r'"(#[0-9a-f]{6})"',
                      src[src.index("FAMILY_COLORS = ["):
@@ -102,15 +50,10 @@ def lake3d_families():
 FS_LETTER, FS_TITLE, FS_SUB = 16.0, 16.0, 16.0
 FS_FAMILY, FS_NOTE, FS_LEGEND = 13.0, 16.0, 16.0
 FS_CASE, FS_CASE_SUB = 16.0, 16.0
-# The numbered disc, as matplotlib wants it (marker area in points squared) and
-# as the page sees it (printed diameter in inches).  The second is derived from
-# the first so the size the discs are drawn at and the distance they are held
-# apart at cannot drift away from one another.
 DISC_PT2 = 470.0
 DISC_IN = 2.0 * np.sqrt(DISC_PT2 / np.pi) / 72.0
 
 
-# ------------------------------------------------------------------- inputs --
 def load(cache=None):
     cache = cache or G.CACHE
     xy = np.asarray(np.load(os.path.join(cache, "layout_xy.npy"), mmap_mode="r"))
@@ -135,7 +78,6 @@ def load(cache=None):
 
 
 def lake_box(xy):
-    """The lake's own bounding box, before any panel aspect is imposed."""
     b = _bounds(xy[:, 0], xy[:, 1], lo=LAKE_LO, hi=LAKE_HI, pad=LAKE_PAD)
     y0 = float(np.percentile(xy[:, 1], LAKE_Y_LO))
     return [b[0], b[1], y0 - (b[3] - y0) * LAKE_PAD, b[3]]
@@ -164,13 +106,6 @@ def ext_cast(xy, pool, aspect):
 
 
 def _peaks_in_frame(xy, family_id, vocab, wanted, ext, res=260, min_n=400):
-    """Densest in-frame cell of each named family.
-
-    `galaxy_render.family_peaks` histograms inside the extent but does not
-    check that anything landed there, so a family cropped out by the tighter
-    zoom would be labelled at an arbitrary corner.  Here a family is named only
-    if enough of it is actually inside the frame.
-    """
     x, y = np.asarray(xy[:, 0]), np.asarray(xy[:, 1])
     x0, x1, y0, y1 = ext
     out = []
@@ -196,12 +131,6 @@ def _peaks_in_frame(xy, family_id, vocab, wanted, ext, res=260, min_n=400):
 
 
 def frame_families(D, ext, k=N_FAMILIES, min_n=1):
-    """The viewer's families, in the viewer's order, that this frame shows.
-
-    A family the frame barely holds is left to the context layer rather than
-    given a swatch nobody can find, but the colour of the ones that stay is
-    the viewer's, not one this figure chose.
-    """
     x, y = D["xy"][:, 0], D["xy"][:, 1]
     inside = (x >= ext[0]) & (x <= ext[1]) & (y >= ext[2]) & (y <= ext[3])
     u, c = np.unique(D["family_id"][inside], return_counts=True)
@@ -215,7 +144,6 @@ def frame_families(D, ext, k=N_FAMILIES, min_n=1):
 
 
 def outside_frame(xy, ext):
-    """Rows the frame leaves out -- each figure reports its own count."""
     x, y = np.asarray(xy[:, 0]), np.asarray(xy[:, 1])
     return int((~((x >= ext[0]) & (x <= ext[1]) &
                   (y >= ext[2]) & (y <= ext[3]))).sum())
@@ -229,21 +157,14 @@ def _hist(x, y, ext, res):
 
 def family_image(D, ext, fams, res=(2000, 2000), smooth=1.35, sharp=0.40,
                  clip=99.80, blur=1.7):
-    """The lake, painted by family: hue says who lives there, value says how many.
-
-    Ink is the total density -- the same image the one-colour plate drew -- so
-    the shape of the lake is untouched.  Colour is decided per cell by which
-    family leads it, with cells no named family leads left in the context grey.
-    Territories are therefore readable without any cell being invented.
-    """
     x, y = D["xy"][:, 0], D["xy"][:, 1]
     ink = density_image(x, y, ext, res=res, smooth=smooth, sharp=sharp,
-                        clip=clip)                      # (H, W), 0..1
+                        clip=clip)
     fid = D["family_id"]
     named = np.stack([gaussian_filter(np.log1p(_hist(x[fid == f["id"]],
                                                      y[fid == f["id"]],
                                                      ext, res)), blur).T
-                      for f in fams])                   # (F, H, W)
+                      for f in fams])
     rest = ~np.isin(fid, [f["id"] for f in fams])
     other = gaussian_filter(np.log1p(_hist(x[rest], y[rest], ext, res)), blur).T
 
@@ -253,13 +174,11 @@ def family_image(D, ext, fams, res=(2000, 2000), smooth=1.35, sharp=0.40,
     rgb = np.where((top > other * 0.35)[..., None], cols[lead],
                    to_rgb(OTHER_COLOR))
 
-    # a named territory carries a little more ink than the context it sits in
     a = np.clip(ink * np.where(top > other * 0.35, 1.50, 1.00), 0, 1)[..., None]
     return 1.0 - a * (1.0 - rgb)
 
 
 def family_peaks(D, ext, fams, res=300):
-    """Densest in-frame cell of each named family, for its label."""
     x, y = D["xy"][:, 0], D["xy"][:, 1]
     out = []
     for f in fams:
@@ -274,13 +193,6 @@ def family_peaks(D, ext, fams, res=300):
 
 
 def _title(ax, letter, title, sub=None, sub_below=False):
-    """Letter and title on one line, with the count, if any, set beside them.
-
-    The count is as large and as black as the title -- it is a headline
-    number, not a footnote -- which makes it too wide to share the title's
-    line, so it goes on lines of its own: stacked above the title (bottom
-    line first), or, with `sub_below`, hung under the panel (top line first).
-    """
     if letter:
         ax.text(0.0, 1.016, letter, transform=ax.transAxes, fontsize=FS_LETTER,
                 weight="bold", color=INK, ha="left", va="bottom")
@@ -298,7 +210,6 @@ def _title(ax, letter, title, sub=None, sub_below=False):
 
 
 def _axes_size_in(ax):
-    """Printed size of an axes, in inches -- the pills are sized in points."""
     fw, fh = ax.figure.get_size_inches()
     bb = ax.get_position()
     return bb.width * fw, bb.height * fh
@@ -312,7 +223,6 @@ def _strip(fig, rect):
     return ax
 
 
-# ------------------------------------------------------------------ panel A --
 def panel_a(ax, D, ext):
     xy, qxy = D["xy"], D["qxy"]
     x, y = xy[:, 0], xy[:, 1]
@@ -350,7 +260,6 @@ def panel_a(ax, D, ext):
                 bbox=dict(boxstyle="round,pad=0.14", fc=PAPER, ec="none",
                           alpha=0.86))
 
-    # where B's cast lands: the contour holding most of that query's pool
     pool_xy = xy[D["case"]["pool"]]
     ph, pxe, pye = np.histogram2d(pool_xy[:, 0], pool_xy[:, 1], bins=110,
                                   range=[[ext[0], ext[1]], [ext[2], ext[3]]])
@@ -366,7 +275,6 @@ def panel_a(ax, D, ext):
             zorder=13)
 
 
-# ------------------------------------------------------------------ panel B --
 def panel_b(ax, D, ext, strip=None, letter="B", title="one query, answered",
             sub=None, fams=None, cols=None):
     xy, qxy, case = D["xy"], D["qxy"], D["case"]
@@ -390,11 +298,6 @@ def panel_b(ax, D, ext, strip=None, letter="B", title="one query, answered",
     gp = xy[case["gold"]]
     qp = qxy[G.CASE_QUERY]
 
-    # The ten that came back are ranks, not measurements, so a disc may be
-    # nudged off its model to keep it readable -- but never silently: anything
-    # that moves keeps a hairline back to where it belongs.  Which family each
-    # one belongs to is read off the colour of the water it sits in, named in
-    # the legend, so the disc carries only its depth in the list.
     anchors = np.array([_to_axes(*(gp if int(m) == case["gold"] else xy[int(m)]),
                                  ext) for m in case["top10"]], float)
     ranks = list(range(1, len(anchors) + 1))
@@ -405,29 +308,14 @@ def panel_b(ax, D, ext, strip=None, letter="B", title="one query, answered",
                              "returned, so panel B has no star to draw"
                              % G.CASE_QUERY)
     gi = int(where[0])
-    # The gold is drawn once, as the star, with no numbered disc of its own;
-    # the legend states where it came back.  Its slot stays fixed exactly on
-    # the star, so the slot's only job is to keep the other discs off it.
-    #
-    # This reads cleanly only while the gold comes back first, as it does for
-    # the squad case.  If the case is ever changed to one whose gold is
-    # returned lower, the plate will show a star, a separate "1", and no disc
-    # for the gold's own rank -- give the gold its own numbered disc back then.
     fixed = np.zeros(len(pos), bool)
     fixed[gi] = True
 
-    # Discs are pushed apart in printed inches, not in axes units.  A single
-    # number in axes units is a different printed distance on every panel: it
-    # held the discs 1.44 of their own widths apart on the wide pair plate,
-    # which turned the five near-coincident models of a returned group into a
-    # chain marching off toward the frame's corner, and only 0.71 of a width
-    # apart on the narrower B, where they could still touch.  Separating by
-    # the disc's own diameter keeps a tight group tight and legible on both.
     w_in, h_in = _axes_size_in(ax)
     inch = np.array([w_in, h_in], float)
-    SEP = DISC_IN * 1.12                   # the disc, plus a hair of air
+    SEP = DISC_IN * 1.12
     PULL = 0.30
-    P, Anc = pos * inch, anchors * inch    # everything below is in inches
+    P, Anc = pos * inch, anchors * inch
     for _ in range(500):
         moved = False
         for i in range(len(P)):
@@ -459,7 +347,7 @@ def panel_b(ax, D, ext, strip=None, letter="B", title="one query, answered",
 
     gold_rank = ranks[gi]
     for k, r in enumerate(ranks):
-        if k == gi:                            # drawn once, as the star
+        if k == gi:
             continue
         ax_, ay_ = anchors[k]
         lx, ly = pos[k]
@@ -481,13 +369,8 @@ def panel_b(ax, D, ext, strip=None, letter="B", title="one query, answered",
 
 
 LEGEND_COLS_MAX = 5
-# A legend column has to hold a swatch, its gap, and the longest name in the
-# list.  The legend is set at one size in one font, so a per-character advance
-# is enough to pick a column count that does not overrun.  Five columns fit
-# the wide pair plate; on the narrower single-panel B they do not, and
-# "stablediffusion" was running into "test".
-LEGEND_CHAR_IN = FS_LEGEND / 72.0 * 0.55     # advance of one character, inches
-LEGEND_SWATCH_IN = 0.26                      # the swatch and its gap
+LEGEND_CHAR_IN = FS_LEGEND / 72.0 * 0.55
+LEGEND_SWATCH_IN = 0.26
 
 
 def _ordinal(n):
@@ -495,32 +378,19 @@ def _ordinal(n):
 
 
 def legend_cols(width_in, fams):
-    """As many columns as the widest entry will actually fit in."""
     longest = max([len(f["label"]) for f in fams] + [len("no named family")])
     need = LEGEND_SWATCH_IN + longest * LEGEND_CHAR_IN
     return max(1, min(LEGEND_COLS_MAX, int(width_in / need)))
 
 
-LEGEND_MARKS = 3        # star, query, numbered disc
+LEGEND_MARKS = 3
 
 
 def legend_rows(fams, cols):
-    """How many lines the legend needs: the marks, then the families."""
     return LEGEND_MARKS + int(np.ceil((len(fams) + 1) / float(cols)))
 
 
 def legend_strip(strip, D, case, fams, gold_rank, cols):
-    """The marks, one per line, then the family colours in a swatch grid.
-
-    The families are named here rather than on the water: at lake scale a name
-    laid over its own territory either covers it or points at it from far
-    away, and there are two dozen of them.  The last swatch is the water that
-    belongs to no named family.
-
-    `cols` is passed in rather than chosen here: the caller sized the strip
-    from it, and a grid laid out on a different count than the strip was cut
-    for is how the rows end up on top of one another.
-    """
     n = legend_rows(fams, cols)
     step = 1.0 / n
     y = lambda r: 1.0 - step * (r + 0.5)
@@ -556,7 +426,6 @@ def legend_strip(strip, D, case, fams, gold_rank, cols):
                    ha="left", va="center")
 
 
-# ----------------------------------------------------------------- builders --
 def _save(fig, name, dpi=600):
     os.makedirs(OUTDIR, exist_ok=True)
     for ext in ("pdf", "svg", "png"):
@@ -572,9 +441,8 @@ def _ratio(rect, w, h):
 
 
 def build_a(D):
-    """The panel takes the lake's own aspect, whatever shape that is."""
     panel = [0.034, 0.130, 0.948, 0.830]
-    PW = 5.90                                    # printed panel width, inches
+    PW = 5.90
     W = PW / panel[2]
     H = (PW / lake_aspect(D["xy"])) / panel[3]
     fig = plt.figure(figsize=(W, H))
@@ -585,20 +453,9 @@ def build_a(D):
 
 
 def build_b(D):
-    """The cast at its own aspect, with the legend in a strip underneath.
-
-    The strip is sized from the number of rows the legend actually needs, the
-    way `build_pair` sizes its own.  It used to be a fixed 1.45 inches, which
-    held while the cast frame was tight enough to show only a handful of
-    families; A0's cast covers most of the lake, all 26 families fall inside
-    it, and nine rows of legend piled into that fixed strip on top of one
-    another.
-    """
-    PW = 6.30                                    # printed panel width, inches
+    PW = 6.30
     ph = PW / cast_aspect(D["xy"], D["case"]["pool"])
     lpad, rpad, top, bot = 0.10, 0.10, 0.45, 0.10
-    # the same list is measured and then drawn, so the strip cannot be sized
-    # for one legend and filled with another
     fams = frame_families(D, cast_box(D["xy"], D["case"]["pool"]))
     cols = legend_cols(PW, fams)
     strip_h = 0.30 + 0.36 * legend_rows(fams, cols)
@@ -614,18 +471,12 @@ def build_b(D):
 
 
 def build_pair(D):
-    """One plate: the whole lake, painted by family, with a query answered on it.
-
-    Panel A is gone -- this is the big figure, so it takes the lake's own
-    frame and its own aspect, the ten answers keep their depth in the list,
-    and the family colours are named in the legend underneath.
-    """
-    PW = 10.60                                   # printed panel width, inches
+    PW = 10.60
     ph = PW / lake_aspect(D["xy"])
     lpad, rpad, top, bot = 0.16, 0.16, 0.10, 0.16
     W = lpad + PW + rpad
 
-    fams = frame_families(D, lake_box(D["xy"]))  # only what the frame shows
+    fams = frame_families(D, lake_box(D["xy"]))
     cols = legend_cols(PW, fams)
     strip_h = 0.30 + 0.36 * legend_rows(fams, cols)
     H = bot + strip_h + ph + top
@@ -642,12 +493,6 @@ def build_pair(D):
 
 
 def caption_facts(D):
-    """The numbers `lake_ab_captions.tex` quotes, so the prose can be checked.
-
-    The captions are written by hand and the figures are not, which is exactly
-    how a caption ends up a run behind its picture.  Printing the figure's own
-    numbers here is what lets the two be reconciled after every rebuild.
-    """
     xy, case = D["xy"], D["case"]
     named = _peaks_in_frame(xy, D["family_id"], D["ginfo"]["family_vocab"],
                             NAMED, ext_lake(xy, lake_aspect(xy)))

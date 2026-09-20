@@ -1,31 +1,3 @@
-"""
-modellens_build_graph.py -- P1 step 2: build the ModelLens-v2 HGraph
-`hgraph_ml_v2.pt` from the intake artifacts, REUSING the D0 feature builders so
-the output honors the identical Stage-2 contract as `hgraph_d0_v1.pt`.
-
-Node feature layout (byte-identical dims to D0-v1):
-  model   x = [e_name 64 (hash, seed 42) || e_desc 384 (MiniLM)]           = 448
-            learnable ids: size_bucket (from ModelLens size in BILLIONS),
-                           family (ModelLens model_profile.family, name-infer
-                           fallback for the 10.4% missing)
-  dataset x = [e_name 64 (seed 43) || e_card 384 (MiniLM over dataset_desp)
-              || e_stats 10]                                                = 458
-            learnable id: task_type (native vocab from the ModelLens task col)
-
-Edges (same 5 relation types / 3 families as D0):
-  (model, trained_on, dataset)+attr / reverse   -- value_norm from intake
-  (dataset, similar_to, dataset)+attr           -- KNN k=20 over e_card cosine
-  (model, is_base_of, model)+attr / reverse     -- intake lineage_base
-
-Difference from D0 build: features come from the ModelLens side JSONs (already
-folded into the intake CSVs), NOT from HuggingFace metadata caches. Everything
-else -- builders, dims, contracts, meta dicts, row-order guarantees -- is the
-same, so Stage-2 consumes this graph unchanged.
-
-Run (from ModelLakeFishing/):
-    .\\.venv\\Scripts\\python.exe -m scale.modellens_build_graph
-"""
-
 import hashlib
 import json
 import os
@@ -39,7 +11,7 @@ from torch_geometric.data import HeteroData
 _S1 = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
                    "stage1BuildTransferGraph")
 sys.path.insert(0, _S1)
-from dataset_embed.xm0_builder import (  # noqa: E402
+from dataset_embed.xm0_builder import (
     build_name_embeddings, param_count_to_size_bucket,
     load_or_update_family_vocab, build_family_ids, NUM_SIZE_BUCKETS,
     FAMILY_OTHER,
@@ -65,8 +37,6 @@ def _minilm(texts, tag):
 
 
 def model_descriptor(mid, family, size_b):
-    """No HF cardData here; build an honest descriptor from what ModelLens
-    gives: cleaned name + family + coarse size band."""
     name = mid.replace("/", " ").replace("-", " ").replace("_", " ")
     parts = [name]
     if family:
@@ -78,8 +48,6 @@ def model_descriptor(mid, family, size_b):
 
 
 def topk_knn(emb, k):
-    """Top-k cosine neighbours via blocked argpartition (avoids full argsort of
-    an N x N matrix). Returns (src, dst, weight) flat arrays."""
     c = emb / (np.linalg.norm(emb, axis=1, keepdims=True) + 1e-8)
     n = c.shape[0]
     k = min(k, n - 1)
@@ -89,9 +57,9 @@ def topk_knn(emb, k):
     block = 2048
     for s in range(0, n, block):
         e = min(s + block, n)
-        sims = c[s:e] @ c.T                      # (b, n)
+        sims = c[s:e] @ c.T
         for i in range(e - s):
-            sims[i, s + i] = -1.0                 # drop self
+            sims[i, s + i] = -1.0
         part = np.argpartition(-sims, k, axis=1)[:, :k]
         rows = np.arange(e - s)[:, None]
         pw = sims[rows, part]
@@ -105,33 +73,28 @@ def topk_knn(emb, k):
 
 
 def main():
-    # ---- load intake artifacts ------------------------------------------
     obs = pd.read_parquet(os.path.join(LAKE, "ml_observations.parquet"))
     pool = pd.read_csv(os.path.join(LAKE, "ml_dataset_pool.csv"))
     mi = pd.read_csv(os.path.join(LAKE, "ml_model_intake.csv"))
     print(f"[load] obs {len(obs):,} | nodes {len(pool):,} | models {len(mi):,}",
           flush=True)
 
-    # ---- model index (mappedID row order) -------------------------------
     model_ids = sorted(mi["model_id"].astype(str))
     m_of = {m: i for i, m in enumerate(model_ids)}
     mi = mi.set_index("model_id")
 
-    # ---- dataset node index ---------------------------------------------
     ds_nodes = sorted(pool["dataset_node"].astype(str))
     d_of = {n: i for i, n in enumerate(ds_nodes)}
     pool = pool.set_index("dataset_node")
-    roots = pool.loc[ds_nodes, "root_a"].astype(str).tolist()      # split unit (a)
-    roots_b = pool.loc[ds_nodes, "root_b"].astype(str).tolist()    # split unit (b)
+    roots = pool.loc[ds_nodes, "root_a"].astype(str).tolist()
+    roots_b = pool.loc[ds_nodes, "root_b"].astype(str).tolist()
 
-    # ---- supervision edges ----------------------------------------------
     obs = obs[obs["model_id"].isin(m_of) & obs["dataset_node"].isin(d_of)]
     src = torch.tensor([m_of[m] for m in obs["model_id"]], dtype=torch.long)
     dst = torch.tensor([d_of[n] for n in obs["dataset_node"]], dtype=torch.long)
     attr = torch.tensor(obs["value_norm"].to_numpy(), dtype=torch.float32)
     print(f"[edges] trained_on {len(src):,}", flush=True)
 
-    # ---- lineage edges ---------------------------------------------------
     lb, ld = [], []
     lin = mi[mi["lineage_base"].notna()]
     for mid, base in lin["lineage_base"].items():
@@ -140,7 +103,6 @@ def main():
             lb.append(m_of[base]); ld.append(m_of[str(mid)])
     print(f"[edges] is_base_of {len(lb):,}", flush=True)
 
-    # ---- model features --------------------------------------------------
     e_name = build_name_embeddings(model_ids, token_dim=64, seed=42)
     fam_raw = mi.loc[model_ids, "family"].fillna("").astype(str).tolist()
     size_b = mi.loc[model_ids, "size_b"].to_numpy(dtype=float)
@@ -148,15 +110,9 @@ def main():
                       for m, f, s in zip(model_ids, fam_raw, size_b)], "xm0.desc")
     xm = np.concatenate([e_name, e_desc], axis=1)
 
-    # size bucket: ModelLens size is BILLIONS -> raw count -> D0 bucket
     param_counts = [(b * 1e9 if not np.isnan(b) else None) for b in size_b]
     size_id = torch.tensor([param_count_to_size_bucket(c) for c in param_counts],
                            dtype=torch.long)
-    # family: ModelLens model_profile.family is authoritative (89.6% coverage,
-    # 332 families). Missing -> Other. We deliberately do NOT name-infer the
-    # rest: rule inference on arbitrary names injected 400+ junk "families"
-    # (Test/output/single letters) that polluted the embedding table. Folding to
-    # Other is the honest degradation (same as D0's FAMILY_MIN_COUNT rationale).
     fams = [f if f else FAMILY_OTHER for f in fam_raw]
     family_vocab = load_or_update_family_vocab(fams, vocab_path=None)
     fam_id = torch.as_tensor(build_family_ids(fams, family_vocab), dtype=torch.long)
@@ -164,9 +120,7 @@ def main():
           f"{float((size_id==0).float().mean()):.2f} | families {len(family_vocab)}",
           flush=True)
 
-    # ---- dataset features + native task vocab ---------------------------
     dn_emb = build_name_embeddings(ds_nodes, token_dim=64, seed=43)
-    # e_card: MiniLM over dataset_desp when present, else the cleaned name+task
     card_texts = []
     for n in ds_nodes:
         d, t = n.split(NODE_SEP) if NODE_SEP in n else (n, "")
@@ -187,7 +141,6 @@ def main():
          for i, n in enumerate(ds_nodes)], dtype=np.float32))
     xd = np.concatenate([dn_emb, dc_emb, xd_stats], axis=1)
 
-    # native task vocab from the dominant task per node
     node_task = {n: (n.split(NODE_SEP)[1] if NODE_SEP in n else "") for n in ds_nodes}
     tcounts = pd.Series([node_task[n].lower() for n in ds_nodes if node_task[n]]
                         ).value_counts()
@@ -198,11 +151,9 @@ def main():
     print(f"[xd0] frozen {xd.shape} | task vocab {len(task_vocab)} | "
           f"Other share {float((tt_id==0).float().mean()):.2f}", flush=True)
 
-    # ---- similar_to KNN --------------------------------------------------
     s_src, s_dst, s_attr = topk_knn(dc_emb, SIM_K)
     print(f"[edges] similar_to {len(s_src):,}", flush=True)
 
-    # ---- assemble + contracts (identical to D0-v1) ----------------------
     data = HeteroData()
     data["model"].node_id = torch.arange(len(model_ids))
     data["model"].x = torch.from_numpy(xm)

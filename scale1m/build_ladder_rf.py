@@ -1,39 +1,3 @@
-"""
-build_ladder_rf.py -- F3: freeze the row order of the lake.
-
-Runbook: docs/1M/1Mplan.md 5 (F3). Record: docs/1M/F3.md.
-
-WHAT THE LADDER IS
-    One row per candidate model, in the order their embeddings will sit in
-    `z_m`. `mappedID == i` means row i, and every later stage -- features,
-    graph, export, HNSW, evaluation -- indexes by it. A misordered ladder does
-    not raise anywhere; it silently reassigns every embedding to the wrong
-    model.
-
-ROW ORDER
-    0 .. 3,003,758          the 2026-08-18 snapshot, in crawl order
-                            (createdAt desc), exactly as F2 wrote the canon
-                            parts
-    3,003,759 .. N-1        models that appear only in historical supervision
-                            (D-63), sorted by normalised id
-
-    Appending rather than interleaving keeps the snapshot an exact prefix, so
-    "the first 3,003,759 rows are the lake as HF had it" stays true and the
-    retrieval-side subsampling in 1Mplan 3.5 can use prefixes when it wants to.
-
-ATTRIBUTES OF THE APPENDED ROWS
-    They have no HF record, so `size_b` is unknown -- the same NaN every model
-    without `safetensors.total` gets, and the same downstream consequence
-    (bucket 0, no size clause in the descriptor). `family` is recovered from
-    whichever historical graph carried the model, via that graph's own
-    `family_vocab`; `family_source` records which graph it came from. Their
-    `x` is NOT copied from those graphs: the D0 line used a different
-    descriptor function, and constraint 2 requires one descriptor for the whole
-    lake, so F4 recomputes it.
-
-Run (from ModelLakeFishing/):
-    python -m scale1m.build_ladder_rf --rf <rf dir> --out <ladder dir>
-"""
 import argparse
 import collections
 import glob
@@ -52,7 +16,6 @@ LAYER_NO_RECORD = "no_snapshot_record"
 
 
 def load_canon(rf_dir):
-    """The 61 canon parts, in shard order == crawl order."""
     parts = sorted(glob.glob(os.path.join(rf_dir, "canon", "part-*.parquet")))
     if not parts:
         raise SystemExit("no canon parts in %s" % rf_dir)
@@ -63,12 +26,6 @@ def load_canon(rf_dir):
 
 
 def family_from_history(models, source_dir=None):
-    """model -> (family string, which graph it came from).
-
-    Historical graphs store `family_id` against their own `family_vocab`, so
-    the id is only meaningful with the vocab that produced it. Sources are read
-    in priority order and the first hit wins, matching D-64.
-    """
     want, out = set(models), {}
     for key, fname, _prio in SOURCES:
         ck = torch.load(os.path.join(source_dir or G, fname), map_location="cpu", weights_only=False)
@@ -126,7 +83,6 @@ def build(rf_dir, out_dir, source_dir=None, hf_only=False):
         "appended_rows_are_not_in_the_snapshot":
             not (set(rows["model"]) & set(canon["model"])),
     }
-    # every model carrying supervision must have a row, or its edges point nowhere
     sup = pd.read_parquet(os.path.join(rf_dir, "canon", "supervision_merged.parquet"))
     sup_models = set(sup["model"])
     checks["every_supervised_model_has_a_row"] = sup_models.issubset(set(ladder["model"]))
@@ -135,7 +91,6 @@ def build(rf_dir, out_dir, source_dir=None, hf_only=False):
     lpath = os.path.join(out_dir, "full_model_ids.parquet")
     ladder.to_parquet(lpath, index=False)
 
-    # dataset side: the same discipline, deterministic order by node string
     nodes = pd.read_parquet(os.path.join(rf_dir, "canon",
                                          "dataset_nodes_merged.parquet"))
     nodes = nodes.sort_values("node").reset_index(drop=True)

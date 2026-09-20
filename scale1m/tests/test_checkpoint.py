@@ -1,13 +1,3 @@
-"""Tests for T6 checkpoint / resume (scale1m/checkpoint.py, train hooks).
-
-Gate G-W4 is "save, reload, resume, and the steps stay continuous". The way
-that gate fails in practice is not an exception -- it is a resume that restores
-the weights but not the optimizer, or that restarts the epoch counter, and then
-finishes and reports a number. So these tests compare a resumed run against an
-uninterrupted one parameter by parameter, rather than only checking that resume
-did not crash.
-"""
-
 import json
 import os
 
@@ -42,21 +32,12 @@ def _fixture(tmp_path):
 
 
 def _step(model, scorer, opt, n=1):
-    """A step whose gradient differs every time.
-
-    With a constant input the gradient is constant, Adam's normalized update
-    degenerates, and a run with fresh moment buffers is indistinguishable from
-    a correctly resumed one -- the tests below would pass on a broken resume.
-    Drawing x from the torch RNG also puts the RNG state itself under test.
-    """
     for _ in range(n):
         opt.zero_grad()
         x = torch.randn(2, 4)
         (model(x).sum() + scorer(x).pow(2).sum()).backward()
         opt.step()
 
-
-# ── save / load ──────────────────────────────────────────────────────────────
 
 def test_save_writes_numbered_file_and_repoints_last(tmp_path):
     model, scorer, opt, binding = _fixture(tmp_path)
@@ -112,8 +93,6 @@ def test_prune_keeps_best_last_and_history(tmp_path):
     assert os.path.exists(os.path.join(d, CK.BEST))
 
 
-# ── resume resolution order (§9.3) ───────────────────────────────────────────
-
 def test_resume_order_prefers_explicit_then_last_then_fresh(tmp_path):
     model, scorer, opt, binding = _fixture(tmp_path)
     d = str(tmp_path / "ckpt")
@@ -129,8 +108,6 @@ def test_resume_with_a_missing_explicit_path_fails_loudly(tmp_path):
     with pytest.raises(FileNotFoundError):
         CK.resolve_resume(str(tmp_path / "nope.pt"), str(tmp_path))
 
-
-# ── binding validation ───────────────────────────────────────────────────────
 
 def test_validate_accepts_a_matching_binding(tmp_path):
     model, scorer, opt, binding = _fixture(tmp_path)
@@ -168,10 +145,7 @@ def test_validate_can_also_diff_the_config(tmp_path):
     assert any(m.startswith("cfg.batch_size") for m in bad)
 
 
-# ── the gate itself: resume == uninterrupted ─────────────────────────────────
-
 def _run(steps, resume_from=None, ckpt_dir=None, binding=None):
-    """Four Adam steps, optionally split across a save/reload boundary."""
     torch.manual_seed(0)
     model, scorer = Tiny(), Tiny()
     opt = torch.optim.Adam(list(model.parameters()) + list(scorer.parameters()),
@@ -208,9 +182,6 @@ def test_resume_reproduces_the_uninterrupted_run(tmp_path):
 
 
 def test_dropping_optimizer_state_would_change_the_result(tmp_path):
-    """Guards the guard: if Adam's moments were not restored the previous test
-    would still pass on a model that happened to converge, so check that the
-    optimizer state actually matters here."""
     _, _, _, binding = _fixture(tmp_path)
     straight, _, _ = _run(4)
 
@@ -222,7 +193,7 @@ def test_dropping_optimizer_state_would_change_the_result(tmp_path):
     model.load_state_dict(ck["model"])
     scorer.load_state_dict(ck["scorer"])
     opt = torch.optim.Adam(list(model.parameters()) + list(scorer.parameters()),
-                           lr=1e-2)                    # fresh moments on purpose
+                           lr=1e-2)
     _step(model, scorer, opt, n=2)
 
     assert not all(torch.allclose(a, b, atol=1e-6)
@@ -239,8 +210,6 @@ def test_global_step_is_continuous_across_a_resume(tmp_path):
     assert ck["epoch"] == 3 and ck["global_step"] == 4
 
 
-# ── RNG ──────────────────────────────────────────────────────────────────────
-
 def test_rng_round_trip_restores_all_cpu_streams(tmp_path):
     import random
     s = CK.rng_state()
@@ -251,10 +220,6 @@ def test_rng_round_trip_restores_all_cpu_streams(tmp_path):
 
 
 def test_resume_state_carries_the_rng(tmp_path):
-    """Regression guard. train_eval_one calls torch.manual_seed(init_seed) when
-    it builds the model, so an RNG restored by the driver before that call is
-    discarded and the resumed run takes a different batch order. The RNG has to
-    travel inside resume_state and be applied by train() itself."""
     model, scorer, opt, binding = _fixture(tmp_path)
     d = str(tmp_path / "ckpt")
     CK.save(d, epoch=1, global_step=2, model=model, scorer=scorer, opt=opt,

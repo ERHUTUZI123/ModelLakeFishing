@@ -1,18 +1,3 @@
-"""
-verify_corpus.py -- P0/P1..P4 entry guard: prove the frozen raw/ snapshot is
-still byte-identical to what PROVENANCE.json recorded.
-
-PLAN §1.4 rule 3: "此后每次进入 P1-P4,先跑 verify_corpus.py 比对校验和;
-不匹配即硬失败,禁止继续."
-
-Exit code 0 = snapshot intact, safe to proceed.
-Exit code 1 = MISMATCH / MISSING -- stop, do not build, do not report numbers.
-
-Run (from ModelLakeFishing/):
-    .\\.venv\\Scripts\\python.exe -m scale.verify_corpus
-    .\\.venv\\Scripts\\python.exe -m scale.verify_corpus --root <alt copy>
-"""
-
 import argparse
 import hashlib
 import json
@@ -39,7 +24,6 @@ def sha256_and_lines(path: str, count_lines: bool):
 
 
 def verify_one(subdir_root: str) -> tuple[int, int, list]:
-    """Returns (n_ok, n_bad, failures)."""
     prov_path = os.path.join(subdir_root, "PROVENANCE.json")
     if not os.path.exists(prov_path):
         return 0, 1, [f"MISSING PROVENANCE.json at {subdir_root}"]
@@ -47,8 +31,6 @@ def verify_one(subdir_root: str) -> tuple[int, int, list]:
     with open(prov_path, encoding="utf-8") as fh:
         prov = json.load(fh)
 
-    # The raw dir is resolved relative to THIS root, so the same provenance
-    # file can verify a backup copy sitting at a different path.
     raw_dir = os.path.join(subdir_root, "raw")
     ok, bad, failures = 0, 0, []
 

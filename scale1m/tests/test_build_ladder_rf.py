@@ -1,11 +1,3 @@
-"""Unit tests for the F3 ladder (RF).
-
-The ladder is a row-order contract, and a broken one raises nothing: it just
-hands every embedding to the wrong model. So each invariant the builder claims
-gets a test that fails when the invariant is violated, including the two that
-only matter once historical supervision is merged in -- the snapshot has to
-stay an exact prefix, and every supervised model has to have a row.
-"""
 import os
 
 import pandas as pd
@@ -49,7 +41,6 @@ def test_snapshot_stays_an_exact_prefix_and_history_is_appended(tmp_path, monkey
                  ["z/old", "y/older"], sup_models=["a/1", "z/old"])
     ladder, nodes, rep = B.build(rf, str(tmp_path / "out"))
     assert ladder["model"].tolist()[:3] == ["a/1", "a/2", "a/3"]
-    # appended, sorted by id, never interleaved
     assert ladder["model"].tolist()[3:] == ["y/older", "z/old"]
     assert ladder["mappedID"].tolist() == [0, 1, 2, 3, 4]
     assert all(rep["checks"].values())
@@ -62,15 +53,14 @@ def test_appended_rows_carry_no_size_and_a_recovered_family(tmp_path, monkeypatc
                  sup_models=["a/1"])
     ladder, _n, rep = B.build(rf, str(tmp_path / "out"))
     app = ladder[~ladder.in_snapshot].set_index("model")
-    assert pd.isna(app.loc["z/old", "size_b"])          # no HF record -> no size
+    assert pd.isna(app.loc["z/old", "size_b"])
     assert app.loc["z/old", "family"] == "llama"
-    assert app.loc["q/unknown", "family"] == "other"    # not recoverable -> Other
+    assert app.loc["q/unknown", "family"] == "other"
     assert app.loc["q/unknown", "family_source"] == "history:none"
     assert set(app["layer"]) == {B.LAYER_NO_RECORD}
 
 
 def test_a_supervised_model_missing_from_the_ladder_is_caught(tmp_path, monkeypatch):
-    """Edges pointing at a model with no row would index into nothing."""
     monkeypatch.setattr(B, "family_from_history", lambda models, source_dir=None: {})
     rf = _rf_dir(tmp_path / "rf", [_row("a/1")], [],
                  sup_models=["a/1", "ghost/model"])
@@ -94,7 +84,7 @@ def test_dataset_side_gets_its_own_contiguous_order(tmp_path, monkeypatch):
     rf = _rf_dir(tmp_path / "rf", [_row("a/1")], [], sup_models=["a/1"],
                  nodes=nodes)
     _l, nd, rep = B.build(rf, str(tmp_path / "out"))
-    assert nd["node"].tolist() == ["a\tt", "b\tt", "c\tt"]   # deterministic
+    assert nd["node"].tolist() == ["a\tt", "b\tt", "c\tt"]
     assert nd["mappedID"].tolist() == [0, 1, 2]
     assert rep["datasets"]["gold_eligible"] == 2
 

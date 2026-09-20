@@ -1,29 +1,3 @@
-"""
-hf_crawl_datasets.py -- F1.5: the dataset-side snapshot.
-
-WHY THIS EXISTS
-    `x_d` has been `[e_name 64 || e_card 384 || e_stats 10]` since D0, and
-    `e_card` is MiniLM over a dataset descriptor built from the HF dataset
-    card -- name, task_categories, tags, description (see
-    scale1m/dataset_descriptor.py). The
-    ModelLens rungs took that text from the corpus's own `desc` column. With
-    the corpus gone (D-56), the same text has to come from where D0 originally
-    took it: the HF datasets API.
-
-WHY ENUMERATE INSTEAD OF FETCHING THE 7,700 BY ID
-    Anonymous rate limit is 500 requests / 300 s. 7,700 per-id GETs cost about
-    16 windows (over an hour); enumerating the whole dataset index at 1000 per
-    page costs about 980 requests (2 windows, ~10 min) and additionally tells
-    us which of our names are not HF repos at all. It also keeps the
-    closed-world property: one snapshot, one source.
-
-    Ordering is `createdAt` desc for the same reason as the model crawl: its
-    pagination cursor is keyed on the immutable `_id`, so nothing already in
-    the index is skipped mid-crawl (docs/1M/F0.md 2.2).
-
-Run (from ModelLakeFishing/):
-    python -m scale1m.hf_crawl_datasets --out $MLF_DATA_DIR/data1m/datasets_full
-"""
 import argparse
 import json
 import os
@@ -39,15 +13,13 @@ from scale1m.hf_crawl import (PAGE_LIMIT_MAX, data_root, fetch, finalize_shard,
 
 API = "https://huggingface.co/api/datasets"
 
-# Exactly the fields dataset_descriptor() reads, plus the popularity/recency
-# signals the stats view may use. No file listings.
 EXPAND = ("author", "createdAt", "lastModified", "downloads", "likes",
           "tags", "description", "cardData")
 
 KEEP = ("id", "author", "createdAt", "lastModified", "downloads", "likes", "tags")
 KEEP_CARD = ("task_categories", "task_ids", "language", "size_categories",
              "license", "multilinguality", "source_datasets")
-DESC_CHARS = 1000          # the descriptor uses 400; keep headroom, drop the rest
+DESC_CHARS = 1000
 
 
 def build_url(params):

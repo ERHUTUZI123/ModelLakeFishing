@@ -1,14 +1,3 @@
-"""Unit tests for the T2 crawler's pure parts (no network).
-
-The crawl itself is verified end-to-end by scale1m.verify_raw against the
-frozen shards; what is worth pinning here is the record trimming (a silent
-field drop would surface only as a 100% size_b miss in T3) and the shard /
-resume bookkeeping (a torn line would corrupt the ladder's row order).
-
-Run (from ModelLakeFishing/):
-    .\\.venv\\Scripts\\python.exe -m pytest scale1m/tests -q
-"""
-
 import gzip
 import json
 import os
@@ -19,11 +8,7 @@ from scale1m import hf_crawl as C
 from scale1m.verify_raw import normalize
 
 
-# --- trimming --------------------------------------------------------------
-
-
 def test_trim_v1_keeps_exactly_the_declared_fields():
-    """v1 shape is FROZEN: raw/ was crawled with it and must stay reproducible."""
     rec = {
         "_id": "internal",
         "id": "org/model",
@@ -42,13 +27,11 @@ def test_trim_v1_keeps_exactly_the_declared_fields():
     out = C.trim(rec, v2=False)
     assert set(out) == set(C.KEEP_V1) | {"safetensors", "cardData"}
     assert "siblings" not in out and "_id" not in out
-    assert out["safetensors"] == {"total": 123}          # parameters dropped
-    assert set(out["cardData"]) == {"base_model", "datasets"}  # license/widget dropped
+    assert out["safetensors"] == {"total": 123}
+    assert set(out["cardData"]) == {"base_model", "datasets"}
 
 
 def test_trim_v2_adds_the_fields_v1_silently_dropped():
-    """The v1 KEEP set dropped cardData.language, author, baseModels and config
-    -- which is why the v1 shards contain zero language metadata."""
     rec = {
         "id": "org/model", "author": "org", "downloads": 7,
         "lastModified": "2026-02-02T00:00:00.000Z", "gated": False,
@@ -68,7 +51,6 @@ def test_trim_v2_adds_the_fields_v1_silently_dropped():
     assert out["config"] == {"architectures": ["BertModel"], "model_type": "bert"}
     assert out["gguf"] is True
     assert "widget" not in out["cardData"]
-    # v1 would have kept none of these
     v1 = C.trim(rec, v2=False)
     assert "author" not in v1 and "baseModels" not in v1 and "config" not in v1
     assert "language" not in v1["cardData"]
@@ -86,7 +68,7 @@ def test_trim_omits_absent_and_null_fields():
     out = C.trim({"id": "a/b", "downloads": 0, "safetensors": None, "cardData": None})
     assert out == {"id": "a/b", "downloads": 0}
     out2 = C.trim({"id": "a/b", "safetensors": {"parameters": {"F32": 5}}})
-    assert "safetensors" not in out2                     # total is the only useful key
+    assert "safetensors" not in out2
 
 
 def test_trim_model_index_drops_verify_token_keeps_values():
@@ -105,13 +87,9 @@ def test_trim_model_index_drops_verify_token_keeps_values():
 
 
 def test_trim_model_index_survives_malformed_cards():
-    # Seen in the wild: a bare dict instead of a list, and results missing.
     assert C.trim_model_index({"results": []}) is None
     assert C.trim_model_index("not-a-model-index") is None
     assert C.trim_model_index([{"results": "nope"}, None]) is None
-
-
-# --- http plumbing ---------------------------------------------------------
 
 
 def test_parse_ratelimit():
@@ -131,9 +109,6 @@ def test_next_url_reads_the_link_header():
     class R3:
         headers = {}
     assert C.next_url(R3()) == ""
-
-
-# --- shard / resume bookkeeping -------------------------------------------
 
 
 def _write_plain(tmp, idx, ids):
@@ -162,12 +137,10 @@ def test_replay_truncates_a_torn_partial_shard(tmp_path):
     _write_plain(tmp, 0, ["a/b", "c/d"])
     shards = []
     C.finalize_shard(tmp, 0, 2, shards)
-    # Shard 1 is mid-flight: the cursor committed 1 record, then the process
-    # died halfway through writing the second line.
     path = os.path.join(tmp, C.shard_stem(1) + ".jsonl")
     with open(path, "w", encoding="utf-8") as fh:
         fh.write(json.dumps({"id": "e/f"}) + "\n")
-        fh.write('{"id": "g/h"')            # torn
+        fh.write('{"id": "g/h"')
     seen = C.replay_seen_ids(tmp, shards, 1, 1)
     assert seen == {"a/b", "c/d", "e/f"}
     with open(path, "r", encoding="utf-8") as fh:
@@ -178,7 +151,7 @@ def test_write_json_atomic_overwrites_a_frozen_file(tmp_path):
     path = str(tmp_path / "PROVENANCE.json")
     C.write_json_atomic(path, {"a": 1})
     os.chmod(path, 0o444)
-    C.write_json_atomic(path, {"a": 2})     # a re-run must not need chmod by hand
+    C.write_json_atomic(path, {"a": 2})
     with open(path, encoding="utf-8") as fh:
         assert json.load(fh) == {"a": 2}
 
@@ -193,11 +166,7 @@ def test_shard_stem_is_zero_padded_and_sorts(idx, stem):
     assert C.shard_stem(idx) == stem
 
 
-# --- stream ordering (RF full enumeration) ---------------------------------
-
-
 def _single_stream_args(out, **over):
-    """The attribute set crawl_single reads; defaults mirror the CLI."""
     import types
     base = dict(out=out, restart=False, v2_fields=True, sort="downloads",
                 direction="-1", page_size=C.PAGE_LIMIT_MAX, limit=10_000_000,
@@ -208,7 +177,6 @@ def _single_stream_args(out, **over):
 
 
 def test_default_sort_is_the_frozen_v1_ordering():
-    """raw/ was crawled with downloads/-1; the default must not drift."""
     args = C.build_parser().parse_args([])
     assert (args.sort, args.direction) == ("downloads", "-1")
 
@@ -221,7 +189,6 @@ def test_sort_flag_accepts_createdAt_and_rejects_junk():
 
 
 def test_full_enumeration_ends_on_cursor_exhaustion_not_on_limit(tmp_path, monkeypatch):
-    """`--sort createdAt --limit huge` must exit 0 when the stream runs out."""
     pages = [([{"id": "a/one", "createdAt": "2026-08-18T00:00:00.000Z"},
                {"id": "b/two", "createdAt": "2026-08-17T00:00:00.000Z"}], "")]
 
@@ -232,7 +199,7 @@ def test_full_enumeration_ends_on_cursor_exhaustion_not_on_limit(tmp_path, monke
     monkeypatch.setattr(C, "fetch", fake_fetch)
     out = str(tmp_path / "candidates_full")
     rc = C.crawl_single(_single_stream_args(out, sort="createdAt"))
-    assert rc == 0                                   # not 1, despite limit unmet
+    assert rc == 0
     with open(os.path.join(out, "PROVENANCE.json"), encoding="utf-8") as fh:
         prov = json.load(fh)
     assert prov["sort"] == "createdAt" and prov["direction"] == "-1"
@@ -242,7 +209,6 @@ def test_full_enumeration_ends_on_cursor_exhaustion_not_on_limit(tmp_path, monke
 
 
 def test_resume_refuses_to_splice_two_orderings(tmp_path, capsys):
-    """A downloads cursor and a createdAt cursor are different populations."""
     out = str(tmp_path / "candidates_full")
     os.makedirs(out)
     C.write_json_atomic(os.path.join(out, "CURSOR.json"),

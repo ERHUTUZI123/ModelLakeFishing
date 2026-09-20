@@ -1,30 +1,3 @@
-"""
-retrain_modellens.py -- P5: retrain ModelLens's METHOD under identical, fully
-reproducible conditions, so the A-axis is a fair architecture-vs-architecture
-comparison (not "our full system vs their blinded release").
-
-Fairness (kills the "did you cripple it?" objection):
-  * ModelLens's OWN architecture: its `ModelLens` class from ModelLens/module/
-    model/MLP.py (cross-feature MLP, id-emb, name-enc, desc, task/metric/size/
-    family priors, learnable temperature).
-  * ModelLens's OWN loss family + hyperparameters (args.json): listwise +
-    pairwise + pointwise ensemble, lambda_list=0.5, lambda_pair=1.0,
-    point_loss_weight=0.1, id_dropout_rate=0.1.
-  * The SAME dataset & model representations our GNN uses: pulled straight from
-    the graph -- dataset_desc = e_card (MiniLM over dataset_desp, name+task
-    fallback), model_desc = e_desc (MiniLM over name+family+size). So the ONLY
-    difference is the architecture. NOT blind: it sees the dataset description.
-  * The SAME 12K universe, SAME root-aware held-out 517 gold queries, SAME
-    global-metric harness (scale/global_metrics).
-
-Held-out (cold) query datasets get dataset_id = [UNK] (their id was never
-supervised) but KEEP their known description -- the genuine new-dataset path.
-
-Run (repo root):
-  ModelLakeFishing/.venv/Scripts/python.exe -m ModelLakeFishing.scale.retrain_modellens \
-     --graph ModelLakeFishing/stage1BuildTransferGraph/hgraph_ml_v2_sub.pt --epochs 20
-"""
-
 import argparse
 import json
 import os
@@ -46,18 +19,15 @@ EXPORT = os.path.join(_HERE, "..", "docs", "scale", "P3", "exports", "ml_sub_L1L
 OUT = os.path.join(_HERE, "..", "docs", "scale", "P5", "artifacts")
 NODE_SEP = "␟"
 
-sys.path.insert(0, _HERE + "/..")  # for scale import when run as module it's fine
-from scale import global_metrics as GM  # noqa: E402
+sys.path.insert(0, _HERE + "/..")
+from scale import global_metrics as GM
 
 
 def build_modellens(n_models, n_datasets, n_tasks, n_metrics, n_size, n_fam, dev):
     if ML_REPO not in sys.path:
         sys.path.insert(0, ML_REPO)
-    from module.model.registry import get_model_class  # noqa
-    import module.model.MLP  # noqa: registers ModelLens
-    # their hyperparameters (args.json) where they define the METHOD; dims for
-    # the desc slots set to OUR MiniLM width (384) so the shared embedding is
-    # in-distribution for the retrained model (no OOD, no padding).
+    from module.model.registry import get_model_class
+    import module.model.MLP
     a = SimpleNamespace(
         model_name="ModelLens", use_id_emb=True,
         num_models=n_models, num_tasks=n_tasks, num_metrics=n_metrics,
@@ -98,19 +68,17 @@ def main():
     names = umi["model"].tolist()
     n_m = len(names); n_d = len(udi)
 
-    # shared features straight from the graph (identical to our GNN inputs)
-    xm = data["model"].x.numpy()          # [n_m, 448] = e_name64 || e_desc384
-    xd = data["dataset"].x.numpy()        # [n_d, 458] = e_name64 || e_card384 || stats10
-    model_desc = torch.tensor(xm[:, 64:448], dtype=torch.float32)   # e_desc
-    dataset_desc = torch.tensor(xd[:, 64:448], dtype=torch.float32) # e_card
+    xm = data["model"].x.numpy()
+    xd = data["dataset"].x.numpy()
+    model_desc = torch.tensor(xm[:, 64:448], dtype=torch.float32)
+    dataset_desc = torch.tensor(xd[:, 64:448], dtype=torch.float32)
     size_ids = data["model"].size_bucket_id.clone()
     fam_ids = data["model"].family_id.clone()
-    task_ids_d = data["dataset"].task_type_id.clone()   # per dataset node
+    task_ids_d = data["dataset"].task_type_id.clone()
     n_size = int(payload["xm0_meta"]["num_size_buckets"])
     n_fam = int(payload["xm0_meta"]["num_families"])
     n_task = int(payload["xd0_meta"]["num_task_types"])
 
-    # metric vocab from chosen_metric per node
     pool = pd.read_csv(os.path.join(LAKE, "ml_dataset_pool.csv"))
     node2metric = dict(zip(pool["dataset_node"], pool["chosen_metric"]))
     metrics = sorted(set(str(node2metric.get(nd, "unknown")) for nd in udi["dataset"]))
@@ -120,13 +88,11 @@ def main():
         dtype=torch.long)
     n_metric = len(metric2id)
 
-    # supervision tuples + held-out split = same 517 test datasets as our export
     ei = data["model", "trained_on", "dataset"].edge_index.numpy()
     ev = data["model", "trained_on", "dataset"].edge_attr.numpy()
     gc = np.load(os.path.join(EXPORT, "gold_cands.npz"))
     test_d = set(int(k) for k in gc.files)
     did_map = dict(zip(udi["mappedID"], udi["dataset"]))
-    # per dataset -> (model ids, values)
     by_d = {}
     for k in range(ei.shape[1]):
         m, d, v = int(ei[0, k]), int(ei[1, k]), float(ev[k])
@@ -137,9 +103,6 @@ def main():
           f"| test(gold) {len(test_d)} | tasks {n_task} metrics {n_metric}")
 
     model, a = build_modellens(n_m, n_d, n_task, n_metric, n_size, n_fam, dev)
-    # inject the SHARED representations. model_desc_matrix inits to 0 rows (its
-    # model2id path is absent), so re-register at the right shape; dataset_desc_
-    # matrix is (n_d+1, 384) already, fill its real rows (unk row stays zeros).
     del model.model_desc_matrix
     model.register_buffer("model_desc_matrix", model_desc.clone().to(dev))
     with torch.no_grad():
@@ -150,10 +113,8 @@ def main():
     opt = torch.optim.Adam(model.parameters(), lr=args.lr, weight_decay=1e-4)
 
     def forward_scores(d_ids_list, m_ids):
-        """score [len(d), len(m_ids)] via model.forward per (dataset,model) flat."""
-        pass  # scoring done inline below
+        pass
 
-    # ---- train: listwise + pairwise + pointwise (their ensemble/weights) ----
     LAM_LIST, LAM_PAIR, W_POINT = 0.5, 1.0, 0.1
     steps = 0
     for ep in range(args.epochs):
@@ -170,19 +131,16 @@ def main():
                 neg = torch.randint(n_m, (args.nneg,), device=dev)
                 cand = torch.cat([pos_m, neg])
                 B = cand.numel()
-                desp = torch.full((B, 1), float(d), device=dev)       # ds id -> id emb + desc
+                desp = torch.full((B, 1), float(d), device=dev)
                 s, z = model(
                     task_ids_d[d].repeat(B).to(dev), desp, cand,
                     [all_names[int(i)] for i in cand.tolist()],
                     size_ids[cand], fam_ids[cand],
                     metric_ids=metric_ids_d[d].repeat(B).to(dev))
                 np_ = pos_m.numel()
-                # listwise (ListNet top-1): target = softmax(values) on positives,
-                # 0 on negatives; push scores to match value ordering + beat negs
                 tgt = torch.zeros(B, device=dev)
                 tgt[:np_] = torch.softmax(pos_v / 0.1, dim=0)
                 loss_list = -(tgt * F.log_softmax(s, dim=0)).sum()
-                # pairwise BPR within positives
                 if np_ >= 2:
                     i, j = torch.randint(np_, (min(64, np_ * np_),), device=dev), \
                            torch.randint(np_, (min(64, np_ * np_),), device=dev)
@@ -193,7 +151,6 @@ def main():
                         loss_pair = torch.zeros((), device=dev)
                 else:
                     loss_pair = torch.zeros((), device=dev)
-                # pointwise regression on positives
                 loss_pt = F.mse_loss(torch.sigmoid(z[:np_]), pos_v)
                 loss = loss + LAM_LIST * loss_list + LAM_PAIR * loss_pair + W_POINT * loss_pt
             loss = loss / len(batch_ds)
@@ -204,7 +161,6 @@ def main():
         print(f"  epoch {ep+1}/{args.epochs} loss {ep_loss/max(nb,1):.4f} "
               f"({time.time()-t0:.0f}s)", flush=True)
 
-    # ---- eval: cold held-out datasets (dataset_id=[UNK], desc known) --------
     model.eval()
     unk_ds = model.unk_dataset_id
     cache = model.build_model_cache(
@@ -215,7 +171,6 @@ def main():
     with torch.no_grad():
         for d in cands:
             desp = torch.tensor([[float(unk_ds)]], device=dev)
-            # overwrite the unk desc row with THIS query's known description
             model.dataset_desc_matrix[min(unk_ds, model.dataset_desc_matrix.shape[0]-1)] \
                  = dataset_desc[d]
             s = model.score_matrix(task_ids_d[d].view(1).to(dev), desp, cache,

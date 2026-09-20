@@ -1,4 +1,3 @@
-"""Live reviewer selection, data isolation and pipeline integration contracts."""
 import json
 import os
 from pathlib import Path

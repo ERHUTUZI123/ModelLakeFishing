@@ -1,8 +1,7 @@
-"""Frozen vocabulary bytes and append-only embedding row identities."""
 import pandas as pd
 import pytest
 
-import scale1m  # Registers the portable dataset_embed import location.
+import scale1m
 
 pytest.importorskip("huggingface_hub")
 from dataset_embed.xm0_builder import load_or_update_family_vocab

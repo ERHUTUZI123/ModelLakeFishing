@@ -1,4 +1,3 @@
-"""The prior command must work independently in an arbitrarily named clone."""
 import json
 import hashlib
 import os
@@ -17,7 +16,6 @@ from scale1m.tests.test_prepare_a0_graph import tiny_source
 def test_prior_subprocess_without_a0_marker_or_author_checkout(tmp_path):
     repo = Path(__file__).resolve().parents[2]
     clone = tmp_path / "reviewer-chosen-name"
-    # Only runtime code, with no parent checkout, docs, repro or author data.
     required = [
         "scale1m/__init__.py", "scale1m/graph_store.py",
         "stage3HNSW/build_prior_sidecar.py",

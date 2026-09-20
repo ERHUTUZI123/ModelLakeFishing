@@ -1,4 +1,3 @@
-"""Small producer/consumer binding fixtures; no model export or real graph load."""
 import argparse
 import json
 from pathlib import Path

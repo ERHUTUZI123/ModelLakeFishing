@@ -32,8 +32,6 @@ def check_canonical(rf: Path, frozen: Path):
         columns = sorted(expected.columns)
         if sorted(got.columns) != columns:
             raise ValueError("Canonical schema differs from frozen A0: " + name)
-        # Parquet container bytes are not stable across writer versions. Check
-        # every scientific value, preserving exact numeric equality instead.
         left = got.sort_values(keys).reset_index(drop=True)[columns]
         right = expected.sort_values(keys).reset_index(drop=True)[columns]
         pd.testing.assert_frame_equal(left, right, check_dtype=False, check_exact=True)

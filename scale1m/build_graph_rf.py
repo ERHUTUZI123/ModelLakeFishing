@@ -1,35 +1,3 @@
-"""
-build_graph_rf.py -- F5: assemble the full-lake HGraph.
-
-Runbook: docs/1M/1Mplan.md 5 (F5). Record: docs/1M/F5.md.
-
-INPUTS
-    ladder_rf/full_model_ids.parquet     row order, frozen by F3
-    ladder_rf/full_dataset_ids.parquet   dataset node order, frozen by F3
-    feats_rf/x_m.npy + size_bucket_id + family_id   the model side, from F4
-    rf/canon/supervision_merged.parquet  the six-source edges, from F2
-    rf/canon/part-*.parquet              lineage_base per model, from F2
-    datasets_full/dataset_cards_merged.parquet      card text, from F1.5
-
-WHAT IT BUILDS
-    x_d, the dataset side, in the shape every rung has used since D0:
-        x_d (458) = [e_name 64 (seed 43) || e_card 384 (MiniLM) || e_stats 10]
-    five edge types:
-        trained_on / rev_trained_on      the supervision, from F2
-        similar_to                       k=20 cosine KNN over e_card
-        is_base_of / rev_is_base_of      lineage, hashmap join on normalised id
-    and writes the whole thing in the scale1m.graph_store sharded layout, so
-    the 5.41 GB feature matrix is never materialised in RAM.
-
-WHY x_m IS COPIED, NOT REBUILT
-    F4 already wrote x_m.npy in exactly the .npy layout graph_store reads. The
-    graph directory takes that file as-is; rebuilding it through torch would
-    cost 5.41 GB of RAM this machine does not have and could only produce the
-    same bytes.
-
-Run (from ModelLakeFishing/):
-    python -m scale1m.build_graph_rf --out <graph dir>
-"""
 import argparse
 import collections
 import glob
@@ -55,17 +23,12 @@ from scale1m.verify_raw import normalize
 
 NAME_DIM_D, CARD_DIM, STAT_DIM = 64, 384, 10
 XD_DIM = NAME_DIM_D + CARD_DIM + STAT_DIM
-NAME_SEED_D = 43           # the dataset side has always used 43, models use 42
+NAME_SEED_D = 43
 SIM_K = 20
 A0_ZERO_COLUMNS = (448, 449, 450, 451, 452, 453, 455)
 
 
 def mask_performance_features(x_dataset):
-    """Return an independent A0 feature array with the seven label-derived columns zero.
-
-    Keep the 458-column schema, name/card blocks, root count and reserved zeros.
-    Never mutate a frozen input array, including a memory map.
-    """
     x = np.asarray(x_dataset)
     if x.ndim != 2 or x.shape[1] != XD_DIM or x.dtype != np.float32:
         raise ValueError("A0 requires a two-dimensional float32 dataset array with 458 columns")
@@ -77,12 +40,10 @@ def mask_performance_features(x_dataset):
 
 
 def _text(v):
-    """pandas hands back NaN for a null string column, and NaN is truthy."""
     return "" if v is None or (isinstance(v, float) and pd.isna(v)) else str(v)
 
 
 def dataset_texts(nodes, cards):
-    """dataset_descriptor() over the F1.5 cards, name-only where none matched."""
     c = cards.set_index(["dataset", "task"])
     out, with_card = [], 0
     for r in nodes.itertuples():
@@ -94,7 +55,6 @@ def dataset_texts(nodes, cards):
                 row = row.iloc[0]
             if str(row.get("card_source", "")).startswith("hf_card"):
                 with_card += 1
-                # a missing description arrives as NaN, and `NaN or ""` is NaN
                 rec = {"description": _text(row.get("description")),
                        "tags": json.loads(_text(row.get("tags")) or "[]"),
                        "cardData": {"task_categories":
@@ -106,12 +66,6 @@ def dataset_texts(nodes, cards):
 
 
 def dataset_stats(nodes, edges):
-    """A0 e_stats: only the frozen node-table root count is an input.
-
-    ``edges`` remains in the builder interface, but no performance records or
-    eligibility flags are read. They remain available separately as supervision
-    and evaluation labels. The original column layout is retained.
-    """
     roots = nodes["dataset"].map(lambda d: str(d).split("/")[0])
     root_sizes = roots.value_counts().to_dict()
     x = np.zeros((len(nodes), STAT_DIM), dtype=np.float32)
@@ -137,7 +91,6 @@ def build_xd(nodes, cards, edges, out_dir, batch_size, device):
 
 
 def lineage_edges(rf_dir, id2idx):
-    """base --is_base_of--> derivative, O(N) hashmap join on the normalised id."""
     src, dst, rel = [], [], []
     rel_counter = collections.Counter()
     declared = self_ref = 0
@@ -156,7 +109,7 @@ def lineage_edges(rf_dir, id2idx):
                 continue
             src.append(j)
             dst.append(i)
-            r = _text(r) or "unknown"      # NaN is truthy; _text() flattens it
+            r = _text(r) or "unknown"
             rel.append(r)
             rel_counter[r] += 1
     return (np.asarray(src, dtype=np.int64), np.asarray(dst, dtype=np.int64),
@@ -199,13 +152,11 @@ def build(ladder_dir, feats_dir, rf_dir, cards_path, out_dir,
     cards = pd.read_parquet(cards_path)
     cards["task"] = cards["task"].fillna("")
 
-    # ---- dataset side -----------------------------------------------------
     xd, e_card, roots, card_meta = build_xd(nodes, cards, edges, out_dir,
                                             batch_size, device)
     print("[xd] %s | cards %d/%d | %.1fs"
           % (xd.shape, card_meta["with_hf_card"], n_d, time.time() - t0), flush=True)
 
-    # ---- edges ------------------------------------------------------------
     id2idx = {normalize(m): i for i, m in zip(models["mappedID"], models["model"])}
     node2idx = {n: i for i, n in zip(nodes["mappedID"], nodes["node"])}
     miss_m = edges["model"].map(lambda m: normalize(m) not in id2idx).sum()
@@ -230,7 +181,6 @@ def build(ladder_dir, feats_dir, rf_dir, cards_path, out_dir,
         ["unknown", "finetune", "adapter", "quantized", "merge"])}
     l_rel_id = np.asarray([rel_vocab.get(r, 0) for r in l_rel], dtype=np.int64)
 
-    # ---- write the sharded graph -----------------------------------------
     src_x = os.path.join(feats_dir, "x_m.npy")
     dst_x = os.path.join(out_dir, "x_model.npy")
     if not os.path.exists(dst_x) or sha256_of(src_x) != sha256_of(dst_x):
@@ -269,9 +219,6 @@ def build(ladder_dir, feats_dir, rf_dir, cards_path, out_dir,
     du.to_parquet(os.path.join(out_dir, "unique_dataset_id.parquet"), index=False)
 
     from dataset_embed.xm0_builder import FAMILY_MIN_COUNT
-    # keep_default_na=False: two real family strings are literally "nan" and
-    # "null", and pandas would parse both as NaN and collapse them into one
-    # dict key, leaving the vocab one row short of num_families.
     vocab = pd.read_csv(os.path.join(feats_dir, "family_vocab.csv"),
                         keep_default_na=False)
     meta = {
@@ -326,13 +273,9 @@ def build(ladder_dir, feats_dir, rf_dir, cards_path, out_dir,
         },
     }
     write_json_atomic(os.path.join(out_dir, "GRAPH_REPORT.json"), report)
-    # The file table must describe the completed artifacts, including reports.
-    # Hashing before writing those reports can bind their previous contents.
     for f in os.listdir(out_dir):
         if f != "meta.json":
             meta["files"][f] = sha256_of(os.path.join(out_dir, f))
-    # A clean from-source build is not yet a prepared graph bound to A0.1.
-    # prepare_a0_graph adds the separate, fully verified A0 provenance marker.
     meta["dataset_feature_policy"] = {"name": "no_performance_derived_inputs",
                                       "zero_columns": list(A0_ZERO_COLUMNS)}
     write_json_atomic(os.path.join(out_dir, "meta.json"), meta)

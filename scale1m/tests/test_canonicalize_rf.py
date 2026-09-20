@@ -1,10 +1,3 @@
-"""Unit tests for the F2 supervision build (RF).
-
-Every rule here is one of the knobs constraint 4 freezes: parsing, dedupe,
-in-group normalisation, direction, primary-metric choice, gold eligibility and
-the per-node cap. Each of them can move gold@10 on its own, so each gets a test
-that would fail if the behaviour drifted.
-"""
 import numpy as np
 import pandas as pd
 import pytest
@@ -21,7 +14,7 @@ def test_values_that_parse(raw, want):
 
 
 @pytest.mark.parametrize("raw", [
-    "11.05 +/- 5.90",      # the HF RL leaderboard format, deliberately rejected
+    "11.05 +/- 5.90",
     "n/a", "", None, True, float("nan"), float("inf"), {"v": 1}, [1, 2],
 ])
 def test_values_that_do_not_parse(raw):
@@ -55,13 +48,12 @@ def _frame(rows):
 
 
 def test_duplicate_records_collapse_to_the_median_not_the_best():
-    """An author who submits three times must not buy a higher edge weight."""
     rows = [("m1", "d", "t", "accuracy", "higher", v) for v in (0.10, 0.50, 0.90)]
     rows += [("m2", "d", "t", "accuracy", "higher", 0.60)]
     edges, nodes, ded, rep = C.build_supervision(_frame(rows))
     assert rep["duplicate_rows_collapsed"] == 2
     m1 = ded[(ded.model == "m1")].iloc[0]
-    assert m1["value"] == pytest.approx(0.50)      # median, not 0.90
+    assert m1["value"] == pytest.approx(0.50)
 
 
 def test_lower_is_better_is_flipped_so_the_best_model_wins_gold():
@@ -75,14 +67,12 @@ def test_lower_is_better_is_flipped_so_the_best_model_wins_gold():
 
 
 def test_normalisation_is_per_full_metric_name_not_pooled():
-    """ndcg_at_1 and ndcg_at_10 are different groups (1Mplan 3.2)."""
     rows = [("m1", "d", "t", "ndcg_at_1", "higher", 0.10),
             ("m2", "d", "t", "ndcg_at_1", "higher", 0.20),
             ("m1", "d", "t", "ndcg_at_10", "higher", 0.80),
             ("m2", "d", "t", "ndcg_at_10", "higher", 0.90)]
     _e, _n, ded, _r = C.build_supervision(_frame(rows))
     per = {(r.metric, r.model): r.v_norm for r in ded.itertuples()}
-    # each group spans its own [0,1]; pooling would put ndcg_at_1 near zero
     assert per[("ndcg_at_1", "m1")] == pytest.approx(0.0)
     assert per[("ndcg_at_1", "m2")] == pytest.approx(1.0)
     assert per[("ndcg_at_10", "m1")] == pytest.approx(0.0)
@@ -105,10 +95,9 @@ def test_direction_known_metric_wins_the_primary_slot():
 
 
 def test_a_node_with_only_unverified_metrics_keeps_edges_but_loses_gold():
-    """D-61: keep the edge, drop it from gold."""
     rows = [("m%d" % i, "d", "t", "mystery", "unknown", i) for i in range(4)]
     edges, nodes, _d, _r = C.build_supervision(_frame(rows))
-    assert len(edges) == 4                       # edges survive
+    assert len(edges) == 4
     assert not bool(nodes.iloc[0]["gold_eligible"])
     assert not bool(nodes.iloc[0]["direction_known"])
 
@@ -146,7 +135,6 @@ def test_the_cap_bounds_a_node_and_keeps_the_value_range():
     assert rep["edges_before_cap"] == 500
     assert rep["edges_after_cap"] == 50
     assert rep["nodes_capped"] == 1
-    # stratified, not head/tail: both ends of the distribution survive
     assert edges.weight.min() < 0.1 and edges.weight.max() > 0.9
 
 

@@ -1,17 +1,3 @@
-r"""Generate a cross-task public-demo audit run sheet.
-
-The sheet contains fixed Model Lake top-10 results, exact dataset input text
-from the ModelLens corpus, and the user-captured ModelLens public-demo tables.
-
-This is a qualitative capability battery.  The 517-query deployment metrics
-remain the prevalence estimate.  Cases are fixed in ``AUDIT_CASES`` so later
-demo outputs cannot alter the selection.
-
-Run from ModelLakeFishing/:
-
-    .\.venv\Scripts\python.exe -m scale.cross_task_demo_audit
-"""
-
 from __future__ import annotations
 
 import argparse
@@ -29,10 +15,6 @@ DEFAULT_JSON = ROOT / "docs" / "scale" / "P5" / "artifacts" / "cross_task_demo_a
 DEFAULT_MD = Path(__file__).resolve().parents[3] / "weeks" / "week9_scale" / "PUBLIC_DEMO_CROSS_TASK_AUDIT.md"
 
 
-# Fixed before any public-demo output is collected.  STS17 is retained as the
-# anchor case requested by the user.  The remaining cases cover frequent,
-# recognisable task families and were selected as capability examples with
-# auditable Model Lake output.  They are not a random or prevalence sample.
 AUDIT_CASES = [
     ("Text classification", 1659, "MTEB MTOPDomainClassification (en)"),
     ("Text retrieval", 1055, "MTEB ArguAna"),
@@ -51,8 +33,6 @@ EXCLUDED_CASES = [
 ]
 
 
-# User-supplied public-demo capture.  New results should be added here without
-# changing AUDIT_CASES, preserving the pre-registered query battery.
 PUBLIC_DEMO_RESULTS = {
     1659: {
         "run_timestamp": "2026-07-28, user-supplied public-demo run",

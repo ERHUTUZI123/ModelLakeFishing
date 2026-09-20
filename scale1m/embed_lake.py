@@ -1,43 +1,3 @@
-"""
-embed_lake.py -- T4: build the rung's frozen model-feature matrix.
-
-Runbook: docs/1M/100kplan.md 7.1 / 7.2 / 7.3.   Record: docs/1M/T4.md.
-
-TWO SEGMENTS, TREATED DIFFERENTLY ON PURPOSE
-    rows 0..30182   CORE   copied out of hgraph_ml_v2.pt, byte for byte.
-                           Never re-embedded (iron rule 1). MiniLM's last bits
-                           move with device and batch composition; one re-embed
-                           and CORE is no longer the CORE that P3/P5 measured,
-                           and the whole R0/R1/R2 ladder is off its anchor.
-    rows 30183..N-1 HALO   embedded here, but through **CORE's own descriptor
-                           function** (iron rule 2): scale.modellens_build_graph
-                           .model_descriptor, imported, not reimplemented.
-
-    The [e_name 64 || e_desc 384] layout, the name-hash seed (42), the encoder
-    (all-MiniLM-L6-v2) and the size-bucket constants are all shared, so the two
-    halves of the matrix are commensurable by construction.
-
-WHAT IRON RULE 2 DOES *NOT* COVER (F-T2-3 / F-T3-5)
-    model_descriptor drops the "<x>B params" clause entirely when size_b is
-    NaN, so "what fraction of rows carry a size clause" is a systematic text
-    difference that survives using the identical function. T3 measured CORE
-    47.91% vs HALO 57.75% (+9.83 pp) and D-26 accepted it. The separability
-    AUC (gate G-B4) is the only real guard at this layer -- so this module
-    computes it and writes it into the report rather than leaving it to a
-    later, optional script.
-
-FAMILY VOCAB IS APPEND-ONLY
-    CORE's 341 rows are materialised into family_vocab.csv first, then HALO's
-    new families are appended by load_or_update_family_vocab. A CORE row that
-    moves is a silent relabelling of a trained nn.Embedding row, so it is an
-    assertion, not a log line.
-
-Run (from ModelLakeFishing/):
-    .\\.venv\\Scripts\\python.exe -m scale1m.embed_lake --rung 100k `
-        --ladder <dir>/ladder/100k_model_ids.csv `
-        --core stage1BuildTransferGraph/hgraph_ml_v2.pt --out <dir>/feats
-"""
-
 import argparse
 import hashlib
 import json
@@ -59,13 +19,7 @@ DESC_DIM = 384
 X_DIM = NAME_DIM + DESC_DIM
 NAME_SEED = 42
 ENCODER = "all-MiniLM-L6-v2"
-# Resolved for the frozen 2026-08 feature build.  A mutable model alias is not
-# a reproduction credential; every fresh encoding therefore requests this
-# exact Hugging Face commit.
 ENCODER_REVISION = "1110a243fdf4706b3f48f1d95db1a4f5529b4d41"
-# CORE went through scale.modellens_build_graph._minilm, i.e. batch_size=256,
-# fp32, normalize_embeddings=False. HALO uses the same call shape by default;
-# --batch-size only exists so a big-GPU rung can trade it for wall clock.
 DEFAULT_BATCH = 256
 CORE_INTAKE = os.path.join(_S1, "artifacts", "modellens_v2_lake",
                            "ml_model_intake.csv")
@@ -83,11 +37,8 @@ def _pct(x):
     return round(float(x), 5)
 
 
-# ── descriptors ──────────────────────────────────────────────────────────────
-
 def halo_descriptors(models, families, sizes):
-    """HALO descriptor texts, through CORE's function (iron rule 2)."""
-    from scale.modellens_build_graph import model_descriptor    # the one
+    from scale.modellens_build_graph import model_descriptor
     out = []
     for mid, fam, sz in zip(models, families, sizes):
         fam = "" if fam is None or (isinstance(fam, float) and np.isnan(fam)) else str(fam)
@@ -96,10 +47,6 @@ def halo_descriptors(models, families, sizes):
 
 
 def core_descriptor_parts(intake_csv=CORE_INTAKE):
-    """CORE's (ids, families, sizes) in mappedID order, straight from the intake
-    CSV modellens_build_graph read. Read-only: nothing here can touch the frozen
-    features -- we rebuild the descriptor STRINGS for auditing, never the
-    embeddings."""
     mi = pd.read_csv(intake_csv).set_index("model_id")
     model_ids = sorted(mi.index.astype(str))
     fam = mi.loc[model_ids, "family"].fillna("").astype(str).tolist()
@@ -108,7 +55,6 @@ def core_descriptor_parts(intake_csv=CORE_INTAKE):
 
 
 def core_descriptors(intake_csv=CORE_INTAKE):
-    """Reconstruct CORE's descriptor TEXTS for the iron-rule-2 audit in 7.3."""
     model_ids, fam, size_b = core_descriptor_parts(intake_csv)
     return model_ids, halo_descriptors(model_ids, fam, size_b)
 
@@ -127,8 +73,6 @@ def text_stats(texts):
     }
 
 
-# ── encoders ─────────────────────────────────────────────────────────────────
-
 def minilm(texts, batch_size=DEFAULT_BATCH, device=None, tag="halo.desc"):
     import torch
     from sentence_transformers import SentenceTransformer
@@ -146,11 +90,7 @@ def name_embeddings(models):
     return build_name_embeddings(list(models), token_dim=NAME_DIM, seed=NAME_SEED)
 
 
-# ── family vocab (append-only over CORE's) ───────────────────────────────────
-
 def extend_family_vocab(core_vocab, halo_families, vocab_path):
-    """Materialise CORE's vocab, then append HALO's families that clear
-    FAMILY_MIN_COUNT. Returns (vocab_after, n_new)."""
     from dataset_embed.xm0_builder import load_or_update_family_vocab
 
     ordered = sorted(core_vocab.items(), key=lambda kv: kv[1])
@@ -169,16 +109,12 @@ def extend_family_vocab(core_vocab, halo_families, vocab_path):
     return vocab_after, len(vocab_after) - len(core_vocab)
 
 
-# ── gates (7.3) ──────────────────────────────────────────────────────────────
-
 def gate_core_verbatim(x, x_core):
     import torch
     return bool(torch.equal(torch.from_numpy(x[:x_core.shape[0]]), x_core))
 
 
 def gate_row_order(x, models, n_core, k=100, seed=0):
-    """Redraw e_name for k random HALO rows straight from the ladder id and
-    compare against x[i, :64]. Row-order misalignment raises nowhere else."""
     rng = np.random.default_rng(seed)
     idx = rng.choice(np.arange(n_core, len(models)), size=min(k, len(models) - n_core),
                      replace=False)
@@ -188,11 +124,6 @@ def gate_row_order(x, models, n_core, k=100, seed=0):
 
 
 def separability_auc(x, n_core, seed=0, max_iter=2000, subsample=None):
-    """G-B4: can a linear probe tell CORE from HALO using x alone?
-
-    Balanced by construction (equal CORE/HALO counts), 50/50 train/test, and
-    reported for the full vector plus each half, because the plan's attribution
-    list is exactly a claim about which half carries the difference."""
     from sklearn.linear_model import LogisticRegression
     from sklearn.metrics import roc_auc_score
     from sklearn.model_selection import train_test_split
@@ -239,16 +170,6 @@ def _auc_of(emb, m, seed=0):
 
 def auc_ablation(core_parts, halo_parts, m, batch_size=DEFAULT_BATCH,
                  device=None, seed=0):
-    """G-B4 attribution: which clause of the descriptor makes CORE and HALO
-    linearly separable?
-
-    7.3 orders the suspects (size-clause coverage, name length, bare names,
-    org concentration) but never measures them against each other. Re-embedding
-    the same rows under stripped descriptors does: the family clause and the
-    size clause are switched off one at a time, so the residual AUC of the
-    name-only variant is the part that is the lake's real composition and not
-    a knob we control.
-    """
     rng = np.random.default_rng(seed)
     variants = {"name_only": (False, False), "name_size": (False, True),
                 "name_family": (True, False), "full": (True, True)}
@@ -276,8 +197,6 @@ def auc_ablation(core_parts, halo_parts, m, batch_size=DEFAULT_BATCH,
     return out
 
 
-# ── main build ───────────────────────────────────────────────────────────────
-
 def build(core_path, ladder_path, out_dir, rung, batch_size=DEFAULT_BATCH,
           device=None, seed=0, skip_auc=False, auc_subsample=None,
           ablation=0):
@@ -303,7 +222,6 @@ def build(core_path, ladder_path, out_dir, rung, batch_size=DEFAULT_BATCH,
     print("[in] CORE %d (frozen) | HALO %d | rung %s" % (n_core, len(halo), rung),
           flush=True)
 
-    # --- segment 2: HALO, through CORE's descriptor function ---------------
     fam_raw = halo["family"].fillna("").astype(str).tolist()
     size_b = halo["size_b"].to_numpy(dtype=float)
     texts = halo_descriptors(halo["model"].tolist(), fam_raw, size_b)
@@ -314,7 +232,6 @@ def build(core_path, ladder_path, out_dir, rung, batch_size=DEFAULT_BATCH,
 
     x = np.concatenate([x_core.numpy(), x_halo], axis=0).astype(np.float32)
 
-    # --- size buckets: CORE's constants, applied to HALO -------------------
     from dataset_embed.xm0_builder import (
         param_count_to_size_bucket, build_family_ids, NUM_SIZE_BUCKETS)
     counts = [(b * 1e9 if not np.isnan(b) else None) for b in size_b]
@@ -322,14 +239,12 @@ def build(core_path, ladder_path, out_dir, rung, batch_size=DEFAULT_BATCH,
                          dtype=np.int64)
     size_id = np.concatenate([size_core.numpy(), size_halo])
 
-    # --- family ids: append-only over CORE's vocab -------------------------
     vocab_path = os.path.join(out_dir, rung, "family_vocab.csv")
     fams = [f if f else "Other" for f in fam_raw]
     vocab_after, n_new = extend_family_vocab(core_vocab, fams, vocab_path)
     fam_halo = build_family_ids(fams, vocab_after)
     fam_id = np.concatenate([fam_core.numpy(), fam_halo])
 
-    # --- write --------------------------------------------------------------
     d = os.path.join(out_dir, rung)
     os.makedirs(d, exist_ok=True)
     np.save(os.path.join(d, "x_m.npy"), x)
@@ -340,7 +255,6 @@ def build(core_path, ladder_path, out_dir, rung, batch_size=DEFAULT_BATCH,
         for t in texts[:50]:
             fh.write(t + "\n")
 
-    # --- gates (7.3) --------------------------------------------------------
     print("\n[gates]", flush=True)
     g_core = gate_core_verbatim(x, x_core)
     g_shape = (x.shape == (n, X_DIM))
@@ -378,7 +292,7 @@ def build(core_path, ladder_path, out_dir, rung, batch_size=DEFAULT_BATCH,
             "core_verbatim": g_core,
             "shape_ok": bool(g_shape),
             "no_nan_inf": bool(g_nan),
-            "family_vocab_append_only": True,      # asserted in extend_family_vocab
+            "family_vocab_append_only": True,
             "row_order_k": k,
             "row_order_max_delta": name_delta,
             "row_order_ok": bool(name_delta < 1e-6),

@@ -21,12 +21,6 @@ def require(condition, message):
 
 
 def split_eligibility(nodes, edges):
-    """Match the production root assignment without materializing graph clones.
-
-    The production split greedily fills edge-count quotas after a seeded
-    permutation of sorted dataset roots. Only the subsequent negative sampling
-    and disjoint edge permutation consume additional random numbers.
-    """
     import torch
 
     root_by_node = nodes.set_index("node")["dataset"].astype(str).str.split("/").str[0]

@@ -1,10 +1,3 @@
-"""Collect the current public Hub metadata lake with durable page checkpoints.
-
-This is an acquisition interval, not an atomic or historical Hub snapshot. Each
-validated API page becomes an immutable gzip shard. The cursor is committed only
-after its shard is durable; an interrupted, uncommitted page is safely refetched.
-No weights, dataset examples, private repositories, or author-local data are used.
-"""
 from __future__ import annotations
 
 import gzip
@@ -68,7 +61,6 @@ def _validate_url(url: str, endpoint: str) -> None:
 
 
 class _Session:
-    """Prevent a pagination/redirect response from forwarding an HF token away."""
 
     def __init__(self, endpoint: str, token: str | None):
         self.endpoint = endpoint
@@ -80,8 +72,6 @@ class _Session:
         if 300 <= response.status_code < 400:
             raise ValueError("Unexpected redirect from the HF listing API")
         if response.status_code == 200:
-            # A malformed next Link must not silently turn a partial crawl into
-            # a completed lake. The public API currently emits absolute links.
             link = response.headers.get("Link", "")
             if link:
                 pieces = re.split(r",\s*(?=<)", link)
@@ -144,8 +134,6 @@ def _state(directory: Path, spec: dict) -> dict:
             raise ValueError("Existing live collection uses a different crawl configuration")
         return state
     if directory.exists() and any(directory.iterdir()):
-        # An initial CURSOR.json.tmp can be left by interruption before the
-        # first checkpoint replacement. No data page has been committed yet.
         if set(p.name for p in directory.iterdir()) != {"CURSOR.json.tmp"}:
             raise ValueError("Nonempty collection has no live cursor: " + str(directory))
     directory.mkdir(parents=True, exist_ok=True)
@@ -162,8 +150,6 @@ def _collect(directory: Path, kind: str, *, token, timeout, max_retries, page_si
     spec = _spec(kind, page_size)
     state = _state(directory, spec)
     seen = _read_shards(directory, state)
-    # The last downloaded page may have reached disk immediately before an
-    # interruption of the cursor replacement. It is not committed input yet.
     next_name = models.shard_stem(len(state["shards"])) + ".jsonl.gz"
     committed = {row["file"] for row in state["shards"]}
     for path in directory.glob("hf_models_*"):
@@ -200,8 +186,6 @@ def _collect(directory: Path, kind: str, *, token, timeout, max_retries, page_si
                     continue
                 seen.add(record["id"])
                 page_rows.append(trim(record))
-            # One page is one transaction. If interrupted before CURSOR.json
-            # changes, only this deterministic next shard may be overwritten.
             if page_rows:
                 path = directory / (models.shard_stem(len(state["shards"])) + ".jsonl.gz")
                 part = path.with_name(path.name + ".part")
@@ -235,7 +219,6 @@ def _collect(directory: Path, kind: str, *, token, timeout, max_retries, page_si
                   "snapshot_is_atomic": False, "total_records": state["n_written"],
                   "pages": state["pages"], "exhausted_cursor": state["exhausted_cursor"],
                   "shards": state["shards"], "stats": state["stats"]}
-    # Derived indexes are reproducible from the durable cursor after a crash.
     _atomic(directory / "SHARDS.json", state["shards"])
     _atomic(directory / "PROVENANCE.json", provenance)
     return provenance
@@ -289,7 +272,6 @@ def _inspect(root: Path) -> dict:
 
 
 def input_digest(report: dict) -> str:
-    """Stable input binding, excluding verification timestamps/local paths."""
     if not report.get("ok"):
         raise ValueError("Cannot bind incomplete or modified live inputs")
     payload = json.dumps(sorted(report["files"], key=lambda row: row["path"]),
@@ -314,11 +296,6 @@ def verify(root: Path) -> dict:
 
 def download(root: Path, *, token: str | None = None, timeout: float = 60,
              max_retries: int = 8, page_size: int = 1000) -> dict:
-    """Download/resume both complete public listing streams into ``root``.
-
-    A completed collection is immutable and verified without contacting HF.
-    To collect newer metadata, use a new root (the CLI's ``--snapshot-id``).
-    """
     root = Path(root).resolve()
     if not 1 <= page_size <= models.PAGE_LIMIT_MAX or max_retries < 0 or timeout <= 0:
         raise ValueError("Invalid live API page size, retries, or timeout")

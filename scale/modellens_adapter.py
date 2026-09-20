@@ -1,37 +1,3 @@
-"""
-modellens_adapter.py -- P2: run the REAL ModelLens model (its own source +
-published checkpoint) as a full-lake scorer, so it can be evaluated on OUR
-global metrics (scale/global_metrics.py).
-
-Faithfulness: we import ModelLens's own `ModelLens` class and load its published
-`ModelLens.pt` with strict=False. Every trained weight (model_desc_matrix,
-_id_emb, task/metric/size/family embeddings, backbone, heads, temperature)
-loads from the checkpoint. The candidate universe is the FULL 47,242 models in
-GLOBAL-ID ORDER, so build_model_cache's `arange(M)` indexes _id_emb and
-model_desc_matrix correctly -- no id remapping needed.
-
-D-5 (dataset-desc matrix, unpublished) -- recorded per the user ruling:
-  (c) LOWER BOUND: the checkpoint has NO dataset_desc_matrix, so it stays zeros
-      (their own code falls back to zeros). This is the honest floor.
-  (a) MAIN: we rebuild the dataset-desc slot with the SAME MiniLM encoder as our
-      e_card (all-MiniLM-L6-v2, 384-d), placed in the first 384 of the 1536-d
-      slot -- their own `use_dim = min(...)` partial-fill convention. NOT the
-      original encoder (unknown, likely OpenAI 1536-d); provenance stamped on
-      every output.
-
-Documented approximations (both minor priors; dominant signals are exact):
-  * size bucket: `ds.modelid2bucket` is unpublished, so ModelLens's own default
-    is all-zeros. We reconstruct via searchsorted on args.size_bucket (best
-    effort); a --size-zeros flag reproduces their published-artifact default.
-  * held-out datasets have no entry in a (also unpublished) dataset2id, so every
-    query uses unk_dataset_id -- the genuine cold-start path for a new dataset.
-
-Run (from ModelLakeFishing/):
-    .\\.venv\\Scripts\\python.exe -m scale.modellens_adapter --wiring-check
-    .\\.venv\\Scripts\\python.exe -m scale.modellens_adapter --eval --desc a
-    .\\.venv\\Scripts\\python.exe -m scale.modellens_adapter --eval --desc c
-"""
-
 import argparse
 import json
 import os
@@ -58,31 +24,23 @@ ENCODER = "all-MiniLM-L6-v2"
 
 
 def load_modellens(size_zeros: bool = False):
-    """Reconstruct ModelLens from its own source + published checkpoint."""
     if ML_REPO not in sys.path:
         sys.path.insert(0, ML_REPO)
-    # its package imports are rooted at the repo dir
     os.chdir(ML_REPO)
     from module.model.registry import get_model_class
-    import module.model.MLP  # noqa: F401  (registers "ModelLens")
+    import module.model.MLP
 
     with open(os.path.join(CKPT_DIR, "args.json"), encoding="utf-8") as fh:
         args = SimpleNamespace(**json.load(fh))
-    # eval-only: no dropout, no wandb, cpu/gpu
     args.is_train = False
     args.use_wandb = False
     dev = "cuda" if torch.cuda.is_available() else "cpu"
     args.device = dev
-    # Point the desc-matrix builders at the frozen model2id so the buffers size
-    # to (47242, 1536) / (85938, 1536) and the checkpoint loads over them.
-    # The .npz emb files stay "missing" -> built as zeros -> then the checkpoint
-    # overwrites model_desc_matrix with the real trained values. dataset_desc
-    # has no checkpoint key, so it stays zeros = D-5 lower bound (option c).
     args.model2id_path = os.path.join(RAW, "model2id.json")
     args.model_desp_emb_path = os.path.join(RAW, "__absent_model_desp__.npz")
 
-    cls = get_model_class(args.model_name)          # MLPMetricFull -> ModelLens
-    model = cls(args)                               # builds zeros for missing files
+    cls = get_model_class(args.model_name)
+    model = cls(args)
     sd = torch.load(os.path.join(CKPT_DIR, "ModelLens.pt"), map_location="cpu",
                     weights_only=False)
     missing, unexpected = model.load_state_dict(sd, strict=False)
@@ -105,7 +63,6 @@ def build_vocabs():
 
 
 def candidate_tensors(model2id, family2id, profile, size_bucket, size_zeros):
-    """Full 47,242 candidates in GLOBAL-ID ORDER (id == row index)."""
     n = max(model2id.values()) + 1
     names = [None] * n
     for name, i in model2id.items():
@@ -125,7 +82,6 @@ def candidate_tensors(model2id, family2id, profile, size_bucket, size_zeros):
                 if s not in UNK:
                     try:
                         sb = float(s)
-                        # searchsorted on their own boundary list (best-effort)
                         size_ids[i] = int(min(np.searchsorted(size_bucket, sb,
                                           side="right"), len(size_bucket)))
                     except ValueError:
@@ -142,8 +98,6 @@ def minilm_encode(texts):
 
 
 def load_queries():
-    """Gold query nodes (depth>=10) + labeled (model, acc) over the candidate
-    universe, using GLOBAL model ids so they align with the candidate tensors."""
     obs = pd.read_parquet(os.path.join(LAKE, "ml_observations.parquet"))
     pool = pd.read_csv(os.path.join(LAKE, "ml_dataset_pool.csv"))
     gold = pool[pool["gold_evaluable"]].copy()
@@ -183,20 +137,16 @@ def main():
     obs, gold = load_queries()
     if args.limit:
         gold = gold.head(args.limit)
-    # map node -> (global model ids, accs), task, metric
     obs = obs[obs["dataset_node"].isin(set(gold["dataset_node"]))]
     obs = obs.assign(gid=obs["model_id"].map(lambda m: model2id.get(m)))
     obs = obs[obs["gid"].notna()]
     grp = obs.groupby("dataset_node")
 
     unk_ds = model.unk_dataset_id
-    desc_mat = model.dataset_desc_matrix          # buffer, zeros (D-5)
-    # _encode_dataset CLAMPS ds_id to desc_mat.shape[0]-1 when reading, so inject
-    # option-(a) vectors into that same clamped row.
+    desc_mat = model.dataset_desc_matrix
     have_desc_buf = desc_mat.shape[0] > 0
     inj_row = desc_mat.shape[0] - 1
 
-    # optionally rebuild desc (option a) with MiniLM over dataset_desp
     node_desc_vec = {}
     if args.desc == "a":
         nodes = list(gold["dataset_node"])
@@ -206,11 +156,10 @@ def main():
             d = nd.split(NODE_SEP)[0] if NODE_SEP in nd else nd
             t = str(pool_desc.get(nd, "")) or d
             texts.append(t)
-        vecs = minilm_encode(texts)               # [n, 384]
+        vecs = minilm_encode(texts)
         for nd, v in zip(nodes, vecs):
             node_desc_vec[nd] = v
 
-    # ---- score each query over the full universe ------------------------
     per_scores, cands, roots = {}, {}, {}
     wiring_corr = []
     n_done = 0
@@ -220,19 +169,18 @@ def main():
         task_id = int(task2id.get(task, 0))
         metric_id = int(metric2id.get(str(row["chosen_metric"]), 0))
 
-        # option a: inject this query's desc into the unk row (first 384 dims)
         if args.desc == "a" and have_desc_buf and nd in node_desc_vec:
             with torch.no_grad():
                 desc_mat[inj_row].zero_()
                 v = torch.from_numpy(node_desc_vec[nd]).to(dev)
                 desc_mat[inj_row, :v.numel()] = v
 
-        desc_in = torch.tensor([[float(unk_ds)]], device=dev)   # id in slot 0
+        desc_in = torch.tensor([[float(unk_ds)]], device=dev)
         task_ids = torch.tensor([task_id], device=dev)
         metric_ids = torch.tensor([metric_id], device=dev)
         with torch.no_grad():
             s = model.score_matrix(task_ids, desc_in, cache,
-                                   metric_ids=metric_ids).squeeze(0)  # [M]
+                                   metric_ids=metric_ids).squeeze(0)
         s = s.detach().float().cpu().numpy()
 
         gids = sub["gid"].astype(int).to_numpy()
@@ -241,7 +189,6 @@ def main():
         cands[nd] = (gids, accs)
         roots[nd] = str(row["root_a"])
 
-        # wiring: correlation of ModelLens score vs observed acc over labeled set
         if len(gids) >= 5:
             sc = s[gids]
             if np.std(sc) > 0 and np.std(accs) > 0:

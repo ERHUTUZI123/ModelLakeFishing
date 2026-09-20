@@ -1,28 +1,3 @@
-"""
-modellens_subsample.py -- P3 D-3 fallback: subsample hgraph_ml_v2.pt to a model
-count that fits an 8 GiB GPU, WITHOUT touching the champion training code.
-
-Why: the L1L3b champion uses a full-batch supervised contrastive loss whose
-[N_model, N_model] similarity/mask tensors are O(N^2). At 30,183 models that is
-~4 x 3.6 GB, impossible on an 8 GiB laptop GPU, and pyg-lib (which would give
-bounded neighbor-sampled subgraphs instead of the full-graph fallback) has no
-wheel for torch 2.12. PLAN §3.2 sanctions matched-scale root/degree-stratified
-subsampling as the fallback -- "对照仍受控,论点不弱". Both systems are
-restricted to this same universe in P4, so the head-to-head stays controlled.
-
-Selection (deterministic), keeps the metric well-defined:
-  1. keep every gold node's gold + observed top-3 model (eval-critical);
-  2. fill by DESCENDING trained_on degree up to --budget (hubs matter most for
-     message passing and are the real candidates);
-  3. keep every dataset node that still has >=1 supervision edge.
-
-Everything is reindexed; vocabs (family/task) are unchanged (ids still valid).
-Output honors the identical Stage-2 contract as the parent graph.
-
-Run (from ModelLakeFishing/):
-    .\\.venv\\Scripts\\python.exe -m scale.modellens_subsample --budget 13000
-"""
-
 import argparse
 import hashlib
 import os
@@ -56,7 +31,6 @@ def main():
     name_of = umi["model"].tolist()
     mid_of = {m: i for i, m in enumerate(name_of)}
 
-    # gold + top-3 models (eval-critical) from intake labels
     obs = pd.read_parquet(os.path.join(LAKE, "ml_observations.parquet"))
     pool = pd.read_csv(os.path.join(LAKE, "ml_dataset_pool.csv"))
     gold_nodes = set(pool[pool["gold_evaluable"]]["dataset_node"])
@@ -67,13 +41,11 @@ def main():
     critical_ids = {mid_of[m] for m in critical if m in mid_of}
     print(f"[keep] eval-critical (gold+top3) models: {len(critical_ids)}")
 
-    # trained_on degree per model (mappedID order)
     eidx = data["model", "trained_on", "dataset"].edge_index
     deg = torch.bincount(eidx[0], minlength=n_m).numpy()
 
     budget = min(args.budget, n_m)
     keep = set(critical_ids)
-    # fill by descending degree
     for mi in np.argsort(-deg):
         if len(keep) >= budget:
             break
@@ -84,15 +56,13 @@ def main():
     m_new = -np.ones(n_m, dtype=np.int64)
     m_new[keep_m] = np.arange(len(keep_m))
 
-    # dataset nodes retaining >=1 edge among kept models
     em, ed = eidx[0].numpy(), eidx[1].numpy()
     emask = m_new[em] >= 0
     ed_kept = ed[emask]
     with_edge = np.unique(ed_kept)
-    # cap datasets: all gold nodes + top by retained-edge-count, up to max
     gold_idx = {i for i, nd in enumerate(udi["dataset"]) if nd in gold_nodes}
     edeg = np.bincount(ed_kept, minlength=n_d)
-    keep_dset = set(int(d) for d in with_edge if d in gold_idx)   # gold first
+    keep_dset = set(int(d) for d in with_edge if d in gold_idx)
     for di in np.argsort(-edeg):
         if len(keep_dset) >= args.max_datasets:
             break
@@ -104,7 +74,6 @@ def main():
     print(f"[keep] dataset nodes: {len(keep_d)}/{n_d} "
           f"(gold {sum(1 for d in keep_d if d in gold_idx)}, cap {args.max_datasets})")
 
-    # ---- rebuild HeteroData -------------------------------------------------
     from torch_geometric.data import HeteroData
     g = HeteroData()
     km = torch.as_tensor(keep_m)
@@ -137,7 +106,6 @@ def main():
         g[et].edge_index = ei
         g[et].edge_attr = ea
 
-    # contracts
     assert g["model"].x.shape[0] == len(keep_m)
     assert int(g["model", "trained_on", "dataset"].edge_index[0].max()) < len(keep_m)
     assert len(g.edge_types) == 5

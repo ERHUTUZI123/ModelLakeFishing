@@ -1,9 +1,3 @@
-"""Fresh, hash-bound A0 evaluation of the fixed GD/HNSW1000/task-prior path.
-
-The legacy evaluator remains the archived-result reproducer. This adapter keeps
-its scoring functions while separating measured effectiveness from completion.
-It never imports old measured quality or timing as new results.
-"""
 from __future__ import annotations
 
 import gc
@@ -104,7 +98,6 @@ def verify_chunked_export(meta, *, n_models=None):
 
 
 def check_fixed_options(args):
-    """Reject accidental default old paths or protocol drift before computing."""
     _require(args.stage in ("exact", "hnsw", "finalize", "all"),
              "A0 does not replay old frozen pools")
     _require(args.frozen_pools is None, "A0 cannot reuse historical frozen pools")
@@ -184,7 +177,6 @@ def _verify_query_identity(bundle, seed, identity):
 
 
 def create_binding(args):
-    """Verify actual graph/checkpoint/export/sidecar inputs, without trusting filenames."""
     from ModelLakeFishing.scale1m import checkpoint as CK
     from ModelLakeFishing.scale1m.a0_recompute_checks import graph_checks, checkpoint_check, prior_checks, result as check_result
 
@@ -391,7 +383,6 @@ def register_artifact(out, manifest, name, role, seed):
 
 
 def evaluation_resource_peaks(device):
-    """Read real process/device high-water marks; never substitute current RSS."""
     from ModelLakeFishing.scale1m.train_rung import peak_process_rss
     import torch
     rss, rss_reason = peak_process_rss()
@@ -415,7 +406,6 @@ def _evaluation_envelope(manifest, seed):
 
 
 def _summarize_evaluation_record(record):
-    """Unfinished process segments remain missing after a resume."""
     all_segments = record["exact_segments"] + record["hnsw_segments"]
     stage_seconds = {}
     for stage in ("exact", "hnsw"):
@@ -490,7 +480,6 @@ def finish_evaluation_record(args, manifest, seed, stage, record, status="comple
 
 
 def fail_active_evaluation_record(args, manifest, stage):
-    """Caught failures get real endpoints; hard kills retain the saved null."""
     for seed in E.SEEDS:
         name = manifest["seeds"].get(str(seed), {}).get("evaluation_records")
         if name is None:
@@ -592,7 +581,6 @@ def exact_decision(report):
 
 def _write_report(out, report):
     report["written_at"] = utcnow()
-    # Strict JSON rejects NaN/Infinity before the existing atomic writer.
     json.dumps(report, allow_nan=False)
     write_json_atomic(str(Path(out) / REPORT), report)
 
@@ -627,7 +615,6 @@ def run_exact(args, manifest, report):
         row["full_fused_top10_in_dense_top1000"] = float(np.mean([
             len(set(result["full_top10"][i]) & set(arrays["model"][i])) / 10.0 for i in range(len(queries))]))
         result["rows"]["G_exact1000_task"] = row
-        # Rank sufficient statistics and actual saved full top-10 must agree.
         from_top, _ = E._top10_metrics(result["full_top10"], queries.tolist(), bundle["candidates"], bundle["roots"])
         for key in ("gold@1", "gold@10", "gold-gap@1", "gold-gap@10", "top3@10",
                     "root_gold@1", "root_gold@10", "root_top3@10", "root_gold-gap@10"):
@@ -663,7 +650,6 @@ def recall_by_query(ids, exact):
 
 
 def calibrate(index, zq, queries, exact_ids, threads, save_attempt, *, n_models=None):
-    """No gold arguments. Stop at first pass; otherwise retain maximum-ef data."""
     n_models = E.N_TOTAL if n_models is None else n_models
     trace, chosen = [], None
     for ef in GRID:

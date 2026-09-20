@@ -1,4 +1,3 @@
-"""A0 feature-boundary and persisted graph identity tests (small fixtures only)."""
 import json
 
 import numpy as np

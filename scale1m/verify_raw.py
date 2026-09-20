@@ -1,27 +1,3 @@
-"""
-verify_raw.py -- T2 exit gate / T3 entry guard: prove the frozen raw crawl is
-still byte-identical to what PROVENANCE.json recorded, and report the field
-coverage that decides whether T3 can even build the rung.
-
-Runbook: docs/1M/100kplan.md 5.4 (T2 gate) and 6.3 (T3 gate).
-
-Same contract as scale/verify_corpus.py:
-    exit 0 = snapshot intact, safe to proceed
-    exit 1 = MISMATCH / MISSING / SHORT -- stop, do not canonicalize
-
-Beyond checksums it answers the three questions T3 cannot start without:
-    * safetensors.total coverage  -> the size_b missing rate (100kplan 6.3)
-    * cardData.base_model coverage-> the lineage-edge ceiling (100kplan 8.1)
-    * CORE overlap                -> how many HALO candidates actually remain
-The last one is the one that can silently sink the rung: the ladder needs
-100000 - 30183 = 69817 HALO rows, and every CORE id sitting inside the crawled
-prefix is one candidate fewer.
-
-Run (from ModelLakeFishing/):
-    .\\.venv\\Scripts\\python.exe -m scale1m.verify_raw
-    .\\.venv\\Scripts\\python.exe -m scale1m.verify_raw --core stage1BuildTransferGraph/hgraph_ml_v2.pt --sample 20
-"""
-
 import argparse
 import gzip
 import json
@@ -34,14 +10,10 @@ from collections import Counter
 
 from scale1m.hf_crawl import default_out, sha256_of
 
-# Same shape T3 will look for in a model name when safetensors is absent
-# ("...-7b-...", "...-350M-..."). Used here only to SIZE the decision, not to
-# make it: see D-26 in docs/1M/100kplan.md 16.
 NAME_SIZE_RE = re.compile(r"(?<![a-z0-9.])(\d+(?:\.\d+)?)\s*([bmBM])(?![a-z0-9])")
 
 
 def normalize(mid) -> str:
-    """The single id-normalization rule shared with T3 (100kplan 6.1)."""
     return str(mid).strip().lower()
 
 
@@ -53,7 +25,6 @@ def iter_records(out_dir: str, shards: list):
 
 
 def base_model_of(rec):
-    """cardData.base_model, normalized. str or list (take the first)."""
     b = (rec.get("cardData") or {}).get("base_model")
     if isinstance(b, list):
         b = b[0] if b else None
@@ -61,7 +32,6 @@ def base_model_of(rec):
 
 
 def clean_name(mid: str) -> str:
-    """The first clause of scale.modellens_build_graph.model_descriptor."""
     return mid.replace("/", " ").replace("-", " ").replace("_", " ")
 
 
@@ -75,12 +45,6 @@ def _quant(vals, p):
 
 
 def forecast(recs, core, core_ids, rung_n):
-    """The T2 -> T3/T5/T8 handoff: everything downstream can be bounded now.
-
-    None of this is a gate -- it is the set of numbers whose surprise value is
-    highest *before* the work, so that T3/T5/T8 cannot be quietly re-narrated
-    afterwards. Every line here is a prediction with a named owner gate.
-    """
     print("\n" + "=" * 72)
     print("FORECAST for rung N=%d  (predictions, not gates)" % rung_n)
     print("=" * 72)
@@ -93,7 +57,6 @@ def forecast(recs, core, core_ids, rung_n):
         print("  !! only %d HALO candidates -- crawl deeper before T3" % len(halo))
         return
 
-    # -- T3 6.3: layer distribution ------------------------------------
     lab = lin = plain = dropped = 0
     for r in halo:
         card = r.get("cardData") or {}
@@ -112,7 +75,6 @@ def forecast(recs, core, core_ids, rung_n):
              plain, _pct(plain, len(halo)), dropped, _pct(dropped, len(halo))))
     print("           -> T8 11.1 displacement_quality has %d labeled HALO models to work with" % lab)
 
-    # -- T5 8.1: the is_base_of edge count, i.e. D-8's first real test --
     lake = core_ids | {normalize(r["id"]) for r in halo}
     declared = hit = hit_core = 0
     for r in halo:
@@ -129,21 +91,19 @@ def forecast(recs, core, core_ids, rung_n):
           % (hit, hit_core, hit - hit_core))
     print("           P1's name-matching baseline was 42 edges -> ~%.0fx" % (hit / 42.0))
 
-    # -- T8 11.3: the cold-start strata ---------------------------------
     key = [e for e in core["data"].edge_types if e[0] == "model" and "trained" in e[1]][0]
     ei = core["data"][key].edge_index
     import torch
     deg = torch.zeros(core["data"]["model"].num_nodes, dtype=torch.long)
     deg.scatter_add_(0, ei[0], torch.ones_like(ei[0]))
     warm, cool, core_d0 = int((deg >= 10).sum()), int(((deg >= 1) & (deg < 10)).sum()), int((deg == 0).sum())
-    cold = hit                 # HALO with a resolvable base; all HALO have degree 0
+    cold = hit
     frozen = len(halo) - hit + core_d0
     print("\n  [T8 11.3] predicted strata: warm %d (%.2f%%) | cool %d (%.2f%%) | "
           "cold %d (%.2f%%) | frozen %d (%.2f%%)"
           % (warm, _pct(warm, rung_n), cool, _pct(cool, rung_n),
              cold, _pct(cold, rung_n), frozen, _pct(frozen, rung_n)))
 
-    # -- T4 7.3 / G-B4: is the descriptor information content aligned? ---
     sb = core["data"]["model"].size_bucket_id
     core_size_cov = _pct(int((sb != 0).sum()), sb.numel())
     halo_st = sum(1 for r in halo if (r.get("safetensors") or {}).get("total"))
@@ -218,7 +178,6 @@ def main(argv=None) -> int:
           % (prov.get("pages"), prov.get("retries"), prov.get("duplicates_skipped")))
     print("wallclock_s       : %s" % prov.get("wallclock_s"))
 
-    # --- gate 1: checksums + read-only ------------------------------------
     print("\n-- shards --")
     n_declared = 0
     for sh in prov.get("shards", []):
@@ -245,20 +204,16 @@ def main(argv=None) -> int:
     if (prov.get("total_records") or 0) < args.expect:
         fail.append("total_records %s < --expect %d" % (prov.get("total_records"), args.expect))
 
-    # --- gate 2: one full pass -- order, dupes, field coverage -------------
     n = 0
     ids_norm = set()
     dupes = 0
     order_violations = 0
-    # The stream's own sort key, not a hardcoded one: `raw/` is downloads-desc,
-    # the RF enumeration is createdAt-desc, and checking the wrong field would
-    # report every record as a violation.
     sort_key = prov.get("sort") or "downloads"
     sort_dir = str(prov.get("direction") or "-1")
     prev_sort = None
     cov = dict(safetensors=0, base_model=0, model_index=0, pipeline_tag=0,
                library_name=0, tags=0, card_datasets=0)
-    zero_info = 0          # the T3 `dropped` layer, exactly as 100kplan 6.1 defines it
+    zero_info = 0
     reservoir = []
     rng = random.Random(args.seed)
     want_forecast = bool(args.core) and args.forecast > 0
@@ -329,13 +284,12 @@ def main(argv=None) -> int:
           % ("size_b MISSING", n - cov["safetensors"],
              100.0 * (n - cov["safetensors"]) / max(n, 1)))
 
-    # --- gate 3: HALO headroom against CORE -------------------------------
     if args.core:
         import torch
         core = torch.load(args.core, weights_only=False)
         core_ids = set(normalize(m) for m in core["unique_model_id"]["model"])
         overlap = len(core_ids & ids_norm)
-        halo_pool = len(ids_norm) - overlap - zero_info  # upper bound: zero-info may overlap
+        halo_pool = len(ids_norm) - overlap - zero_info
         need = 100_000 - len(core_ids)
         print("\n-- HALO headroom (CORE = %s) --" % os.path.basename(args.core))
         print("  CORE models                 : %d" % len(core_ids))
@@ -352,7 +306,6 @@ def main(argv=None) -> int:
         if want_forecast:
             forecast(recs, core, core_ids, args.forecast)
 
-    # --- gate 4: the manual eyeball ---------------------------------------
     print("\n-- random sample of %d (gate: id / safetensors.total / cardData.base_model) --"
           % args.sample)
     for rec in reservoir:

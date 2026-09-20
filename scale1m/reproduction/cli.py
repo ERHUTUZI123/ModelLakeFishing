@@ -79,7 +79,7 @@ def doctor(profile: str, data: Path, device: str) -> dict:
     except ImportError:
         errors.append("PyTorch could not import")
     try:
-        import hnswlib  # noqa: F401
+        import hnswlib
     except ImportError:
         errors.append("hnswlib could not import; a C++ compiler may be required when installing")
     probe = data
@@ -158,7 +158,6 @@ def validate_snapshot_id(value: str) -> str:
 
 
 def live_paths(args, data: Path) -> tuple[str, Path, Path]:
-    """Resolve a stable capture across commands; only download updates selection."""
     current = data / "LIVE_CURRENT.json"
     create = args.command == "download" and not args.offline
     if getattr(args, "new_snapshot", False) and args.snapshot_id:
@@ -185,7 +184,6 @@ def live_paths(args, data: Path) -> tuple[str, Path, Path]:
 
 
 def live_main(args, data: Path):
-    # Imported only for live commands; historical archive metadata is irrelevant.
     from . import live_snapshot
     if getattr(args, "hf_repo", None) or getattr(args, "hf_revision", None):
         raise ValueError("Live downloads enumerate the Hub API; archive --hf-repo/--hf-revision require an archived profile")

@@ -1,19 +1,3 @@
-"""galaxy_render.py -- draws the plate from the cache built by model_lake_galaxy.
-
-The plate is one landscape figure on white:
-
-    header   title, and the cascade 3,016,439 -> 1,000 -> 10 with its costs
-    A        the lake: log-density of all 3,016,439 model rows, family
-             territories named in place, inset of the 46,146 luminous rows,
-             and the outline of the cast that panel B enlarges
-    B        one cast: the dense top-1,000 pool of a single held-out query
-             drawn in the same coordinates
-    C        what came back: the ten returned models, dense rank -> final rank
-    D        rank migration for every seed-0 query whose gold reached the pool
-
-Only matplotlib is used.  The million-row layers are rasterised inside an
-otherwise vector PDF, so the file stays small and the type stays sharp.
-"""
 import json
 import os
 
@@ -28,7 +12,6 @@ from scipy.ndimage import gaussian_filter
 
 from ModelLakeFishing.viz import model_lake_galaxy as G
 
-# ------------------------------------------------------------------ palette --
 PAPER = "#ffffff"
 INK = "#12172a"
 SUBINK = "#5d6579"
@@ -55,7 +38,6 @@ PRIOR_CMAP = LinearSegmentedColormap.from_list("prior", [
 SANS = ["Segoe UI", "Calibri", "Arial", "DejaVu Sans"]
 MONO = ["Consolas", "DejaVu Sans Mono"]
 
-# panel rectangles, in figure coordinates
 FIGSIZE = (15.6, 9.85)
 R_HEADER = [0.000, 0.893, 1.000, 0.107]
 R_A = [0.030, 0.052, 0.512, 0.795]
@@ -77,7 +59,6 @@ def _style():
 
 
 def _clean(ax):
-    """Strip every default axis decoration, minor log ticks included."""
     from matplotlib.ticker import NullLocator
     for spine in ax.spines.values():
         spine.set_visible(False)
@@ -108,14 +89,7 @@ def _ax_ratio(rect):
     return (rect[2] * FIGSIZE[0]) / (rect[3] * FIGSIZE[1])
 
 
-# ------------------------------------------------------------------ density --
 def density_image(x, y, extent, res, smooth=1.35, sharp=0.34, clip=99.94):
-    """Log-density on a fixed grid, softened once and mixed back with itself.
-
-    The soft copy makes the diffuse outskirts legible on white; the sharp copy
-    keeps dense knots from dissolving.  Normalisation is against a high
-    percentile of occupied cells so one hub does not consume the whole ramp.
-    """
     x0, x1, y0, y1 = extent
     H, _xe, _ye = np.histogram2d(x, y, bins=res, range=[[x0, x1], [y0, y1]])
     L = np.log1p(H)
@@ -135,7 +109,6 @@ def _bounds(x, y, lo=0.04, hi=99.96, pad=0.10):
 
 
 def _fit(extent, aspect):
-    """Grow an extent so it exactly fills a panel of the given width/height."""
     x0, x1, y0, y1 = extent
     w, h = x1 - x0, y1 - y0
     cx, cy = (x0 + x1) / 2, (y0 + y1) / 2
@@ -151,9 +124,7 @@ def _to_axes(px, py, extent):
             (py - extent[2]) / (extent[3] - extent[2]))
 
 
-# -------------------------------------------------------------- family peaks --
 def family_peaks(xy, family_id, vocab, wanted, extent, res=260, min_n=300):
-    """The densest grid cell of each named family, used to anchor its label."""
     x, y = np.asarray(xy[:, 0]), np.asarray(xy[:, 1])
     x0, x1, y0, y1 = extent
     out = []
@@ -175,15 +146,6 @@ def family_peaks(xy, family_id, vocab, wanted, extent, res=260, min_n=300):
 
 def place_labels(peaks, extent, blocked=(), min_sep=0.085, margin=0.045,
                  text_room=0.105):
-    """Slide each label outward along its ray until it is clear of everything.
-
-    Labels sit outside their own territory and are joined back to it by a
-    leader, so no word ever covers the region it names.  `blocked` holds axes-
-    coordinate rectangles (the inset, the caption, the marked query) that
-    labels must avoid.  A label pushed leftward is set right of its anchor and
-    grows to the left, so the usable margin on that side is `text_room`, not
-    `margin`; the same applies mirrored on the right.
-    """
     cx = cy = 0.5
     taken = []
 
@@ -225,13 +187,7 @@ def place_labels(peaks, extent, blocked=(), min_sep=0.085, margin=0.045,
     return peaks
 
 
-# ================================================================== the plate =
 def stage_render(cache, outdir, dpi=460):
-    # Panels C and D still print the Y2/Y4 archive, while the cache A and B
-    # are laid out from is now A0.  Drawing them on one plate would put A0
-    # water under pre-A0 numbers, which is the kind of quiet mismatch the rest
-    # of this file is written to prevent.  `lake_ab` is the figure that has
-    # been moved over; this one needs its C and D repointed first.
     raise SystemExit(
         "the four-panel plate is not on A0 yet: A and B would be laid out "
         "from %s while C and D still print the Y2/Y4 archive.  Repoint them "
@@ -334,14 +290,7 @@ def _case_data(rr, xy):
             "fused_rank": int(rr["fused_rank"][qi])}
 
 
-# ------------------------------------------------------------------ header --
 def _draw_cascade(ax, y4):
-    """3,016,439 -> 1,000 -> 10, as a chain rather than a bar chart.
-
-    Every figure printed here is read out of the archived Y4 report for the
-    same seed the rest of the plate uses, so nothing on the header is typed in
-    by hand.
-    """
     h0 = y4["hnsw"]["0"]
     row = h0["rows"]["G_hnsw1000_task"]
     lat = h0["latency_ms"]["1000"]
@@ -379,7 +328,6 @@ def _draw_cascade(ax, y4):
                                         mutation_scale=8), clip_on=False)
 
 
-# ------------------------------------------------------------------ panel A --
 def _panel_lake(ax, xy, qxy, lum, family_id, vocab, ext, ginfo, case):
     x, y = xy[:, 0], xy[:, 1]
     img = density_image(x, y, ext, res=(2200, 2200), smooth=1.45, sharp=0.36,
@@ -399,8 +347,6 @@ def _panel_lake(ax, xy, qxy, lum, family_id, vocab, ext, ginfo, case):
 
     qx, qy = _to_axes(qxy[G.CASE_QUERY][0], qxy[G.CASE_QUERY][1], ext)
     inset_rect = [0.606, 0.014, 0.986, 0.394]
-    # a label anchored just left of the inset still runs into it, so the region
-    # labels must keep clear of is wider than the inset itself
     inset_keepout = [0.500, 0.000, 1.000, 0.410]
     caption_rect = [0.010, 0.010, 0.46, 0.090]
     blocked = [inset_keepout, caption_rect,
@@ -420,10 +366,6 @@ def _panel_lake(ax, xy, qxy, lum, family_id, vocab, ext, ginfo, case):
                 bbox=dict(boxstyle="round,pad=0.15", fc="#ffffff", ec="none",
                           alpha=0.82))
 
-    # Where panel B's cast lands.  A rectangle would be wrong here: the dense
-    # top-1,000 of one query is not a small neighbourhood, it is a long stretch
-    # of the lake, so the region is drawn as the contour that holds most of the
-    # pool rather than as a crop box.
     pool_xy = xy[case["pool"]]
     ph, pxe, pye = np.histogram2d(pool_xy[:, 0], pool_xy[:, 1], bins=110,
                                   range=[[ext[0], ext[1]], [ext[2], ext[3]]])
@@ -449,7 +391,6 @@ def _panel_lake(ax, xy, qxy, lum, family_id, vocab, ext, ginfo, case):
             transform=ax.transAxes, fontsize=6.5, color=FAINT,
             ha="left", va="bottom", zorder=12)
 
-    # inset: the identical frame, luminous rows only
     ins = ax.inset_axes(inset_rect[:2] + [inset_rect[2] - inset_rect[0],
                                           inset_rect[3] - inset_rect[1]])
     outline = density_image(x, y, ext, res=(820, 820), smooth=2.4, sharp=0.0)
@@ -482,7 +423,6 @@ def _panel_lake(ax, xy, qxy, lum, family_id, vocab, ext, ginfo, case):
              ha="left", va="bottom", linespacing=1.40)
 
 
-# ------------------------------------------------------------------ panel B --
 def _panel_cast(ax, xy, qxy, case, model_name, ds_name, ext):
     pool = case["pool"]
     pxy = xy[pool]
@@ -514,7 +454,7 @@ def _panel_cast(ax, xy, qxy, case, model_name, ds_name, ext):
 
     for r, m in enumerate(case["top10"], 1):
         if int(m) == case["gold"]:
-            continue                      # the star already marks that rank
+            continue
         p = xy[int(m)]
         ax.scatter([p[0]], [p[1]], s=52, facecolor="#ffffff", edgecolor=INK,
                    lw=0.7, zorder=14, alpha=0.95)
@@ -557,7 +497,6 @@ def _panel_cast(ax, xy, qxy, case, model_name, ds_name, ext):
                 color=SUBINK, ha="left", va="center", zorder=12)
 
 
-# ------------------------------------------------------------------ panel C --
 def _panel_returned(ax, case, model_name):
     dpos = {int(m): i + 1 for i, m in enumerate(case["pool"])}
     ax.set_xscale("log")
@@ -590,7 +529,6 @@ def _panel_returned(ax, case, model_name):
          "grey dot: where the dense stage had it  ·  bar: how far the prior moved it")
 
 
-# ------------------------------------------------------------------ panel D --
 def _panel_migration(ax, rr, rinfo, case):
     dense = rr["dense_rank"].astype(np.int64)
     fused = rr["fused_rank"].astype(np.int64)

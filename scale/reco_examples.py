@@ -1,18 +1,3 @@
-"""
-reco_examples.py -- P4: concrete top-10 recommendation examples on real held-out
-ModelLens datasets, our system vs ModelLens (blind release version), in the
-style of weeks/week8_Updated/updated_recommendations.md.
-
-Both rank the SAME 12,000-model universe for the SAME query; each recommended
-model is annotated with its observed accuracy ON THAT dataset (— = the model has
-no recorded score on this exact dataset, not necessarily poor). Our ranking is
-plain MIPS on the held-out (leakage-free) embeddings; ModelLens is its own blind
-score. Honesty note re ModelLens blinding is carried at the top of the output.
-
-Run (repo root):
-  ModelLakeFishing/.venv/Scripts/python.exe -m ModelLakeFishing.scale.reco_examples --n 4
-"""
-
 import argparse
 import os
 import sys
@@ -51,7 +36,6 @@ def main():
     node_of = dict(zip(did["mappedID"], did["dataset"]))
     cands = {int(k): (gc[k][0].astype(int), gc[k][1].astype(float)) for k in gc.files}
 
-    # pick example datasets: high candidate depth, distinct tasks
     rows = []
     for d, (c, a) in cands.items():
         node = str(node_of[int(d)])
@@ -69,7 +53,6 @@ def main():
         if len(picked) >= args.n:
             break
 
-    # ModelLens scorer over the same 12K
     model, margs, dev, missing, unexpected = MA.load_modellens()
     model2id, task2id, metric2id, family2id, profile, size_bucket = MA.build_vocabs()
     pool = pd.read_csv(os.path.join(LAKE, "ml_dataset_pool.csv"))

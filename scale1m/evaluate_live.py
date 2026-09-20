@@ -25,7 +25,6 @@ require = P.require
 
 
 def validate_graph(directory):
-    """Verify dynamic dimensions, every shard, clean features and edge identity."""
     from .prepare_a0_graph import verify_files, _digest
     from .build_graph_rf import A0_ZERO_COLUMNS, dataset_stats
 
@@ -71,11 +70,6 @@ def validate_graph(directory):
 
 
 def expected_split(graph, seed):
-    """Use the producer's splitter on a feature-free skeleton, not 3 graph copies.
-
-    Negative labels never participate in the observed positive cohort or prior;
-    zero negatives therefore reproduce the same root assignment and edge order.
-    """
     import torch
     from torch_geometric.data import HeteroData
     from ModelLakeFishing.stage2TrainGraphSAGE.d0_splits import make_root_aware_splits
@@ -98,7 +92,6 @@ def expected_split(graph, seed):
 
 
 class LiveTaskPrior(E.TaskPrior):
-    """Same serving lookup/shrinkage as A0, with locally verified dimensions."""
 
     def __init__(self, path, meta, graph, split, nodes):
         self.payload = np.load(path, allow_pickle=False)
@@ -175,7 +168,6 @@ def validate_seed(args, seed, graph, nodes):
 
 
 def score_seed(bundle, args, seed, nm, tie_rank):
-    """Full exact reference plus calibrated HNSW; labels do not tune the index."""
     import hnswlib
 
     exact = E.evaluate_exact_seed(str(bundle["folder"]), bundle["prior"], bundle["candidates"],

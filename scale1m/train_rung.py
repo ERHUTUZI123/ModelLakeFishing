@@ -1,29 +1,3 @@
-"""
-train_rung.py -- T6: train the champion config on a rung's graph.
-
-Runbook: docs/1M/100kplan.md §9.   Guide for running it: docs/1M/T6GPU.md.
-
-THE CONFIG IS NOT TUNED HERE
-    §9.1 says the configuration is reused with zero changes: l1l3b_config() --
-    L1 whole-lake logQ sampled softmax, L3 native task ids, global_n_neg=256,
-    batch_size=1024. This file adds the things a cluster run needs and nothing
-    that changes what is being trained: a run directory, checkpoint/resume,
-    metadata capture, the mechanism gate, and a manifest.
-
-    That restraint is the point of the anchor gate. R0 on 12K has to reproduce
-    gold@10 = 0.4159; if this file quietly changed a hyperparameter, the anchor
-    would move and there would be no way to tell that from a genuine effect of
-    the T0 scale switches.
-
-WHAT RUNS WHERE
-    Everything here is CPU-runnable on a small graph -- that is how the
-    checkpoint/resume gate is tested. The 100K training itself needs a GPU.
-
-Run (from ModelLakeFishing/):
-    python -m scale1m.train_rung --rung 100k --graph <...>/hgraph_100k.pt `
-        --seed 0 --epochs 25 --out <OUTPUT_ROOT>/runs/<RUN_ID>
-"""
-
 import argparse
 import json
 import os
@@ -36,25 +10,18 @@ import numpy as np
 import torch
 
 _HERE = os.path.dirname(os.path.abspath(__file__))
-# _REPO_ROOT is the *import* root: `import ModelLakeFishing.stage2...` needs the
-# directory above the package on sys.path. It is one level above the git repo
-# and must not be reused for git -- doing so is what left git_head empty in
-# every T6 run of 2026-08-11 (docs/1M/T6more.md P1-2).
 _REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(_HERE), ".."))
 _GIT_ROOT = os.path.dirname(_HERE)
 if _REPO_ROOT not in sys.path:
     sys.path.insert(0, _REPO_ROOT)
 
-from scale1m import checkpoint as CK                                # noqa: E402
-from scale1m.hf_crawl import utcnow, write_json_atomic              # noqa: E402
+from scale1m import checkpoint as CK
+from scale1m.hf_crawl import utcnow, write_json_atomic
 
-# Written into git_head/git_status when git cannot report on the tree, so the
-# manifest says "unknown" out loud instead of looking like a clean repo.
 _NO_GIT = "not-a-git-repo"
 SMOKE_MARKER = "SMOKE_ONLY.json"
 A0_RUN_RECORDS = "A0_RUN_RECORDS.json"
 
-# Anchors the plan pins per rung (§9.2 / G-C2). None = no published anchor yet.
 RUNGS = {
     "12k": {"expect_n": None, "anchor_gold10": 0.4159},
     "30k": {"expect_n": 30_183, "anchor_gold10": None},
@@ -65,16 +32,7 @@ RUNGS = {
 }
 
 
-# ── run directory ────────────────────────────────────────────────────────────
-
 def make_run_dir(out, *, smoke_only=False):
-    """Create the run layout and report what was already in it.
-
-    A requeue reuses the directory legitimately (same RUN_ID, resume from
-    ckpt/last.pt). A previous *failed* attempt also leaves things behind --
-    stdout/train.log is opened in append mode, so its traceback silently
-    becomes part of the next attempt's delivered log. That happened to the
-    12K run of 2026-08-11 and was invisible in the manifest; now it is not."""
     prior = []
     for rel in ("MANIFEST.json", os.path.join("stdout", "train.log")):
         p = os.path.join(out, rel)
@@ -91,7 +49,6 @@ def make_run_dir(out, *, smoke_only=False):
 
 
 def validate_run_mode(args):
-    """Keep one-epoch smoke artifacts separate from resumable formal runs."""
     if args.smoke_only:
         if args.epochs != 1:
             raise ValueError("--smoke-only requires --epochs 1")
@@ -111,16 +68,9 @@ def reject_smoke_checkpoint(ck):
 
 
 def capture_metadata(out, args, cfg, graph_path):
-    """§4.6's list. Written before training starts, so a job that dies still
-    leaves behind what it was trying to do."""
     md = os.path.join(out, "metadata")
     head = _git("rev-parse", "HEAD")
     status = _git("status", "--short")
-    # Dirtiness means "tracked files differ from HEAD", which is what
-    # uncommitted.patch can actually capture. Plain `status --short` also lists
-    # untracked paths, and on the cluster that is always non-empty (logs/ and
-    # stray slurm-*.out), so every run reported a dirty tree and wrote a
-    # zero-byte patch. -uno asks the question we mean.
     tracked_dirty = _git("status", "--porcelain", "--untracked-files=no")
     meta = {
         "utc_time": utcnow(),
@@ -147,7 +97,6 @@ def capture_metadata(out, args, cfg, graph_path):
     }
     write_json_atomic(os.path.join(md, "resolved_config.json"), meta)
     if tracked_dirty:
-        # §4.3: a deliberately dirty tree is allowed, but it has to be recorded
         patch = _git("diff", "HEAD")
         with open(os.path.join(md, "uncommitted.patch"), "w", encoding="utf-8") as fh:
             fh.write(patch or "")
@@ -155,12 +104,6 @@ def capture_metadata(out, args, cfg, graph_path):
 
 
 def _git(*a):
-    """stdout of the git command, or None when this is not a usable git tree.
-
-    The distinction matters: an empty string is a legitimate result (a clean
-    `status --short` returns one), so collapsing failure into "" hides a broken
-    git root behind a plausible-looking value. That is exactly how the T6 runs
-    recorded no commit at all while the tree was in fact dirty."""
     try:
         r = subprocess.run(["git", *a], cwd=_GIT_ROOT, capture_output=True,
                            text=True, encoding="utf-8", errors="replace", timeout=30)
@@ -169,11 +112,7 @@ def _git(*a):
     return r.stdout.strip() if r.returncode == 0 else None
 
 
-# ── mechanism gate (G-C1) ────────────────────────────────────────────────────
-
 def mechanism_gate(history, model):
-    """§9.4 G1: loss went down, nothing is NaN, both embedding tables moved,
-    the frozen features did not."""
     tot = [h["total"] for h in history]
     enc = getattr(model, "model_encoder", None)
     out = {
@@ -197,7 +136,6 @@ def mechanism_gate(history, model):
 
 
 def smoke_gate(history, model, scorer, opt):
-    """Check a completed optimization epoch; loss descent needs two epochs."""
     numeric = [v for h in history for v in h.values() if isinstance(v, (int, float))]
     params = [p for module in (model, scorer) for p in module.parameters() if p.requires_grad]
     grads = [p.grad for p in params if p.grad is not None]
@@ -226,7 +164,6 @@ def smoke_gate(history, model, scorer, opt):
 
 
 def smoke_checkpoint_roundtrip(path, model, scorer, binding):
-    """Verify persisted weights without any graph forward or RNG restoration."""
     ck = CK.load(path)
     return bool(ck.get("extra", {}).get("smoke_only") and not CK.validate(ck, binding)
                 and all(set(ck[key]) == set(module.state_dict())
@@ -236,7 +173,6 @@ def smoke_checkpoint_roundtrip(path, model, scorer, binding):
 
 
 def peak_process_rss():
-    """OS process-lifetime high-water mark, never substitute current RSS."""
     try:
         if sys.platform.startswith("win"):
             import psutil
@@ -248,7 +184,6 @@ def peak_process_rss():
 
 
 def capture_runtime_environment():
-    """Measure this invocation's environment; never inherit a previous host."""
     cuda = torch.cuda.is_available()
     return {"captured_at": utcnow(), "hostname": platform.node(),
             "platform": platform.platform(), "python": sys.version.split()[0],
@@ -260,7 +195,6 @@ def capture_runtime_environment():
 
 
 def begin_a0_run_records(out, cfg, binding, run_name, seed, init_seed, resume_path):
-    """Load only this logical A0 run's native timing/history envelope."""
     path = os.path.join(out, A0_RUN_RECORDS)
     identity = {"protocol": "a0", "run_id": "A0_20260912", "seed": seed,
                 "graph_digest": binding["graph_sha256"]}
@@ -294,8 +228,6 @@ def begin_a0_run_records(out, cfg, binding, run_name, seed, init_seed, resume_pa
     records["peak_process_rss_scope"] = "OS process lifetime high-water mark; cumulative maximum across recorded process segments"
     return records
 
-
-# ── main ─────────────────────────────────────────────────────────────────────
 
 def build_config(args):
     from ModelLakeFishing.scale.export_ours import l1l3b_config
@@ -331,7 +263,6 @@ def main(argv=None):
     p.add_argument("--family-vocab", default=None,
                    help="family_vocab.csv this graph was built with (binding)")
     p.add_argument("--expect-n", type=int, default=None)
-    # T0 scale switches, same names and defaults as scale.export_ours
     p.add_argument("--fanout", action="store_true")
     p.add_argument("--sparse-M", action="store_true")
     p.add_argument("--contrast-n-neg", type=int, default=None)
@@ -381,8 +312,6 @@ def main(argv=None):
                 or os.path.isfile(os.path.join(args.graph, "A0_FEATURE_REPAIR.json"))):
             from scale1m.a0_graph_validation import verify_a0_graph
             a0_graph_verification = verify_a0_graph(args.graph)
-        # A0's shared verifier already hashed every bound file and checked the
-        # clean-statistics policy. Preserve the legacy loader default otherwise.
         payload = load_sharded(args.graph, mmap=True, verify_sha256=False)
     else:
         payload = torch.load(args.graph, map_location="cpu", weights_only=False)
@@ -392,11 +321,8 @@ def main(argv=None):
 
     n_models = int(data["model"].num_nodes)
     if args.rung == "live" and expect_n is None:
-        # Bind the observed lake size in the run manifest for later export.
         expect_n = n_models
     if expect_n is not None:
-        # plan §1 rule 3, checked before anything expensive runs rather than at
-        # the end when the compute is already spent
         assert n_models == expect_n, \
             "graph has %d models, rung %s expects %d" % (n_models, args.rung, expect_n)
 
@@ -409,7 +335,6 @@ def main(argv=None):
     if a0_graph_verification is not None and binding["graph_sha256"] != a0_graph_verification["graph_sha256"]:
         raise ValueError("A0 graph file table changed after its actual bytes were verified")
 
-    # --- resume ------------------------------------------------------------
     resume_path, how = ((None, "fresh_smoke") if args.smoke_only
                         else CK.resolve_resume(args.resume, ckpt_dir))
     resume_state, history0, start_epoch = None, None, 0
@@ -439,12 +364,6 @@ def main(argv=None):
     data = apply_similar_to_mode(data, cfg["similar_to_mode"], k=cfg["similar_to_k"])
     split = make_root_aware_splits(data, root_of, split_seed=args.seed)
 
-    # --- checkpoint hook ---------------------------------------------------
-    # train() keeps its own `history`; this driver keeps a parallel copy so the
-    # checkpoint carries the complete history, not only the epochs since this
-    # process started. `opt` is captured from the callback rather than rebuilt
-    # afterwards -- a fresh Adam has empty moment buffers, and resuming from a
-    # checkpoint written that way silently changes the trajectory.
     state = {"step": start_epoch, "saved": [], "history": list(history0 or []),
              "opt": None}
     a0_records = (begin_a0_run_records(out, cfg, binding, meta["run_id"], args.seed,
@@ -563,9 +482,6 @@ def main(argv=None):
         "peak_gpu_mem_gb": peak_gb,
         "resumed_from": resume_path, "resume_mode": how,
         "start_epoch": start_epoch,
-        # written != retained: _prune keeps only the newest `ckpt_keep` numbered
-        # files, so the two lists differ by design. Reporting only the first
-        # sends the reader looking for files that were already deleted.
         "checkpoints_written": sorted(set(state["saved"]
                                           + [os.path.basename(final)])),
         "checkpoints_retained": sorted(f for f in os.listdir(ckpt_dir)

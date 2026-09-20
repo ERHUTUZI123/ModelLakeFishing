@@ -1,22 +1,3 @@
-"""
-audit_corpus.py -- P0 step 3: parse the frozen corpus and establish the REAL
-counts + the intake profile that P1 will have to handle.
-
-Two jobs:
- 1. Settle the headline count. The PLAN deliberately refused to pre-fill a
-    model count ("42k" per the user vs "~47K" per the paper). This resolves it
-    from the actual bytes, not from either claim.
- 2. Profile what modellens_intake.py will face: metric vocabulary vs our
-    BOUNDED whitelist, value scale (percent vs unit), per-dataset candidate
-    depth (can a `gold` best-model even be defined?), and the coverage of the
-    side JSONs we plan to turn into node features / lineage edges.
-
-Streams the CSV in chunks -- data.csv is ~900 MB with a free-text column.
-
-Run (from ModelLakeFishing/):
-    .\\.venv\\Scripts\\python.exe -m scale.audit_corpus
-"""
-
 import argparse
 import json
 import os
@@ -28,7 +9,6 @@ import pandas as pd
 
 from scale.pull_corpus import REPOS, data_root
 
-# Our D0 bounded-metric whitelist (stage1BuildTransferGraph/d0_build_graph.py)
 BOUNDED = {"accuracy", "f1", "matthews_correlation", "pearson", "spearman",
            "exact_match", "map", "mrr", "rougeL"}
 
@@ -44,7 +24,6 @@ def audit(corpus_key: str, root: str, out_dir: str):
     print(f"=== auditing {corpus_key}: {csv_path}")
     print(f"    revision {spec['revision']}")
 
-    # ---- pass 1: the 5 structured columns -------------------------------
     models, datasets, tasks = set(), set(), set()
     metric_counts = Counter()
     task_counts = Counter()
@@ -73,7 +52,6 @@ def audit(corpus_key: str, root: str, out_dir: str):
         if vv.size:
             value_min = min(value_min, float(vv.min()))
             value_max = max(value_max, float(vv.max()))
-            # reservoir-ish sample for quantiles without holding 2M floats
             if len(values) < 400_000:
                 values.append(vv[:: max(1, vv.size // 20_000)])
 
@@ -86,7 +64,6 @@ def audit(corpus_key: str, root: str, out_dir: str):
 
     vsample = np.concatenate(values) if values else np.array([])
 
-    # ---- pass 2: dataset_desp coverage ----------------------------------
     desc_seen, desc_nonempty = set(), set()
     reader = pd.read_csv(csv_path, usecols=["dataset", "dataset_desp"],
                          chunksize=CHUNK, low_memory=False)
@@ -99,7 +76,6 @@ def audit(corpus_key: str, root: str, out_dir: str):
             if isinstance(s, str) and s.strip():
                 desc_nonempty.add(d)
 
-    # ---- side JSONs -----------------------------------------------------
     def load(name):
         p = os.path.join(raw, name)
         if not os.path.exists(p):
@@ -115,14 +91,12 @@ def audit(corpus_key: str, root: str, out_dir: str):
     metric2id = load("metric2id.json")
     family2id = load("family2id.json")
 
-    # coverage of the CSV's models by each side file
     def cov(d):
         if d is None:
             return None
         keys = set(d)
         return len(models & keys)
 
-    # size availability inside model_profile
     size_keys = ("size", "model_size", "params", "num_parameters",
                  "safetensors_total", "total")
     n_with_size = 0
@@ -136,7 +110,6 @@ def audit(corpus_key: str, root: str, out_dir: str):
                 if any(v.get(s) not in (None, "", 0) for s in size_keys):
                     n_with_size += 1
 
-    # candidate depth per dataset: can a gold best-model be defined?
     depth = np.array(sorted(len(v) for v in per_ds_models.values()))
     bounded_hits = sum(c for m, c in metric_counts.items()
                        if str(m).lower() in BOUNDED)
@@ -193,7 +166,6 @@ def audit(corpus_key: str, root: str, out_dir: str):
     with open(out, "w", encoding="utf-8") as fh:
         json.dump(rep, fh, indent=2, default=str)
 
-    # ---- console summary ------------------------------------------------
     print(f"\n--- {corpus_key} HEADLINE ---")
     print(f"  rows                 {rows:,}")
     print(f"  unique models        {len(models):,}")

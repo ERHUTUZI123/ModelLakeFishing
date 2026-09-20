@@ -1,4 +1,3 @@
-"""Portable A0 serving checks on small independent fixtures."""
 import argparse
 import json
 import shutil
@@ -39,7 +38,7 @@ def prior_fixture():
 def test_prior_checks_normalized_tasks_and_entire_query_root_exclusion():
     args = prior_fixture()
     P.check_prior(*args)
-    args[0]["edge_dataset"][1] = 2  # Sibling of query 1, not query 1 itself.
+    args[0]["edge_dataset"][1] = 2
     with pytest.raises(ValueError, match="held-out query root"):
         P.check_prior(*args)
 
@@ -125,8 +124,6 @@ def test_fusion_preserves_float32_and_label_free_ties(monkeypatch):
     ids = np.arange(1000, dtype=np.int64)[None, :]
     scores = np.ones((1, 1000), dtype=np.float32)
     ties = P.E._tie_ranks(1024)
-    # Model 1 is uniquely promoted. Remaining positions follow the fixed key,
-    # irrespective of the observed evaluation values.
     expected = sorted(range(1000), key=lambda m: (-float(1. + (.25 if m == 1 else 0)),
                     (m * 11400714819323198485 + 0xD1B54A32D192ED03) % 2**64))[:10]
     candidates = {0: (np.array([1, 999, 998]), np.array([1., .8, .6]))}
@@ -180,7 +177,6 @@ def test_embedding_shape_finite_and_norm_validation(tmp_path):
 
 @pytest.fixture
 def fresh_export(tmp_path, monkeypatch):
-    """Small real graph/checkpoint/export/prior with no historical A0 marker."""
     import torch
     from scale1m import checkpoint as CK
     from scale1m.build_graph_rf import mask_performance_features

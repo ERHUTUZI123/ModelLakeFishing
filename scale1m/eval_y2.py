@@ -1,9 +1,3 @@
-"""Y2: exact/HNSW top-1000 retrieval followed by the X2 task prior.
-
-The experiment is specified in ``docs/1M/Y2.md``.  Stage ``exact`` first
-separates pool truncation from ANN approximation.  Stage ``hnsw`` is allowed
-only when the exact-pool retention gate passed.
-"""
 import argparse
 import gc
 import hashlib
@@ -81,7 +75,6 @@ def _load_candidates(export_dir, eligible_path, seed):
 
 
 def _tie_ranks(n):
-    """Unique int64 rank of X6's uint64 permutation; smaller wins ties."""
     key = fixed_tie_break(n)
     order = np.argsort(key, kind="stable")
     rank = np.empty(n, dtype=np.int64)
@@ -114,16 +107,11 @@ class TaskPrior:
                 or edge_dataset.max(initial=0) >= len(roots)):
             raise AssertionError("sidecar contains an out-of-range mappedID")
 
-        # Under the root-aware split, no visible edge may share the root of a
-        # scored test query. This simultaneously checks self leakage and that
-        # the sibling channel is empty under the X5/X6 protocol.
         visible_roots = np.unique(self.root_id[edge_dataset])
         query_roots = np.unique(self.root_id[np.fromiter(candidates, np.int64)])
         if np.intersect1d(visible_roots, query_roots).size:
             raise AssertionError("a test-query root appears in visible prior edges")
         if not np.array_equal(self.root_id.astype(str), roots.astype(str)):
-            # The integer codes need not equal string roots, so compare their
-            # induced equivalence relation on adjacent sorted groups below.
             frame = pd.DataFrame({"root": roots.astype(str), "code": self.root_id})
             if (frame.groupby("root")["code"].nunique().max() != 1
                     or frame.groupby("code")["root"].nunique().max() != 1):
@@ -180,8 +168,6 @@ def _pool_metrics(pool_ids, pool_dense, queries, candidates, roots, prior,
         gold_in_pool[i] = gold in pos
         if gold in pos:
             retrieved_gold_ranks.append(pos[gold])
-        # A missing probe cannot enter the returned top-10; K+1 is the censored
-        # rank used only to compute @k metrics, never reported as a full rank.
         counts[i, 0] = pos.get(gold, k + 1) - 1
         counts[i, 1] = min(pos.get(int(model), k + 1) for model in top3) - 1
         counts[i, 2] = min(pos.get(int(model), k + 1) for model in near) - 1
@@ -196,12 +182,6 @@ def _pool_metrics(pool_ids, pool_dense, queries, candidates, roots, prior,
 
 
 def _top10_metrics(top10, queries, candidates, roots, n_universe=N_TOTAL):
-    """Recompute metrics whose truth is completely determined by a top-10.
-
-    A frozen top-10 proves every @1/@10 claim, including the root-macro
-    variants, but cannot prove a rank below position ten.  Missing probes are
-    therefore censored at 11 and the median rank is deliberately not reported.
-    """
     top10 = np.asarray(top10, dtype=np.int64)
     if top10.shape != (len(queries), 10):
         raise AssertionError("top-10 shape %r != (%d, 10)" %
@@ -231,13 +211,6 @@ def _top10_metrics(top10, queries, candidates, roots, n_universe=N_TOTAL):
 
 
 def _task_only_top10(queries, prior, tie_rank):
-    """Construct the exact full-lake task-prior top-10, cached per task.
-
-    ``TaskPrior.by_task`` contains every model with a positive shrunken prior.
-    Those models sort by the float32 serving value and then by X6's fixed
-    tie-break.  If a task has fewer than ten observations, the remaining
-    zero-prior models follow in the same fixed tie-break order.
-    """
     result = np.empty((len(queries), 10), dtype=np.int64)
     cache = {}
     zero_order = None
@@ -273,7 +246,6 @@ def _task_only_top10(queries, prior, tie_rank):
 
 
 def _copy_bound_pool(source, out_dir, seed):
-    """Verify a frozen pool's identity, then place that exact file in ``out``."""
     expected = EXPECTED_EXACT_POOL_SHA256[seed]
     if not os.path.isfile(source):
         raise FileNotFoundError(source)
@@ -297,8 +269,6 @@ def _copy_bound_pool(source, out_dir, seed):
 def _topk_update(values, indices, score_block, offset, k, tie_rank=None):
     import torch
     if tie_rank is not None:
-        # A0's full-fused top-10 must use the same label-free secondary key
-        # as its exact rank counts. torch.topk alone picks arbitrary tied IDs.
         base = torch.arange(offset, offset + score_block.size(0),
                             device=score_block.device, dtype=torch.long)
         order = torch.argsort(tie_rank[base], stable=True)
@@ -371,10 +341,6 @@ def evaluate_exact_seed(export_dir, prior, candidates, roots, tie_rank, device,
         q_t = torch.as_tensor(block, dtype=torch.long, device=device)
         zq = zd[q_t]
         if protocol in ("a0", "live"):
-            # Use the exact same float32 GEMM shape/reduction as the full scan.
-            # Elementwise dot reduction can differ by one ULP and make even
-            # identical vectors rank ahead of their own probe. No tolerance,
-            # score rounding or dtype change is introduced by this correction.
             raw_probe = torch.empty(flat_t.numel(), dtype=torch.float32, device=device)
             for ps in range(0, n_universe, model_chunk):
                 here = (flat_t >= ps) & (flat_t < min(ps + model_chunk, n_universe))
@@ -395,7 +361,6 @@ def evaluate_exact_seed(export_dir, prior, candidates, roots, tie_rank, device,
         dense_buf = (None, None)
         fused_buf = (None, None)
 
-        # Sparse (model, query-column, prior) triples for this query block.
         bi, bc, bv = [], [], []
         for col, query in enumerate(block):
             idx, val = prior.by_task.get(
@@ -600,7 +565,6 @@ def run_exact(args):
 
 
 def _replay_exact_seed(pool_path, bundle, tie_rank):
-    """Recompute Y2's verifiable exact-stage results from one frozen pool."""
     started = time.time()
     required = {"query", "model", "score", "exact_top10", "full_top10"}
     with np.load(pool_path, allow_pickle=False) as payload:
@@ -666,12 +630,6 @@ def _replay_exact_seed(pool_path, bundle, tie_rank):
 
 
 def run_replay_exact(args):
-    """Replay the exact-stage metrics without rescoring all 3M embeddings.
-
-    The `.npz` files are immutable sufficient statistics for top-10 claims and
-    dense-pool reranking.  Their known SHA-256 values are checked before any
-    result is computed.  The report is newly derived, never copied.
-    """
     if not args.frozen_pools:
         raise SystemExit("--frozen-pools is required for --stage replay-exact")
     os.makedirs(args.out, exist_ok=True)
@@ -739,7 +697,6 @@ def run_replay_exact(args):
 
 
 def run_hnsw(args):
-    # Kept separate so exact-stage failure never creates multi-GB indexes.
     import hnswlib
 
     report_path = os.path.join(args.out, "Y2_REPORT.json")
@@ -801,8 +758,6 @@ def run_hnsw(args):
             continue
         ef, ids, scores, recall = chosen
 
-        # Query and rerank latency are measured one query at a time. Index load
-        # and construction are explicitly excluded.
         index.set_ef(ef)
         for i in range(min(50, len(queries))):
             index.knn_query(zq[i:i + 1], k=POOL_K, num_threads=1)
@@ -865,7 +820,6 @@ def run_hnsw(args):
 
 
 def finalize_report(args):
-    """Add cross-seed HNSW summaries and reproducibility metadata."""
     report_path = os.path.join(args.out, "Y2_REPORT.json")
     with open(report_path, encoding="utf-8") as handle:
         report = json.load(handle)

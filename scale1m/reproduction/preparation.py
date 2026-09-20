@@ -23,12 +23,6 @@ FROZEN_REPAIR_SHA256 = "e1e7a7fb3dccbfe81fab3619600adcbf5ea59da096d13a014d5a8233
 
 
 def reconstruct_graph(source, binding_dir, out):
-    """Rebuild and verify A0 bytes without modifying any frozen input.
-
-    ``binding_dir`` contains downloaded, archived ``meta.json`` and
-    ``A0_FEATURE_REPAIR.json``.  Their identities are pinned here as well as in
-    the download manifest.  Existing outputs are never overwritten.
-    """
     import numpy as np
 
     from scale1m import prepare_a0_graph as preparation
@@ -57,8 +51,6 @@ def reconstruct_graph(source, binding_dir, out):
     if preparation._digest(output_meta["files"]) != PREPARED_GRAPH_DIGEST:
         raise ValueError("Frozen graph binding does not identify the published A0 graph")
 
-    # This validates source metadata, every source file, physical node order,
-    # float32 shapes and the root-count feature before allocating output files.
     source_meta, source_files, original, clean_stats = preparation._validate_source(
         source, preparation.SOURCE_GRAPH_DIGEST, preparation.SOURCE_SHAPE)
     if repair["source_files"] != source_files:
@@ -77,8 +69,6 @@ def reconstruct_graph(source, binding_dir, out):
     if staged.resolve().parent != out.parent:
         raise ValueError("Staging path is outside the requested output parent")
     staged.mkdir(exist_ok=False)
-    # A failed verification leaves only this unique staging directory for
-    # inspection.  It never publishes a partial graph or removes user files.
     for name in source_files:
         if name != "x_dataset.npy":
             shutil.copy2(source / name, staged / name)

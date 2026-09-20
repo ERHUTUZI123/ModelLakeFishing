@@ -1,50 +1,3 @@
-"""
-export_rf.py -- F7: turn an F6 checkpoint into servable embeddings and indexes.
-
-Runbook: docs/1M/1Mplan.md §5 (F7). Record: docs/1M/F7.md.
-
-WHY NOT export_rung.py
-    That file is T7's exporter and still reproduces the 100K rung. It reads a
-    single-file `.pt` graph, hashes it with `sha256_of`, reads a CSV ladder, and
-    does every stage in one process. At 3,016,439 models none of those hold: the
-    graph is a `graph_store` directory, the ladder is parquet, and z_m alone is
-    1.54 GB while the HNSW index is another 2.3 GB -- more than this machine has
-    free if the graph is still resident. So the work is split into stages that
-    each exit before the next begins, and the memory-heavy ones never load the
-    graph at all.
-
-    Everything that decides a number is unchanged: the same `build_models`, the
-    same `chunked_forward`, the same `make_root_aware_splits` with the split
-    seed read from the checkpoint binding, the same `five_metric_eval` and
-    `global_metrics`, the same `build_hnsw` with iso-recall ef tuning.
-
-THE TWO FORWARDS
-    z_*_full : whole graph. This is what gets indexed and served; at serving
-               time every edge legitimately exists.
-    z_*_eval : test-split forward. A held-out query dataset does not see its own
-               trained_on edges.
-
-    Only z_*_eval may produce a reported gold@K. Scoring with the full-graph z_d
-    let each held-out query see its own supervision once before and read 0.61
-    instead of 0.42, which is why the leakage gate is an inequality rather than
-    a note.
-
-STAGES
-    embed    load graph + checkpoint, two chunked forwards, write the four
-             matrices and the gold candidate sets. Peak memory is the graph.
-    metrics  read the matrices, compute A-axis rows on both forwards, run the
-             leakage gate and the harness parity check. Never loads the graph.
-    index    read z_m/z_d, build the full-lake HNSW, tune ef to iso-recall.
-    curve    the retrieval-side scaling curve: one index per (N, sampling seed),
-             each containing every supervised model plus a uniform sample of the
-             unlabeled ones.
-
-Run (from ModelLakeFishing/):
-    python -m scale1m.export_rf --run <F6 run dir> --stage embed
-    python -m scale1m.export_rf --run <F6 run dir> --stage metrics
-    python -m scale1m.export_rf --run <F6 run dir> --stage index
-    python -m scale1m.export_rf --run <F6 run dir> --stage curve
-"""
 import argparse
 import gc
 import json
@@ -61,22 +14,16 @@ _REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(_HERE), ".."))
 if _REPO_ROOT not in sys.path:
     sys.path.insert(0, _REPO_ROOT)
 
-from scale1m import checkpoint as CK                                # noqa: E402
-from scale1m.graph_store import load_sharded                        # noqa: E402
-from scale1m.hf_crawl import data_root, utcnow, write_json_atomic    # noqa: E402
-from scale1m.train_rung import RUNGS, reject_smoke_checkpoint        # noqa: E402
+from scale1m import checkpoint as CK
+from scale1m.graph_store import load_sharded
+from scale1m.hf_crawl import data_root, utcnow, write_json_atomic
+from scale1m.train_rung import RUNGS, reject_smoke_checkpoint
 
-# The retrieval-side curve of 1Mplan §3.5. The full-lake point is the index the
-# `index` stage already built, so it is not rebuilt here.
 CURVE_NS = (100_000, 250_000, 500_000, 1_000_000)
 CURVE_SEEDS = (0, 1, 2)
 
 
-# ── gates ────────────────────────────────────────────────────────────────────
-
 def gate_pool_size(n_models, expect_n):
-    """G-F7a. The silent failure this catches is scoring only the supervised
-    subset and reporting that gold@10 held up under 65x the distractors."""
     ok = expect_n is None or n_models == expect_n
     return {"gate": "G-F7a", "name": "candidate pool size", "ok": bool(ok),
             "n_models": int(n_models), "expect_n": expect_n}
@@ -94,7 +41,6 @@ def expected_pool_size(manifest, rung):
 
 
 def gate_leakage(gold10_eval, gold10_full):
-    """G-F7b. Held-out embeddings must score worse than full-graph ones."""
     ok = gold10_eval < gold10_full
     return {"gate": "G-F7b", "name": "held-out < full-graph gold@10", "ok": bool(ok),
             "gold10_eval": float(gold10_eval), "gold10_full": float(gold10_full),
@@ -102,9 +48,6 @@ def gate_leakage(gold10_eval, gold10_full):
 
 
 def gate_row_order(model_ids, ladder_ids, n_probe=100, seed=0):
-    """G-F7c. Row order never raises on its own: z_m row i simply stops meaning
-    model i. Probe random positions, because an off-by-one in a prefix survives
-    a head-only check."""
     if len(model_ids) != len(ladder_ids):
         return {"gate": "G-F7c", "name": "row order vs ladder", "ok": False,
                 "reason": "length %d != ladder %d" % (len(model_ids), len(ladder_ids))}
@@ -116,8 +59,6 @@ def gate_row_order(model_ids, ladder_ids, n_probe=100, seed=0):
             "n_probed": int(len(probe)), "probe_mismatches": bad[:10],
             "total_mismatches": total}
 
-
-# ── shared plumbing ──────────────────────────────────────────────────────────
 
 def read_manifest(run):
     with open(os.path.join(run, "MANIFEST.json"), encoding="utf-8") as fh:
@@ -135,9 +76,6 @@ def resolve_ckpt(run, which):
 
 
 def bind_or_die(ck_path, graph_path):
-    """A checkpoint records the digest of the graph it was trained on. Exporting
-    against a different graph is a hard stop, not a warning: the embeddings would
-    be labelled with the wrong models and nothing downstream would notice."""
     ck = CK.load(ck_path)
     reject_smoke_checkpoint(ck)
     if os.path.isdir(graph_path):
@@ -157,7 +95,6 @@ def bind_or_die(ck_path, graph_path):
 
 
 def a0_export_context(run, ck_path, ck, graph_path, digest, out):
-    """Bind new export bytes to an actual completed A0 training record."""
     graph_meta = {}
     if os.path.isdir(graph_path):
         with open(os.path.join(graph_path, "meta.json"), encoding="utf-8") as handle:
@@ -208,8 +145,6 @@ def load_cands(out):
 
 
 def merge_stage(out, name, payload):
-    """One manifest per export, written stage by stage so a crashed later stage
-    does not erase what an earlier one measured."""
     p = os.path.join(out, "EXPORT_MANIFEST.json")
     man = {}
     if os.path.isfile(p):
@@ -227,8 +162,6 @@ def merge_stage(out, name, payload):
     return man
 
 
-# ── stage: embed ─────────────────────────────────────────────────────────────
-
 def stage_embed(args, run, out):
     from ModelLakeFishing.stage2TrainGraphSAGE.graph_surgery import apply_similar_to_mode
     from ModelLakeFishing.stage2TrainGraphSAGE.d0_splits import make_root_aware_splits
@@ -240,7 +173,7 @@ def stage_embed(args, run, out):
     man = read_manifest(run)
     rung = args.rung or man["rung"]
     graph_path = args.graph or man["graph"]
-    if not os.path.exists(graph_path):                 # remote path in the manifest
+    if not os.path.exists(graph_path):
         if rung == "live":
             raise FileNotFoundError("Live training graph is unavailable; pass its exact --graph path")
         graph_path = args.graph or os.path.join(data_root(), "data1m", "graphs", "hgraph_rf")
@@ -273,8 +206,8 @@ def stage_embed(args, run, out):
     lookup = accuracy_lookup(data)
 
     model, scorer = build_models(data, xm0, xd0, cfg, device=device)
-    model.load_state_dict(ck["model"])      # strict: a partial load would export
-    scorer.load_state_dict(ck["scorer"])    # a half-random model
+    model.load_state_dict(ck["model"])
+    scorer.load_state_dict(ck["scorer"])
     model.eval()
 
     with torch.no_grad():
@@ -296,10 +229,6 @@ def stage_embed(args, run, out):
     umi.to_parquet(os.path.join(out, "model_ids.parquet"), index=False)
     udi.to_parquet(os.path.join(out, "dataset_ids.parquet"), index=False)
 
-    # G-F7d. The whole-graph forward this compares against needs the memory of a
-    # 3M-node forward with autograd off; it is run on a 100K-model subgraph, the
-    # size the plan names, with the dataset side kept whole so message passing
-    # is not degenerate.
     chunk_check = {"ran": False}
     if args.verify_chunked:
         k = min(args.verify_nodes, n_models)
@@ -331,8 +260,6 @@ def stage_embed(args, run, out):
            "n_test_queries": len(cands), "expect_n": expect_n,
            "device": device, "chunk": args.chunk,
            "seconds": round(time.time() - t0, 1), "gates": gates}
-    # Newly rebuilt graphs have no historical A0 repair envelope. They still
-    # need content-bound exports so the portable evaluator can verify them.
     artifact_names = ("z_m.npy", "z_d.npy", "z_m_eval.npy", "z_d_eval.npy",
                       "gold_cands.npz", "model_ids.parquet", "dataset_ids.parquet")
     rep.update(checkpoint_sha256=CK.sha256_of(ck_path),
@@ -346,8 +273,6 @@ def stage_embed(args, run, out):
                      indent=2, ensure_ascii=False))
     return rep
 
-
-# ── stage: metrics ───────────────────────────────────────────────────────────
 
 def _z(out, name, mmap=None):
     return np.load(os.path.join(out, name + ".npy"), mmap_mode=mmap)
@@ -420,16 +345,6 @@ def stage_metrics(args, run, out):
 
 
 def snapshot_only_row(out, ladder_path, cands, roots_q, device):
-    """The second A-axis pool that `rf-gold-2.0` requires.
-
-    D-63 put 12,680 models into the lake that no longer exist on HF, so every
-    A-axis number has to be reported over all candidates and over surviving
-    candidates only. The ladder keeps the snapshot as an exact prefix (F3), so
-    restricting the pool is a truncation of z_m -- but that also removes some
-    queries' gold model, and a query whose answer is not in the pool is not a
-    harder query, it is a different one. Those queries are dropped, and the
-    count is reported so the two rows are read as different query sets.
-    """
     from ModelLakeFishing.scale import global_metrics as GM
 
     ladder = pd.read_parquet(ladder_path, columns=["mappedID", "in_snapshot"])
@@ -440,9 +355,6 @@ def snapshot_only_row(out, ladder_path, cands, roots_q, device):
     if not prefix_ok:
         return {"snapshot_is_an_exact_prefix": False, "n_snapshot": n_snap}
 
-    # the same eligibility rule the candidate set was built with, re-applied to
-    # the restricted pool: at least 3 surviving candidates and a non-constant
-    # accuracy among them
     kept, dropped, lost_gold = {}, 0, 0
     for d, (c, a) in cands.items():
         c = np.asarray(c)
@@ -475,16 +387,12 @@ def snapshot_only_row(out, ladder_path, cands, roots_q, device):
             "n_queries": agg["n_queries"], "n_roots": agg["n_roots"]}
 
 
-# ── stage: index ─────────────────────────────────────────────────────────────
-
 def stage_index(args, run, out):
     from ModelLakeFishing.scale.export_ours import build_hnsw
 
     man = read_manifest(run)
     t0 = time.time()
     cands = load_cands(out)
-    # memory-mapped: build_hnsw makes its own normalized copy, and holding a
-    # second resident 1.54 GB array alongside the index is what does not fit here
     z_m, z_d = _z(out, "z_m", mmap="r"), _z(out, "z_d")
     idx, hnsw = build_hnsw(z_m, z_d, cands, ef=args.ef_construction, M=args.hnsw_M,
                            threads=args.hnsw_threads, iso_recall=args.iso_recall)
@@ -506,14 +414,7 @@ def stage_index(args, run, out):
     return rep
 
 
-# ── stage: curve ─────────────────────────────────────────────────────────────
-
 def supervised_rows(out, sup_path):
-    """mappedIDs of every model carrying a supervision edge.
-
-    §3.5 requires each subsampled universe to contain all of them: the gold for
-    every query is a supervised model, so a sample that dropped one would remove
-    the query's answer from the pool and measure something else."""
     ids = pd.read_parquet(os.path.join(out, "model_ids.parquet"))
     ids = ids.sort_values("mappedID")
     pos = pd.Series(ids["mappedID"].to_numpy(), index=ids["model"].astype(str))
@@ -566,10 +467,9 @@ def stage_curve(args, run, out):
             if args.hnsw_threads:
                 idx.set_num_threads(int(args.hnsw_threads))
             tb = time.perf_counter_ns()
-            idx.add_items(zm[sel], sel)          # label == original mappedID
+            idx.add_items(zm[sel], sel)
             build_ms = (time.perf_counter_ns() - tb) / 1e6
 
-            # iso-recall against brute force over the SAME universe
             sub_zm = zm[sel]
             brute = {d: set(sel[np.argpartition(-(sub_zm @ zd[int(d)]), 50)[:50]].tolist())
                      for d in qd}
@@ -601,8 +501,6 @@ def stage_curve(args, run, out):
     write_json_atomic(os.path.join(out, "scaling_curve_retrieval.json"), rep)
     return rep
 
-
-# ── cli ──────────────────────────────────────────────────────────────────────
 
 def main(argv=None):
     d = os.path.join(data_root(), "data1m")

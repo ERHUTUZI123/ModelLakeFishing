@@ -15,7 +15,6 @@ from ModelLakeFishing.scale1m import recompute_a0 as R
 
 
 def _pack(seed=0, reverse=False):
-    """Small hand-checkable pool with one missed gold and unequal root sizes."""
     q = np.array([101, 102, 103], dtype=np.int64)
     models = np.tile(np.arange(12, dtype=np.int64), (3, 1))
     score = np.tile(np.linspace(0.9, -0.9, 12, dtype=np.float32), (3, 1))
@@ -25,8 +24,6 @@ def _pack(seed=0, reverse=False):
                 (np.array([0, 11, 10]), np.array([1.0, 0.995, 0.4])),
                 (np.array([1, 11, 10]), np.array([1.0, 0.7, 0.4]))]
     gold = [23, 0, 1]
-    # Independent reference uses Python integer modulo arithmetic, no production
-    # scorer or recompute module to establish the expected ordering.
     ranked = np.array([sorted(row.tolist(), key=lambda m: (-float(fused[i, m]),
                        (m * 11400714819323198485 + 0xD1B54A32D192ED03) % 2**64))
                        for i, row in enumerate(models)], dtype=np.int64)
@@ -69,8 +66,6 @@ def _item(scope, name, seed, **kwargs):
 
 @pytest.fixture
 def bundle(tmp_path, monkeypatch):
-    # These fixtures own only tiny raw-ranking records, not full graph/model
-    # files. Separate a0_recompute_checks fixtures exercise those real readers.
     from ModelLakeFishing.scale1m import a0_recompute_checks as checks
     monkeypatch.setattr(checks, "recompute_checks", lambda manifest, protocol: {})
     raw = tmp_path / "raw"
@@ -440,8 +435,6 @@ def test_all_three_seeds_enable_summaries_without_historical_fill(bundle):
     assert result["completeness"]["missing_seeds"] == []
     assert result["new_measurements"][f"{R.FINAL}.gold_at_10.mean"]["value"] == 2 / 3
     assert result["new_measurements"]["retrieval_diagnostics.overall_retention.mean"]["value"] == 1.0
-    # Three complete retrieval seeds do not turn missing resource measurements
-    # into a successful whole-pipeline completeness verdict.
     assert not result["completeness"]["complete"]
 
 

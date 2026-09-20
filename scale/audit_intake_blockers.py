@@ -1,29 +1,3 @@
-"""
-audit_intake_blockers.py -- P0 step 4: correct the naive first-pass audit and
-quantify the four things that actually decide P1's design.
-
-Why this file exists: the first pass (audit_corpus.py) produced three numbers
-that were WRONG in a way that would have mis-planned P1, and finding that out
-is itself a P0 result:
-
-  * `model_profile` stores the STRING "unknown" for missing size/family, so a
-    naive truthiness test reported 47,242/47,242 "with size". Real coverage is
-    far lower.
-  * `model_popularity.json` is a WRAPPER ({fetched_at, source, num_models,
-    status_counts, models}); the payload is under ["models"]. The naive read
-    reported 5 entries / 0 coverage.
-  * the D0 BOUNDED whitelist has no notion of `@k` suffixes or `accuracy_norm`,
-    so it scored ndcg@10 / recall@100 / map@10 as unusable and reported only
-    10.6% usable rows. This corpus is 48% Retrieval -- those ARE bounded.
-
-Also answers the question that decides whether the 12.4% dataset_desp coverage
-is fatal or benign: are the described datasets the DEEP ones (many candidates,
-i.e. the ones that can actually serve as gold@K queries)?
-
-Run (from ModelLakeFishing/):
-    .\\.venv\\Scripts\\python.exe -m scale.audit_intake_blockers
-"""
-
 import json
 import os
 import re
@@ -40,7 +14,6 @@ RAW = os.path.join(data_root(), "modellens_v2", "raw")
 OUT = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
                    "docs", "scale", "P0", "artifacts")
 
-# @k-aware bounded-metric rule. Strip a trailing @<int>, lowercase, then match.
 AT_K = re.compile(r"@\d+$")
 BOUNDED_BASE = {
     "accuracy", "accuracy_norm", "acc", "acc_norm", "f1", "micro_f1",
@@ -60,7 +33,6 @@ def main():
     os.makedirs(OUT, exist_ok=True)
     rep = {}
 
-    # ---------- 1. side-file truth ---------------------------------------
     with open(os.path.join(RAW, "model_profile.json"), encoding="utf-8") as fh:
         prof = json.load(fh)
     with open(os.path.join(RAW, "model_popularity.json"), encoding="utf-8") as fh:
@@ -92,9 +64,8 @@ def main():
         sample=dict(list(pop.items())[:3]),
     )
 
-    # ---------- 2. CSV pass: metrics, values, depth, desc ------------------
     metric_rows = Counter()
-    metric_vals = defaultdict(list)          # base metric -> sampled values
+    metric_vals = defaultdict(list)
     per_ds_models = defaultdict(set)
     rows = 0
 
@@ -123,7 +94,6 @@ def main():
                        if m not in BOUNDED_BASE][:20],
     )
 
-    # per-metric scale: is it [0,1] or [0,100]?
     scale = {}
     for m, parts in metric_vals.items():
         if m not in BOUNDED_BASE:
@@ -140,12 +110,10 @@ def main():
     rep["metric_scale"] = dict(sorted(
         scale.items(), key=lambda kv: -metric_rows[kv[0]])[:20])
 
-    # mixed-scale detection: same metric appearing both 0-1 and 0-100
     mixed = {m: s for m, s in scale.items()
              if 0.05 < s["frac_gt_1"] < 0.95}
     rep["mixed_scale_metrics"] = mixed
 
-    # ---------- 3. does desc coverage land on the DEEP datasets? -----------
     desc_ok = set()
     for ch in pd.read_csv(os.path.join(RAW, "data.csv"),
                           usecols=["dataset", "dataset_desp"],
@@ -167,7 +135,6 @@ def main():
         ">=100": bucket_stats(100),
     }
 
-    # usable query set: depth>=10 AND has desc (what gold@10 needs)
     q10 = [d for d, n in depth.items() if n >= 10]
     rep["query_set"] = dict(
         depth_ge10=len(q10),
@@ -179,7 +146,6 @@ def main():
               encoding="utf-8") as fh:
         json.dump(rep, fh, indent=2, default=str)
 
-    # ---------- console ---------------------------------------------------
     p = rep["profile"]
     print("--- CORRECTED side-file coverage ---")
     print(f"  model_profile keys      {p['n_keys']:,}")

@@ -1,51 +1,4 @@
-"""model_lake_galaxy.py -- a paper figure built from the A0 3M-scale artifacts.
-
-WHAT THIS DRAWS
-    One plate, "The Model Lake", in four registers:
-
-      A  the lake itself: all 3,016,439 trained model embeddings of the A0
-         seed-0 held-out export, laid out once and rendered as a log-density
-         nebula, with the model families that own each region named in place.
-         An inset repeats the identical frame showing only the models that
-         carry any supervision edge -- a small fraction of the lake is
-         luminous, the rest is reachable through representation alone.
-      B  one cast: the 1,000 candidates HNSW returned for a single held-out
-         dataset--task query, drawn in the same coordinates, with the ten
-         models the system actually returned and the held-out gold marked.
-      C  rank migration: for every seed-0 query whose gold model reaches the
-         pool, its dense rank on the left and its rank after the deterministic
-         task-prior rerank on the right.
-      D  the two-stage cascade: 3,016,439 -> 1,000 -> 10, with the recall,
-         latency, and gold@10 of each step.
-
-    Nothing here trains, evaluates, or edits anything.  The cast and the ranks
-    are read out of the archived A0 evaluation rather than re-retrieved, and
-    the gold@10 they imply is checked against the archived A0.7 value before
-    anything is drawn.  Only the layout is computed here.
-
-THE LAYOUT, AND WHAT IT IS AND IS NOT
-    Model rows are L2-normalised 128-vectors whose covariance is effectively
-    rank 10 (the first ten principal directions carry 99.96% of the variance
-    and are near-balanced).  The plate therefore projects to that 10-D
-    principal subspace exactly, runs UMAP on a 250,000-row anchor sample, and
-    places the remaining rows by inverse-distance interpolation over their six
-    nearest anchors in the same 10-D space, plus a jitter proportional to the
-    local anchor spacing so that 3M rows do not stack onto 250K positions.
-    The map is a projection of the retrieval space, not the retrieval space:
-    neighbourhoods are meaningful, absolute distances are not.
-
-    Dataset--task nodes are NOT placed by their own embedding.  Model and query
-    rows share one output head but occupy offset regions of the sphere, so a
-    direct joint layout puts every query in one corner and says nothing.  A
-    query is instead drawn where it fishes: at the similarity-weighted centroid
-    of its exact dense top-64 models over the full lake.  That is the quantity
-    retrieval actually uses.
-
-Run (from the repository parent, with the ModelLakeFishing venv):
-    python -m ModelLakeFishing.viz.model_lake_galaxy --stage project
-    python -m ModelLakeFishing.viz.model_lake_galaxy --stage render
-    python -m ModelLakeFishing.viz.model_lake_galaxy --stage all
-"""
+"""model_lake_galaxy.py -- a paper figure built from the A0 3M-scale artifacts."""
 import argparse
 import json
 import os
@@ -57,76 +10,49 @@ import numpy as np
 _HERE = os.path.dirname(os.path.abspath(__file__))
 _REPO = os.path.abspath(os.path.join(_HERE, ".."))
 _REPO_PARENT = os.path.abspath(os.path.join(_HERE, "..", ".."))
-# scale1m modules import each other both as `ModelLakeFishing.scale1m.x` and as
-# bare `scale1m.x`, so both roots have to be importable.
 for _p in (_REPO_PARENT, _REPO):
     if _p not in sys.path:
         sys.path.insert(0, _p)
 
-# ---------------------------------------------------------------- artifacts --
-# A0: the graph's nodes and edges are the frozen bytes; only the dataset
-# feature matrix changed -- seven performance-derived columns zeroed, recorded
-# with its hashes in graph/A0_FEATURE_REPAIR.json -- so families and lineage
-# carry over unchanged while every representation drawn here is new.
 DATA = r"D:\research\model_lake\data\data1m"
 A0 = os.path.join(DATA, "a0_20260912")
 EXPORT = os.path.join(A0, "exports", "A0GD_full_s0_e25")
 GRAPH = os.path.join(A0, "graph")
 SIDECAR = os.path.join(EXPORT, "prior_sidecar_s0.npz")
-# the measured seed-0 evaluation: HNSW top-1,000, the task prior read over
-# exactly those, the fused score, and the ten the system answered with
 HNSW_POOL = os.path.join(A0, "metrics", "a0_hnsw_s0.npz")
 EXACT_POOL = os.path.join(A0, "metrics", "a0_exact_s0.npz")
 A0_REPORT = os.path.abspath(os.path.join(_HERE, "..", "docs", "1M", "A0_runs",
                                          "A0_7", "results", "A0_REPORT.json"))
 A0_EVAL_REPORT = os.path.join(A0, "metrics", "A0_EVALUATION_REPORT.json")
-# The four-panel plate's C and D panels still print these pre-A0 archives, so
-# they are kept resolvable; `galaxy_render.stage_render` refuses to draw until
-# they are repointed rather than setting A0 water under pre-A0 numbers.
 Y2_REPORT = os.path.abspath(os.path.join(_HERE, "..", "docs", "1M", "Y2_runs", "Y2_REPORT.json"))
 Y4_REPORT = os.path.abspath(os.path.join(_HERE, "..", "docs", "1M", "Y4_runs", "Y4_REPORT.json"))
 CACHE = os.path.join(DATA, "figures", "galaxy_cache_a0")
 OUTDIR = os.path.abspath(os.path.join(_HERE, "..", "docs", "1M", "figures"))
 
-# ------------------------------------------------------------- frozen facts --
 N_MODELS = 3_016_439
 N_QUERIES = 18_729
 N_EVID_EDGES = 247_803
 SPLIT_SEED = 0
 POOL_K = 1_000
 RETURN_K = 10
-# the A0 graph, and the frozen graph it was repaired from
 GRAPH_DIGEST = "acddeb93d926efcb636c83d452fe360736a0e6e4ac68cab3f5fef210e7cef5db"
 SOURCE_GRAPH_DIGEST = "0e80b8393846dcc4b9e354218fd5139a906d569125d2e8545e17ccd01612b76c"
 
-# ------------------------------------------------------- projection settings --
-PCA_SAMPLE = 200_000        # rows used to fit the principal subspace
-PCA_DIM = 12                # kept; the layout uses the leading 10
+PCA_SAMPLE = 200_000
+PCA_DIM = 12
 LAYOUT_DIM = 10
-N_ANCHOR = 250_000          # rows UMAP actually embeds
+N_ANCHOR = 250_000
 UMAP_NEIGHBORS = 25
 UMAP_MIN_DIST = 0.0
 UMAP_EPOCHS = 200
 UMAP_SEED = 7
-KNN_K = 6                   # anchors averaged per interpolated row
-JITTER = 0.30               # fraction of local anchor spacing
-QUERY_TOPK = 64             # models whose centroid places a query
+KNN_K = 6
+JITTER = 0.30
+QUERY_TOPK = 64
 RNG_SEED = 20260908
 
-# The query whose cast panel B draws: squad / question-answering, one of the
-# 1,476 queries seed 0 scored.  Chosen because it is what the second stage is
-# for -- its gold sits 445th in the pool on cosine alone, and the task prior
-# brings it back first -- and because squad is the benchmark a reader knows.
-#
-# Under A0 six of its ten (olmo-2, layerskip-llama2-70b, gemma-3-4b x4) are
-# general LLMs that the map places in the LLM region, far from the query and
-# the gold in the extractive-QA cluster.  That spread is kept on purpose: it
-# is the measured answer.  The map is laid out by representation, so a disc's
-# distance from the query is not its retrieval distance -- the second of the
-# ten is in fact the closest of them by cosine.
 CASE_QUERY = 15473
 
-# Families named on the map: frozen-vocabulary key -> label drawn on the plate.
 FAMILY_LABELS = [
     ("llama", "llama"), ("qwen", "qwen"), ("qwen3", "qwen3"),
     ("gemma", "gemma"), ("mistral", "mistral"), ("bert", "bert"),
@@ -151,9 +77,7 @@ def _unit(a):
     return a / np.linalg.norm(a, axis=1, keepdims=True).clip(1e-12)
 
 
-# ============================================================ stage: project ==
 def principal_subspace(cache):
-    """Leading PCA_DIM directions of the model rows, fitted on a fixed sample."""
     path = os.path.join(cache, "pca.npz")
     if os.path.exists(path):
         z = np.load(path)
@@ -206,7 +130,6 @@ def umap_anchors(cache, P):
 
 
 def extend_layout(cache, P, anchor_idx, anchor_xy):
-    """Place every model row from its KNN_K nearest anchors in the 10-D space."""
     path = os.path.join(cache, "layout_xy.npy")
     if os.path.exists(path):
         return np.load(path, mmap_mode="r")
@@ -240,7 +163,6 @@ def extend_layout(cache, P, anchor_idx, anchor_xy):
 
 
 def query_positions(cache, xy):
-    """A query sits at the similarity-weighted centroid of its dense top-64."""
     path = os.path.join(cache, "query_xy.npz")
     if os.path.exists(path):
         z = np.load(path)
@@ -280,7 +202,6 @@ def query_positions(cache, xy):
 
 
 def graph_facts(cache):
-    """Family ids, supervision degree, lineage -- read from the frozen graph."""
     path = os.path.join(cache, "graph_facts.npz")
     meta_path = os.path.join(cache, "graph_facts.json")
     if os.path.exists(path) and os.path.exists(meta_path):
@@ -322,27 +243,10 @@ def graph_facts(cache):
 
 
 def rerank_facts(cache):
-    """The measured seed-0 answer, read out of the archived A0 evaluation.
-
-    Nothing here is re-retrieved.  `a0_hnsw_s0.npz` holds, for each of the
-    1,476 queries seed 0 scored, the 1,000 ids HNSW returned in cosine order,
-    the task prior read over exactly those ids, the fused score the system
-    ranked by, and the ten ids it answered with.  The only quantity derived
-    here is the held-out gold label, and the gold@10 it implies is checked
-    against the archived A0.7 value before any of it reaches a figure.
-
-    `dense_rank` is where the gold sat in the pool by cosine alone and
-    `fused_rank` where it came back after the task prior; both are 0 when the
-    gold never reached the pool at all.
-    """
     path = os.path.join(cache, "rerank.npz")
     meta_path = os.path.join(cache, "rerank.json")
     if os.path.exists(path) and os.path.exists(meta_path):
         info = json.load(open(meta_path, encoding="utf-8"))
-        # `case_prior` is the prior for one query, so a cache built under a
-        # different CASE_QUERY holds the wrong one -- and nothing downstream
-        # would notice, it would just draw the last case's prior under this
-        # case's name.  Rebuild instead of trusting it.
         if info.get("case_query") == CASE_QUERY:
             return np.load(path), info
         _say("cache holds the rerank for query %s, not %d -- rebuilding"
@@ -377,8 +281,6 @@ def rerank_facts(cache):
                              "scored, so it has no measured answer to draw"
                              % (CASE_QUERY, nq, SPLIT_SEED))
 
-    # the two ways the archive can be read have to agree: membership of the
-    # returned ten, and the recorded position of the gold in the fused order
     by_member = float(np.mean([gold_id[i] in set(top10[i].tolist())
                                for i in range(nq)]))
     by_rank = float(((fused_rank > 0) & (fused_rank <= RETURN_K)).mean())

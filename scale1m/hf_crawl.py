@@ -1,42 +1,3 @@
-"""
-hf_crawl.py -- T2: HF model-metadata collection.
-
-Runbook: docs/1M/100kplan.md 5 (T2), docs/1M/T2.md.
-
-TWO MODES, AND WHY BOTH EXIST
-    --limit N            v1 single-stream: one ordering, first N records.
-                         Kept verbatim so the frozen `raw/` 150K head shard
-                         stays reproducible. It is an audit artifact and a
-                         candidate source -- NOT a population definition.
-                         With `--sort createdAt --limit <huge>` the same mode
-                         performs the RF full enumeration: it then ends by
-                         exhausting the cursor rather than by hitting --limit.
-    --plan {pilot,full}  v2 multi-source candidate DISCOVERY (query_plan.py).
-                         Over-collects from many orthogonal orderings; the
-                         final population is chosen later, under quotas, by
-                         select_balanced_halo.py.
-
-    Discovery is allowed to be biased. Selection is not. Keeping them in one
-    stage is what made the v1 output unusable (one publisher at 20.1%).
-
-WHY expand[] AND NOT full=true
-    `full=true&cardData=true` does NOT return `safetensors` (the only reliable
-    parameter count) and DOES return `siblings` (the per-repo file list, pure
-    bloat). It also silently omits `author`, `config`, `baseModels` and
-    `lastModified`, i.e. four of the fields the v2 annotation depends on.
-
-WHAT WE DELIBERATELY DO NOT DO HERE
-    Nothing in this file interprets a field. Task/language/family/source-type
-    annotation lives in taxonomy.py + annotate_candidates.py. A crawl snapshot
-    cannot be rebuilt after the fact, so freeze the superset once and decide
-    what to use later.
-
-Run (from ModelLakeFishing/):
-    .\\.venv\\Scripts\\python.exe -m scale1m.hf_crawl --plan pilot
-    .\\.venv\\Scripts\\python.exe -m scale1m.hf_crawl --plan full
-    .\\.venv\\Scripts\\python.exe -m scale1m.hf_crawl --limit 150000     # v1
-"""
-
 import argparse
 import datetime as dt
 import gzip
@@ -56,20 +17,11 @@ from scale1m.paths import data_root as _portable_data_root
 
 API = "https://huggingface.co/api/models"
 
-# v1 field set -- frozen, because `raw/` was crawled with exactly this.
 EXPAND_V1 = (
     "downloads", "likes", "pipeline_tag", "library_name", "tags",
     "createdAt", "safetensors", "cardData",
 )
 
-# v2 adds the six fields the balanced selection cannot be built without:
-#   author        -> publisher concentration control (Step 9)
-#   baseModels    -> AUTHORITATIVE parent + relation (Step 4/10); replaces the
-#                    cardData.base_model string, which has no relation type
-#   config        -> architectures / model_type (Step 3/4, task fallback)
-#   lastModified  -> freshness, distinct from createdAt
-#   gguf          -> authoritative quantization flag (Step 5)
-#   gated/disabled/private/trendingScore -> quality gate + recency signal
 EXPAND_V2 = EXPAND_V1 + (
     "author", "baseModels", "config", "lastModified", "gguf",
     "gated", "disabled", "private", "trendingScore", "downloadsAllTime",
@@ -80,9 +32,6 @@ KEEP_V1 = ("id", "downloads", "likes", "pipeline_tag", "library_name", "tags",
 KEEP_V2 = KEEP_V1 + ("author", "lastModified", "trendingScore",
                      "downloadsAllTime", "gated", "disabled", "private")
 
-# v1 kept only these three; v2 adds `language` -- without it the language
-# bucket has no authoritative source at all (measured: the v1 shards contain
-# ZERO cardData.language values, because this list dropped them).
 KEEP_CARD_V1 = ("base_model", "datasets", "model-index")
 KEEP_CARD_V2 = KEEP_CARD_V1 + ("language", "license", "base_model_relation",
                                "tags", "pipeline_tag", "library_name")
@@ -92,7 +41,6 @@ USER_AGENT = "model-lake-fishing/scale1m.hf_crawl (research crawl; contact via r
 
 
 def data_root() -> str:
-    """Return ``MLF_DATA_DIR`` or the repository-local ``data`` directory."""
     return _portable_data_root()
 
 
@@ -108,16 +56,7 @@ def utcnow() -> str:
     return dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds")
 
 
-# --- record trimming -------------------------------------------------------
-
-
 def trim_model_index(mi):
-    """Flatten cardData['model-index'] to the (task, dataset, metrics) triples.
-
-    Kept because T8's `displacement_quality` (100kplan 11.1) needs the measured
-    accuracy of a *labeled* model that outranked the gold one. Dropped:
-    `verifyToken` (a multi-KB JWT per metric), `source`, `verified`.
-    """
     if isinstance(mi, dict):
         mi = [mi]
     if not isinstance(mi, list):
@@ -145,13 +84,6 @@ def trim_model_index(mi):
 
 
 def trim_base_models(bm):
-    """`baseModels` -> {"relation": str, "ids": [str]}.
-
-    This is the authoritative lineage signal: unlike `cardData.base_model`
-    (a bare string an author typed) it carries HF's own relation type --
-    quantized / adapter / finetune / merge -- which is exactly the ordering
-    CLAUDE.md's lineage edge weights already use.
-    """
     if not isinstance(bm, dict):
         return None
     ids = [m.get("id") for m in (bm.get("models") or []) if isinstance(m, dict) and m.get("id")]
@@ -161,7 +93,6 @@ def trim_base_models(bm):
 
 
 def trim_config(cfg):
-    """Only the two structured fields we use; drops tokenizer_config bloat."""
     if not isinstance(cfg, dict):
         return None
     out = {}
@@ -173,7 +104,6 @@ def trim_config(cfg):
 
 
 def trim(rec: dict, v2: bool = True) -> dict:
-    """Full API record -> the shard record. Keys absent upstream stay absent."""
     keep = KEEP_V2 if v2 else KEEP_V1
     keep_card = KEEP_CARD_V2 if v2 else KEEP_CARD_V1
     out = {k: rec[k] for k in keep if k in rec and rec[k] is not None}
@@ -206,9 +136,6 @@ def trim(rec: dict, v2: bool = True) -> dict:
     return out
 
 
-# --- shard / state io ------------------------------------------------------
-
-
 def shard_stem(idx: int) -> str:
     return "hf_models_%05d" % idx
 
@@ -238,7 +165,6 @@ def load_json(path: str, default=None):
 
 
 def finalize_shard(out_dir: str, idx: int, n_records: int, shards: list) -> None:
-    """Plain .jsonl -> .jsonl.gz, sha256, read-only. Idempotent per shard."""
     plain = os.path.join(out_dir, shard_stem(idx) + ".jsonl")
     gz = os.path.join(out_dir, shard_stem(idx) + ".jsonl.gz")
     with open(plain, "rb") as src, gzip.open(gz, "wb", compresslevel=6) as dst:
@@ -251,7 +177,6 @@ def finalize_shard(out_dir: str, idx: int, n_records: int, shards: list) -> None
 
 
 def replay_seen_ids(out_dir: str, shards: list, shard_idx: int, partial_lines: int):
-    """Rebuild the dedupe set on resume, from the shards already on disk."""
     seen = set()
     for sh in shards:
         with gzip.open(os.path.join(out_dir, sh["file"]), "rt", encoding="utf-8") as fh:
@@ -272,11 +197,7 @@ def replay_seen_ids(out_dir: str, shards: list, shard_idx: int, partial_lines: i
     return seen
 
 
-# --- http ------------------------------------------------------------------
-
-
 def parse_ratelimit(headers):
-    """`RateLimit: "api";r=493;t=67` -> (remaining, reset_seconds)."""
     raw = headers.get("RateLimit")
     if not raw:
         return None, None
@@ -291,7 +212,6 @@ def parse_ratelimit(headers):
 
 
 def next_url(resp) -> str:
-    """Cursor pagination lives in the Link header, rel="next"."""
     link = resp.headers.get("Link") or ""
     for part in link.split(","):
         if 'rel="next"' in part:
@@ -311,7 +231,6 @@ def build_url(params: dict, expand) -> str:
 
 
 def fetch(session, url, timeout, max_retries, stats, min_remaining):
-    """One page, with backoff. Returns (records, next_url)."""
     delay = 2.0
     for attempt in range(max_retries + 1):
         try:
@@ -357,7 +276,6 @@ def fetch(session, url, timeout, max_retries, stats, min_remaining):
             delay = min(delay * 2, 60)
             continue
 
-        # 400 on an unsupported filter is a plan bug, not a transient error.
         resp.raise_for_status()
     raise RuntimeError("unreachable")
 
@@ -373,11 +291,6 @@ def make_session(token):
 def new_stats():
     return {"pages": 0, "retries": 0, "retry_reasons": {}, "ratelimit_sleeps": 0,
             "duplicates_skipped": 0, "started_at": utcnow()}
-
-
-# =========================================================================
-# mode 1: v1 single-stream (frozen behaviour)
-# =========================================================================
 
 
 def crawl_single(args) -> int:
@@ -403,9 +316,6 @@ def crawl_single(args) -> int:
                            "sort": sort, "direction": direction}, expand)
 
     if state:
-        # The stream order is baked into the stored cursor. Resuming a
-        # createdAt enumeration with --sort downloads would silently splice two
-        # different orderings into one shard set.
         prev = (state.get("sort", "downloads"), str(state.get("direction", "-1")))
         if prev != (sort, direction):
             print("[abort] %s holds a %s/%s stream; this run asks for %s/%s. "
@@ -455,9 +365,6 @@ def crawl_single(args) -> int:
                 n_written += 1
                 n_in_shard += 1
                 if "first_id" not in stats:
-                    # The newest record in the stream is the snapshot's upper
-                    # boundary: anything created after this instant is, by
-                    # construction, not in this crawl.
                     stats["first_id"] = mid
                     stats["first_created_at"] = rec.get("createdAt")
                     stats["first_record_at"] = utcnow()
@@ -510,14 +417,7 @@ def crawl_single(args) -> int:
     print("\n[ok] %d records in %d shards -> %s%s"
           % (n_written, len(shards), out_dir,
              "  (cursor exhausted)" if not url else ""))
-    # A full enumeration ends by running out of cursor, not by hitting --limit;
-    # both are successful terminations.
     return 0 if (n_written >= args.limit or not url) else 1
-
-
-# =========================================================================
-# mode 2: v2 multi-query candidate discovery
-# =========================================================================
 
 
 def membership_path(out_dir, qid, gz=False):
@@ -526,13 +426,6 @@ def membership_path(out_dir, qid, gz=False):
 
 
 def crawl_plan(args) -> int:
-    """Run every query in the plan; write each unique model ONCE, with merged
-    provenance recorded per query in membership/.
-
-    Resume granularity is per query AND per page: PLAN_STATE.json holds each
-    query's cursor and committed hit count, so a killed run loses at most the
-    records of one page.
-    """
     out_dir = args.out
     os.makedirs(os.path.join(out_dir, "membership"), exist_ok=True)
     state_path = os.path.join(out_dir, "PLAN_STATE.json")
@@ -594,8 +487,8 @@ def crawl_plan(args) -> int:
 
             mpath = membership_path(out_dir, q.qid)
             if n_hits == 0 and os.path.exists(mpath):
-                os.remove(mpath)          # restart this query cleanly
-            elif os.path.exists(mpath):   # truncate a torn tail
+                os.remove(mpath)
+            elif os.path.exists(mpath):
                 with open(mpath, "r", encoding="utf-8") as m:
                     lines = [l for i, l in enumerate(m) if i < n_hits]
                 with open(mpath, "w", encoding="utf-8") as m:
@@ -669,7 +562,6 @@ def crawl_plan(args) -> int:
         if os.path.exists(stale) and os.path.getsize(stale) == 0:
             os.remove(stale)
 
-    # membership -> gz, read-only (they are part of the frozen snapshot)
     for qid in queries_done:
         p, g = membership_path(out_dir, qid), membership_path(out_dir, qid, gz=True)
         if os.path.exists(p):
@@ -695,7 +587,6 @@ def crawl_plan(args) -> int:
 
 def write_provenance(args, out_dir, prov_path, shards, stats, n_written, expand,
                      mode, queries_done=None, plan_size=None) -> None:
-    """The snapshot date is the one irreproducible input -- record it hard."""
     import huggingface_hub
     prov = {
         "artifact": "hf model metadata crawl (T2)",
@@ -742,9 +633,6 @@ def write_provenance(args, out_dir, prov_path, shards, stats, n_written, expand,
         prov["last_id"] = stats.get("last_id")
         prov["last_downloads"] = stats.get("last_downloads")
         prov["last_created_at"] = stats.get("last_created_at")
-        # The snapshot is a window, not an instant: the stream is ordered by
-        # createdAt desc, so models created after `first_created_at` are absent
-        # and models deleted during the window simply vanish from it.
         prov["snapshot_window_utc"] = {
             "crawl_started_at": stats.get("started_at"),
             "crawl_finished_at": stats.get("finished_at"),

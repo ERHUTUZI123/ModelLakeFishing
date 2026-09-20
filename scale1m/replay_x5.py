@@ -1,10 +1,3 @@
-"""Recompute the X5 eligibility and dense top-10 claims from frozen pools.
-
-The frozen Y2 exact pools contain the exact dense top 1,000 in score order.
-Consequently their first ten rows are sufficient to replay every X5 @1/@10
-claim.  Rank statistics below position ten are intentionally not reconstructed.
-"""
-
 from __future__ import annotations
 
 import argparse

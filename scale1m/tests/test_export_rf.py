@@ -1,11 +1,3 @@
-"""Unit tests for the F7 exporter (RF).
-
-The three things here that fail silently rather than loudly are the row-order
-gate, the leakage gate, and the subsample keep-rule. A wrong row order relabels
-every embedding; a swapped pair of gold@10 numbers turns a leak into a pass; a
-subsample that drops a gold model removes the answer from the pool and measures
-a different question. Each gets a test that fails when the invariant is broken.
-"""
 import json
 import os
 
@@ -28,8 +20,6 @@ def test_pool_size_gate_is_a_pass_when_no_expectation_is_pinned():
 
 def test_leakage_gate_is_an_inequality_not_a_note():
     assert E.gate_leakage(0.0700, 0.1046)["ok"] is True
-    # held-out scoring at least as well as full-graph means the query saw its
-    # own supervision; this is the direction P4 got wrong once
     assert E.gate_leakage(0.61, 0.42)["ok"] is False
     assert E.gate_leakage(0.5, 0.5)["ok"] is False
 
@@ -57,8 +47,6 @@ def _exports(tmp_path, models):
 
 
 def test_supervised_rows_maps_ids_to_row_numbers_not_positions(tmp_path):
-    """The supervision table is in its own order; the index labels are ladder
-    row numbers, so the join has to go through `model`, never through order."""
     out = _exports(tmp_path, ["a/1", "b/2", "c/3", "d/4"])
     sup = tmp_path / "sup.parquet"
     pd.DataFrame({"model": ["c/3", "a/1", "c/3"], "node": ["n"] * 3}).to_parquet(
@@ -88,7 +76,6 @@ def test_cands_round_trip_keeps_ids_integral(tmp_path):
 
 
 def test_merge_stage_keeps_earlier_stages_and_reaggregates_gates(tmp_path):
-    """A crashed later stage must not erase what an earlier one measured."""
     out = str(tmp_path)
     E.merge_stage(out, "embed", {"gates": [{"gate": "G-F7a", "ok": True}]})
     man = E.merge_stage(out, "metrics", {"gates": [{"gate": "G-F7b", "ok": False}]})

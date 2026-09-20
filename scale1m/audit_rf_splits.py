@@ -1,9 +1,3 @@
-"""Recompute and fingerprint the three frozen root-aware graph splits.
-
-Only the trained-on skeleton is loaded.  The 5.4 GiB feature matrix is not
-needed by the split algorithm and copying it would add avoidable memory use.
-"""
-
 from __future__ import annotations
 
 import argparse
@@ -21,10 +15,10 @@ _REPO_PARENT = Path(__file__).resolve().parents[2]
 if os.fspath(_REPO_PARENT) not in sys.path:
     sys.path.insert(0, os.fspath(_REPO_PARENT))
 
-from ModelLakeFishing.stage2TrainGraphSAGE.d0_splits import (  # noqa: E402
+from ModelLakeFishing.stage2TrainGraphSAGE.d0_splits import (
     make_root_aware_splits,
 )
-from ModelLakeFishing.stage2TrainGraphSAGE.losses import (  # noqa: E402
+from ModelLakeFishing.stage2TrainGraphSAGE.losses import (
     TRAINED_ON,
     REV_TRAINED_ON,
 )

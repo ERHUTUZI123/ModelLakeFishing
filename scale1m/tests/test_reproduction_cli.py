@@ -1,4 +1,3 @@
-"""Reviewer CLI contracts, using temporary inputs and no network or author data."""
 from __future__ import annotations
 
 import hashlib
@@ -31,8 +30,6 @@ def write_manifest(tmp_path, manifest):
 
 
 def test_clean_checkout_help_and_all_plans_have_no_side_effects(tmp_path):
-    # Copy only the actual CLI package into an arbitrarily named clean checkout.
-    # No ignored repro/, docs/, data/, parent package, or author PYTHONPATH exists.
     checkout = tmp_path / "reviewer-checkout"
     package = checkout / "scale1m"
     package.mkdir(parents=True)
@@ -123,7 +120,7 @@ def test_pinned_download_verifies_bytes_and_resumes_without_fetch(tmp_path):
 def test_downloaded_corruption_is_never_installed(tmp_path):
     content = b"frozen test input"
     bad = tmp_path / "bad-cache.bin"
-    bad.write_bytes(b"x" * len(content))  # Same size: the SHA-256 guard must detect this.
+    bad.write_bytes(b"x" * len(content))
     root = tmp_path / "data"
     with pytest.raises(ValueError, match="differs from the frozen A0 manifest"):
         snapshot.download(root, manifest_for(content), "full", repo_id="owner/a0",

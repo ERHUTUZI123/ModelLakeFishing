@@ -1,22 +1,3 @@
-"""
-pull_corpus.py -- P0 step 1: pull the ModelLens corpus + checkpoint at PINNED
-revisions and freeze them into an immutable raw/ layer.
-
-Implements PLAN scale/MODELLENS_HEADTOHEAD_SCALE_PLAN.md §1.4 rules 1-3:
-  rule 1  lock the commit SHA, never `main`
-  rule 2  raw/ layer written once, then set read-only
-  rule 3  sha256 + line anchor recorded into PROVENANCE.json
-
-The corpus lives on the COMPETITOR's HF repo and is outside our control: it can
-be updated, re-schema'd, rate-limited or taken down at any time. Everything we
-report downstream is only defensible if this snapshot is byte-identical and
-self-verifying. Freeze first, build later.
-
-Run (from ModelLakeFishing/):
-    .\\.venv\\Scripts\\python.exe -m scale.pull_corpus
-    .\\.venv\\Scripts\\python.exe -m scale.pull_corpus --only v2
-"""
-
 import argparse
 import datetime as dt
 import hashlib
@@ -28,10 +9,6 @@ from huggingface_hub import HfApi, hf_hub_download
 
 from scale1m.paths import data_root as _portable_data_root
 
-# --- PINNED REVISIONS ------------------------------------------------------
-# Resolved 2026-07-22. NEVER replace these with "main": main drifts, SHAs do
-# not. If a re-pull yields a different SHA the upstream repo changed and the
-# comparison must be re-baselined, not silently continued.
 REPOS = {
     "v2": dict(
         repo_id="luisrui/ModelLens-corpus-v2",
@@ -61,19 +38,10 @@ TEXT_LINE_COUNT = {".csv", ".json", ".md"}
 
 
 def data_root() -> str:
-    """Return ``MLF_DATA_DIR`` or the repository-local ``data`` directory."""
     return _portable_data_root()
 
 
 def sha256_and_lines(path: str, count_lines: bool):
-    """Stream the file once: sha256 always, raw newline count when useful.
-
-    NOTE the newline count is a *byte-level* anchor, not a record count --
-    data.csv has free-text `dataset_desp` with embedded newlines inside quoted
-    fields, so lines != rows. The true record count is established separately
-    in audit_corpus.py via a real CSV parser. Both are recorded; conflating
-    them is exactly the kind of silent miscount this project has been bitten by.
-    """
     h = hashlib.sha256()
     nl = 0
     size = 0
@@ -90,7 +58,6 @@ def sha256_and_lines(path: str, count_lines: bool):
 
 
 def set_readonly(path: str):
-    """Rule 2: raw/ is written once then frozen. Best-effort, reported."""
     try:
         os.chmod(path, 0o444)
         return True
@@ -103,7 +70,6 @@ def pull_one(key: str, spec: dict, root: str, force: bool) -> dict:
     info = api.repo_info(spec["repo_id"], repo_type=spec["repo_type"],
                          revision=spec["revision"], files_metadata=True)
 
-    # Guard: the pinned SHA must be what the hub actually served us.
     if info.sha != spec["revision"]:
         raise RuntimeError(
             f"{key}: pinned revision {spec['revision']} but hub returned "
@@ -122,7 +88,7 @@ def pull_one(key: str, spec: dict, root: str, force: bool) -> dict:
             print(f"  [skip-exists] {name}")
         else:
             if os.path.exists(dest):
-                os.chmod(dest, 0o644)  # unfreeze before overwrite
+                os.chmod(dest, 0o644)
             print(f"  [get] {name} ({(sib.size or 0)/1e6:.1f} MB) ...", flush=True)
             hf_hub_download(
                 repo_id=spec["repo_id"], filename=name,

@@ -1,28 +1,3 @@
-"""
-match_dataset_cards.py -- F1.5: dataset node -> HF dataset card text.
-
-Runbook: docs/1M/1Mplan.md F1.5 and 3.7. Record: docs/1M/F1.5.md.
-
-`e_card` (384 of the 458 dataset dims) is MiniLM over `dataset_descriptor()`,
-whose input is the HF card: name + task_categories + tags + description. The
-names that reach us are whatever an author typed in a model card or whatever a
-historical graph builder recorded, so the match rate is a measurement.
-
-MATCHING, TWO LEVELS, DELIBERATELY CONSERVATIVE (D-66)
-    exact     the normalised id is a repo id in the index
-    basename  the name carries no owner AND its basename is unique in the index
-    rejected  a basename that would cross owners (`a/x` -> `b/x`), or a
-              basename with several candidates. Not guessed, not resolved by
-              downloads: picking the most-downloaded candidate lifts coverage
-              from 33% to 53% while silently attributing another repo's card.
-
-Everything unmatched falls back to the name text, which is the fallback
-`dataset_descriptor()` already implements. `card_source` records which case
-fired for every node.
-
-Run (from ModelLakeFishing/):
-    python -m scale1m.match_dataset_cards --nodes <parquet> --out <parquet>
-"""
 import argparse
 import collections
 import json
@@ -38,11 +13,6 @@ CARD_SOURCES = ("hf_card", "hf_card_via_parent", "name_only",
 
 
 def load_index_for(wanted_ids, wanted_bases, ds_dir):
-    """Two-pass so the 1M-row index never sits in memory in full.
-
-    Only rows whose id or basename is asked for are retained; the rest are
-    parsed and dropped.
-    """
     prov = json.load(open(os.path.join(ds_dir, "PROVENANCE.json"), encoding="utf-8"))
     by_id, base_hits = {}, collections.defaultdict(list)
     for _, r in iter_records(ds_dir, prov["shards"]):
@@ -53,22 +23,13 @@ def load_index_for(wanted_ids, wanted_bases, ds_dir):
         if base in wanted_bases:
             base_hits[base].append(did)
             if len(base_hits[base]) <= 2 and did not in by_id:
-                by_id[did] = r          # keep enough to resolve or reject
+                by_id[did] = r
     return by_id, base_hits, prov
 
 
 def match(nodes, ds_dir=None):
-    """nodes: DataFrame with columns dataset, task (task may be empty).
-
-    Returns the same rows plus description / tags / task_categories /
-    matched_id / card_source.
-    """
     ds_dir = ds_dir or os.path.join(data_root(), "data1m", "datasets_full")
     wanted_ids = set(nodes["dataset"].map(normalize))
-    # `a/b` is ambiguous between owner/name and dataset/config. The historical
-    # D0 graphs use the second form for 94% of their unmatched nodes
-    # (`ag_news/default`), so the parent is looked up too -- under its own
-    # card_source, never merged into the exact-match count.
     parents = {d.split("/")[0] for d in wanted_ids if "/" in d}
     wanted_ids |= parents
     wanted_bases = {d.split("/")[-1] for d in wanted_ids}
@@ -92,8 +53,6 @@ def match(nodes, ds_dir=None):
             else:
                 how, rec = "name_only", None
         if rec is None and "/" in dsn:
-            # try the parent: `ag_news/default` -> `ag_news`, whose card
-            # describes every config of the dataset
             parent = dsn.split("/")[0]
             prec = by_id.get(parent)
             if prec is None:

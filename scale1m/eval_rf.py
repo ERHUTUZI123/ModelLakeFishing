@@ -1,39 +1,3 @@
-"""
-eval_rf.py -- F8: the four axes on the full-lake rung.
-
-Runbook: docs/1M/1Mplan.md §5 (F8). Record: docs/1M/F8.md.
-
-  A  accuracy       gold@K over the whole candidate pool, from the HELD-OUT
-                    embeddings only, with a three-seed interval, plus the
-                    retrieval-side scaling curve of §3.5.
-  B  latency        HNSW against an O(N) full scan at equal recall.
-  C  cold start     four degree-defined layers, and whether the frozen majority
-                    is retrievable or collapsed.
-  D  system cost    end-to-end build time, memory, disk, incremental onboarding.
-
-WHY NOT eval_rung.py
-    That file is T8's evaluator and still reproduces the 100K rung. It loads a
-    single-file `.pt` graph, reads `<run>/exports/`, indexes `hnsw_<rung>.bin`,
-    and splits displacers into CORE and HALO by a hard-coded 30,183. None of
-    those hold here: the graph is a `graph_store` directory, the exports live
-    outside the run dirs, the index is `hnsw_full.bin`, and there is no CORE.
-    The protocol functions that decide numbers -- `model_layers`,
-    `layer_geometry`, `sibling_vs_random_cosine`, `bench_rung` -- are imported
-    from it unchanged, so the two rungs are measured by the same code.
-
-THE ONE RULE THAT MAKES B HONEST
-    Tune ef_search until recall@50 >= target, THEN time. Any ANN index is
-    arbitrarily fast if it is allowed to be arbitrarily wrong. Every index is
-    benchmarked in one process on one machine, against a full scan measured in
-    the same run, because a latency curve whose slope is partly hardware is not
-    a curve.
-
-Run (from ModelLakeFishing/):
-    python -m scale1m.eval_rf --axis a
-    python -m scale1m.eval_rf --axis b
-    python -m scale1m.eval_rf --axis c
-    python -m scale1m.eval_rf --axis d
-"""
 import argparse
 import gc
 import json
@@ -49,8 +13,8 @@ _REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(_HERE), ".."))
 if _REPO_ROOT not in sys.path:
     sys.path.insert(0, _REPO_ROOT)
 
-from scale1m.hf_crawl import data_root, utcnow, write_json_atomic     # noqa: E402
-from scale1m.eval_rung import (WARM_MIN_DEG, model_layers,            # noqa: E402
+from scale1m.hf_crawl import data_root, utcnow, write_json_atomic
+from scale1m.eval_rung import (WARM_MIN_DEG, model_layers,
                                layer_geometry, sibling_vs_random_cosine,
                                bench_rung, fit_curves)
 
@@ -63,20 +27,14 @@ def run_dir(args, seed):
 
 
 def training_run_dir(args, seed):
-    """Training run directory, independent of the export directory format."""
     return os.path.join(args.f6_runs, args.f6_run_fmt % seed)
 
 
 def default_full_sidecar(args):
-    """Default S-axis sidecar for the selected export family."""
     return os.path.join(run_dir(args, 0), "prior_sidecar.npz")
 
 
 def curve_index_files(d0):
-    """Sub-universe index files written by the `curve` export stage.
-
-    An export family that skipped that stage has no `curve/` directory; the A
-    axis then reports only the full-lake point instead of failing."""
     sub = os.path.join(d0, "curve")
     if not os.path.isdir(sub):
         return []
@@ -97,12 +55,6 @@ def load_cands(args, seed):
 
 
 def merge(out, axis, payload, fname="F8_REPORT.json"):
-    """One report, written axis by axis, so a later axis crashing does not
-    erase what an earlier one measured.
-
-    `fname` exists so the P axis can write beside F8's report instead of into
-    it: F8.md quotes every key in F8_REPORT.json, and a re-ranked gold@10 has no
-    business appearing in the file that documents the retrieval numbers."""
     p = os.path.join(out, fname)
     rep = {}
     if os.path.isfile(p):
@@ -120,15 +72,7 @@ def interval(vals):
             "per_seed": v}
 
 
-# ── A axis ───────────────────────────────────────────────────────────────────
-
 def curve_point(z_m_eval, z_d_eval, cands, roots, sel, device):
-    """A-axis numbers with the candidate pool restricted to `sel`.
-
-    The pool is restricted, not the query set: every gold model is inside `sel`
-    by construction (F7's curve keeps the supervised union), so the queries are
-    the same ones and only the number of distractors changes. That is the whole
-    point of §3.5 -- N is the only variable."""
     from ModelLakeFishing.scale import global_metrics as GM
     pos = np.full(z_m_eval.shape[0], -1, dtype=np.int64)
     pos[sel] = np.arange(len(sel))
@@ -177,7 +121,6 @@ def axis_a(args):
     obs = {k: interval([rows[s]["eval_metrics"][k] for s in SEEDS])
            for k in ("observed_hit1", "top3_hit1", "regret1")}
 
-    # the retrieval-side curve of §3.5, on seed 0's held-out embeddings
     d0 = run_dir(args, 0)
     zm = np.load(os.path.join(d0, "z_m_eval.npy"), mmap_mode="r")
     zd = np.load(os.path.join(d0, "z_d_eval.npy"))
@@ -211,12 +154,10 @@ def axis_a(args):
     return payload
 
 
-# ── B axis ───────────────────────────────────────────────────────────────────
-
 def axis_b(args):
     t0 = time.time()
     d0 = run_dir(args, 0)
-    z_m = np.load(os.path.join(d0, "z_m.npy"))          # serving embeddings
+    z_m = np.load(os.path.join(d0, "z_m.npy"))
     z_d = np.load(os.path.join(d0, "z_d_eval.npy"))
     cands = load_cands(args, 0)
     qids = list(cands)
@@ -226,8 +167,6 @@ def axis_b(args):
     sub = os.path.join(d0, "curve")
     for f in sorted(os.listdir(sub)):
         if f.endswith(".bin"):
-            # hnsw_sub_<N>k_s<seed>.bin -- split on the LAST "_s", because
-            # "_s" also occurs inside "sub"
             stem, seed = f[:-4].rsplit("_s", 1)
             jobs.append((stem.replace("hnsw_sub_", ""), int(seed),
                          os.path.join(sub, f)))
@@ -265,8 +204,6 @@ def axis_b(args):
     return payload
 
 
-# ── C axis ───────────────────────────────────────────────────────────────────
-
 def axis_c(args):
     import torch
     from scale1m.graph_store import load_sharded
@@ -294,8 +231,7 @@ def axis_c(args):
         del z_m
         gc.collect()
 
-    # the largest lineage hubs, reported separately as the plan asks
-    from ModelLakeFishing.stage2TrainGraphSAGE.losses import TRAINED_ON  # noqa: F401
+    from ModelLakeFishing.stage2TrainGraphSAGE.losses import TRAINED_ON
     hubs = []
     for et in data.edge_types:
         if et[1] == "is_base_of":
@@ -336,12 +272,7 @@ def axis_c(args):
     return payload_out
 
 
-# ── D axis ───────────────────────────────────────────────────────────────────
-
 def axis_d(args):
-    """System cost. Every number here was measured by the stage that produced
-    the artifact; this assembles them and adds the one that nothing else
-    measured -- what it costs to put one new model into a live index."""
     t0 = time.time()
     d0 = run_dir(args, 0)
     ex = {s: load_manifest(args, s) for s in SEEDS}
@@ -388,11 +319,6 @@ def axis_d(args):
 
 
 def load_train_costs(args):
-    """Load all three training manifests or fail instead of emitting {}.
-
-    ``--run-fmt`` names export directories.  Training manifests may belong to
-    a different family/root, so their format has a separate CLI option.
-    """
     train = {}
     missing = []
     for s in SEEDS:
@@ -413,11 +339,6 @@ def load_train_costs(args):
 
 
 def incremental_onboarding(d0, args):
-    """Time to place one new model into a live index: encode its descriptor,
-    run the trained encoder over its own features, then insert into HNSW.
-
-    The GNN part is measured as a one-node forward on the already-loaded model;
-    what is timed here is the serving-side cost, not a rebuild."""
     import hnswlib
     z_m = np.load(os.path.join(d0, "z_m.npy"), mmap_mode="r")
     N, dim = z_m.shape
@@ -441,36 +362,11 @@ def incremental_onboarding(d0, args):
                     "reported there"}
 
 
-# ── P axis: the v6 serving priors on the full-lake rung ──────────────────────
-#
-# WHY THIS IS ITS OWN AXIS AND NOT A COLUMN IN A
-#     Axis A is the frozen A-axis of F8; its numbers are quoted in F8.md and in
-#     the 1M plan's gate table. The fusion changes the RANKING, not the
-#     embeddings or the index, so it belongs next to A rather than inside it --
-#     a re-ranked gold@10 must never be mistaken for the retrieval number. This
-#     axis therefore writes its own report and recomputes the plain-MIPS row in
-#     the same pass as a control: if that control does not reproduce F8's
-#     gold@10 exactly, nothing else on the axis can be trusted.
-#
-# HISTORICAL FULL-POOL SCORE (the source implementation is archived under
-#     legacy/pre_3m/stage3HNSW/serving_rerank.py)
-#     fused(D, m) = minmax(z_d[D]·z_m)[m] + alpha·sibling_boost(m) + beta·task_boost(m)
-#     minmax is over the WHOLE lake, as in serving_rerank, so the fused score is
-#     the reference implementation's, not a pool-local rescaling.
-#
-# WHAT IS COUNTED
-#     Every rank is over all 3,016,439 models -- the fusion is not restricted to
-#     a retrieved pool. serving_rerank's POOL = 512 would cap gold@10 at
-#     gold@512 (X1 §6); measuring the full lake separates "does the prior help"
-#     from "how deep must the first stage retrieve".
-
-SHRINK_K = 5.0          # frozen by the current Y2 task-prior protocol
+SHRINK_K = 5.0
 TOPK = 10
 
 
 def _prior_tables(sc, shrink=SHRINK_K):
-    """(task -> (model idx, shrunk boost)) and the same keyed by root, plus the
-    single-group 'null' prior a literal v6 port would compute on this rung."""
     import numpy as np
     import pandas as pd
     em = sc["edge_model"].astype(np.int64)
@@ -500,7 +396,6 @@ def _prior_tables(sc, shrink=SHRINK_K):
 
 
 def _minmax_pass(zm, zd, qids, device, model_chunk):
-    """Per-query min and max of the full-lake MIPS score."""
     import torch
     q = torch.as_tensor(qids, dtype=torch.long, device=device)
     zq = zd[q]
@@ -565,11 +460,6 @@ def axis_p(args):
         node_of = {q: node_of_all[q] for q in qids}
         observed = {q: by_node.get(node_of[q], set()) for q in qids}
 
-        # S2's channel, measured rather than assumed: under root-aware splitting
-        # every sibling of a test dataset is held out with it, so the sibling
-        # prior can only be all-zero. Asserted here so the report can say the
-        # alpha term is inert on this protocol instead of printing a duplicate
-        # column of the beta-only numbers.
         n_sib = sum(1 for q in qids if int(root_of[q]) in by_root)
         assert n_sib == 0, ("%d queries have a train/val-visible sibling; the "
                             "alpha term is no longer inert" % n_sib)
@@ -599,7 +489,6 @@ def axis_p(args):
             lo = lo_all[qs:qs + b]
             span = span_all[qs:qs + b]
 
-            # sparse (model, column, boost) triples of the task prior
             bi, bc, bv = [], [], []
             for j, q in enumerate(blk):
                 idx, val = by_task.get(int(task_of[q]), (np.zeros(0, np.int64),
@@ -616,7 +505,6 @@ def axis_p(args):
             BC_t = torch.as_tensor(BC, device=dev)
             BV_t = torch.as_tensor(BV, device=dev)
 
-            # probe scores by the exact gather path, per variant
             probes = []
             for j, q in enumerate(blk):
                 cand, acc = cands[q]
@@ -713,9 +601,6 @@ def axis_p(args):
                 "median_rank_over_N": float(np.median(g)) / N,
                 "vs_random": float((g <= 10).mean()) / (10.0 / N)}
 
-        # F9's second layer, on the SAME lists this axis ranks (audit §6: a
-        # prior that only scores recorded models must have its availability
-        # cost re-measured, not inherited from F9's seed-0 row)
         layer2 = []
         for v in top10:
             ranked = {q: (top10[v][i], int(cnt[v][i, 0] + 1)) for i, q in enumerate(qids)}
@@ -757,22 +642,6 @@ def axis_p(args):
 
 
 def beta_inf_limit(args):
-    """The beta -> infinity endpoint of the P-axis sweep, computed exactly from
-    the sidecar without a full-lake pass.
-
-    As beta grows, every model carrying a task prior separates from every model
-    that carries none (boosts cluster near the shrinkage midpoint 0.5, while
-    minmax(mips) is bounded by 1), so the fused order converges to "prior first,
-    minmax(mips) as the tie-break". That limit is decidable from the pool alone:
-
-        gold in pool  -> rank = #{m in pool : boost(m) > boost(gold)}
-                              + #{m in pool : boost(m) == boost(gold), s(m) > s(gold)} + 1
-        gold not in pool -> rank > |pool|
-
-    which is exact whenever |pool| >= k, and bounded otherwise. Both bounds are
-    reported; they differ only on the handful of queries whose same-task pool is
-    smaller than k. Without this endpoint a non-monotone beta sweep cannot be
-    read -- it is what says whether beta = 1 is a peak or just a waypoint."""
     import time
     import numpy as np
     import pandas as pd
@@ -842,30 +711,10 @@ def beta_inf_limit(args):
     return payload
 
 
-
-# ── S axis: the second (node-level) protocol and the S2 sibling prior ────────
-#
-# Pre-registered in docs/1M/X3_runs/PREREGISTRATION.md, whose SHA-256 is copied
-# into the result file. The protocol definitions, the seven rankings, the three
-# strata and the expectation are all fixed there; this code only executes them.
-#
-# Protocol A is the root-aware split already reported by the P axis: the prior
-# reads the train and validation edges of that split. Protocol B is node-level
-# at serving time: the prior may read every edge except those incident to the
-# query dataset itself. Training and the index are unchanged in both, so the
-# query set stays the root-aware test set, whose labels the frozen embeddings
-# never saw under either protocol.
-
-NAME_JACCARD_MAX = 0.5      # row 4 of the pre-registration
+NAME_JACCARD_MAX = 0.5
 
 
 def _group_totals(edge_model, edge_dataset, edge_acc, key_of_dataset):
-    """key -> (sorted model ids, summed acc, count), and the same per dataset.
-
-    Both are needed: the totals let a query subtract its own contribution in
-    O(|group models|) instead of re-summing the group, and the per-dataset view
-    lets the name-distinct sibling row rebuild a group from a subset.
-    """
     import numpy as np
     import pandas as pd
     k = key_of_dataset[edge_dataset]
@@ -891,11 +740,6 @@ def _group_totals(edge_model, edge_dataset, edge_acc, key_of_dataset):
 
 
 def _boost_minus_self(totals, per_ds, key, d, shrink):
-    """Group boost for query d, with d's own edges removed exactly.
-
-    Returns (sorted model ids, boost). Models whose only contribution came from
-    d disappear from the group, which is what "exclude D's own labels" means.
-    """
     import numpy as np
     if key not in totals:
         return np.zeros(0, np.int64), np.zeros(0)
@@ -917,7 +761,6 @@ def _boost_minus_self(totals, per_ds, key, d, shrink):
 
 
 def _boost_from_datasets(per_ds, datasets, shrink):
-    """Group boost built from an explicit dataset list (row 4)."""
     import numpy as np
     from collections import defaultdict
     sm, cn = defaultdict(float), defaultdict(int)
@@ -936,7 +779,6 @@ def _boost_from_datasets(per_ds, datasets, shrink):
 
 
 def _scatter(BI, BC, BV, ms, c, b, dev):
-    """Dense [c, b] slice of a sparse per-query boost, for one model block."""
     import numpy as np
     import torch
     out = torch.zeros(c * b, dtype=torch.float32, device=dev)
@@ -1015,11 +857,9 @@ def axis_s(args):
         node_of = {q: node_all[q] for q in qids}
         observed = {q: by_node.get(node_of[q], set()) for q in qids}
 
-        # strata, fixed before any metric is read
         has_sib = np.array([len([x for x in root_members[int(root_of[q])] if x != q]) > 0
                             for q in qids])
 
-        # per-query sparse boosts for the four sources
         boosts = {k: [] for k in SOURCES}
         n_nd_dropped = []
         for q in qids:
@@ -1211,20 +1051,10 @@ def axis_s(args):
     return payload
 
 
-# ── E axis: the gold_eligible query-set caliber change ───────────────────────
-
 ELIGIBILITY_REASONS = ("direction_unknown", "is_placeholder", "is_rl")
 
 
 def query_eligibility(nodes_path, d0):
-    """Per dataset row of an export: gold-eligible, and if not, why not.
-
-    `canonicalize_rf` marks a dataset node gold-ineligible when it is an RL
-    task, when its name is a placeholder, when the metric direction is unknown,
-    or when it has fewer than QUERY_MIN_MODELS models. F2 reports query depth
-    over the eligible nodes only, but `top1_audit.candidates` never applied the
-    flag, so the A axis has been scoring a query set that F2 would not accept.
-    """
     nodes = pd.read_parquet(nodes_path,
                             columns=["node", "gold_eligible", "primary_direction",
                                      "is_placeholder", "is_rl"])
@@ -1243,7 +1073,6 @@ def query_eligibility(nodes_path, d0):
 
 
 def a_row(zm, zd, cands, roots, device):
-    """One A-axis row over whatever query subset `cands` holds."""
     from ModelLakeFishing.scale import global_metrics as GM
     if not cands:
         return None
@@ -1260,13 +1089,6 @@ def a_row(zm, zd, cands, roots, device):
 
 
 def axis_e(args):
-    """A axis recomputed on the F2-eligible query set, beside the current one.
-
-    Three rows per seed: every query the A axis scores today, the eligible
-    subset, and the excluded queries on their own. The third row is what says
-    whether the current number was being helped or hurt by the queries F2 would
-    have refused, which a difference of means cannot.
-    """
     t0 = time.time()
     per_seed, checks = {}, []
     for s in SEEDS:
@@ -1285,9 +1107,6 @@ def axis_e(args):
                 "gold_eligible_only": a_row(zm, zd, keep, roots, args.device),
                 "excluded_only": a_row(zm, zd, drop, roots, args.device)}
 
-        # the unfiltered row is recomputed here, so it must reproduce the row
-        # the export wrote; if it does not, the two are not measuring the same
-        # thing and the comparison below means nothing
         ref = load_manifest(args, s)["stages"]["metrics"]["a_axis_row"]
         delta = max(abs(rows["all_queries"][k] - ref[k])
                     for k in ("gold@1", "gold@10", "top3@10", "root_gold@10"))
@@ -1353,7 +1172,6 @@ def main(argv=None):
     p.add_argument("--f6-run-fmt", default=RUN_FMT,
                    help="printf-style training run directory format keyed by seed")
     p.add_argument("--machine", default="local RTX 4060 Laptop, 24 logical cores")
-    # P axis
     p.add_argument("--dataset-nodes", default=os.path.join(
         d, "rf", "canon", "dataset_nodes_merged.parquet"),
         help="canonical dataset nodes; carries gold_eligible (E axis)")
@@ -1364,7 +1182,6 @@ def main(argv=None):
     p.add_argument("--model-chunk", type=int, default=100_000)
     p.add_argument("--query-chunk", type=int, default=128)
     p.add_argument("--top10-of", nargs="+", default=["mips", "task_b1"])
-    # S axis
     p.add_argument("--prereg", default=os.path.join(
         _REPO_ROOT, "ModelLakeFishing", "docs", "1M", "X3_runs", "PREREGISTRATION.md"))
     p.add_argument("--full-sidecar", default=None,
@@ -1376,7 +1193,6 @@ def main(argv=None):
         import torch
         args.device = "cuda" if torch.cuda.is_available() else "cpu"
     if args.axis == "s" and args.top10_of == ["mips", "task_b1"]:
-        # the pre-registration names rows 1, 5 and 7 for the second layer
         args.top10_of = ["mips", "B_sib_taskA", "B_sib_taskB"]
     os.makedirs(args.out, exist_ok=True)
     {"a": axis_a, "b": axis_b, "c": axis_c, "d": axis_d, "e": axis_e,

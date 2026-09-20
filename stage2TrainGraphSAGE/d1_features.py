@@ -1,18 +1,3 @@
-"""
-d1_features.py -- D1 §5.3 runtime glue: attach the MODEL-side task ids to a
-loaded HGraph and expose the vocab, without rebuilding or re-saving the .pt.
-
-The graph stays immutable (same sha256 in every report); task_id becomes a
-node-store column exactly like size_bucket_id / family_id, so loaders slice it
-with automatic row alignment. Alignment is verified against BOTH mappedID and
-the model name -- a silent misalignment here would corrupt e_task the same way
-a z_m row-order break corrupts serving.
-
-Source artifacts (built offline by stage1's d1_model_task_vocab.py):
-    stage1BuildTransferGraph/artifacts/d1_features/model_task_ids.csv
-    stage1BuildTransferGraph/artifacts/d1_features/task_vocab.csv
-"""
-
 import os
 
 import pandas as pd
@@ -37,10 +22,6 @@ def load_model_task_vocab(vocab_csv: str = VOCAB_CSV) -> dict:
 
 def attach_model_task_ids(data, umi, *, ids_csv: str = IDS_CSV,
                           vocab_csv: str = VOCAB_CSV) -> dict:
-    """
-    Set data['model'].task_id ([N] long, mappedID row order) and return the
-    task vocab. `umi` is the graph's unique_model_id DataFrame (model, mappedID).
-    """
     ids = pd.read_csv(ids_csv)
     vocab = load_model_task_vocab(vocab_csv)
 
@@ -52,7 +33,6 @@ def attach_model_task_ids(data, umi, *, ids_csv: str = IDS_CSV,
             f"{int(merged['task_id'].isna().sum())} graph models missing from "
             f"{os.path.basename(ids_csv)} (e.g. {missing}) — rebuild the task ids "
             "for THIS graph with d1_model_task_vocab.py --graph <graph.pt>")
-    # double alignment check: the CSV's own mappedID must agree with the graph's
     if not (merged["mappedID_x"].values == merged["mappedID_y"].values).all():
         raise ValueError("mappedID mismatch between graph and model_task_ids.csv — "
                          "the CSV was built from a different graph")
@@ -66,20 +46,6 @@ def attach_model_task_ids(data, umi, *, ids_csv: str = IDS_CSV,
 
 def apply_dataset_task_repair(data, xd0_meta, *, patch_csv: str = L3_PATCH_CSV,
                               vocab_csv: str = L3_VOCAB_CSV):
-    """
-    v3 L3: APPLY the (reviewed, gate-passing) task_type_enrichment dry-run
-    patch at runtime -- the graph .pt stays untouched, exactly like the D1
-    task_id attach.
-
-    Overrides data['dataset'].task_type_id for patch rows whose action is
-    'replace_Other_after_review' and extends the task_type vocab with the
-    patch's new rows (ids 10..). Safety: every overridden node must currently
-    be Other (0) -- a graph/patch mismatch fails loudly, not silently.
-
-    Returns a NEW xd0_meta dict (num_task_types / task_type_vocab updated) and
-    a stats dict. The DatasetNodeEncoder built from it gets the extended table;
-    fresh training only -- old checkpoints keep their own bound vocab.
-    """
     patch = pd.read_csv(patch_csv)
     vpatch = pd.read_csv(vocab_csv)
     vocab = dict(zip(vpatch["task_type"], vpatch["task_type_id"].astype(int)))

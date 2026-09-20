@@ -1,42 +1,3 @@
-"""
-hf_canonicalize.py -- T3 stage 1: reduce a frozen candidate snapshot to the
-FOUR quantities the graph builder is allowed to see, plus an audit-only layer.
-
-Runbook: docs/1M/100kplan.md 6.1.   Record: docs/1M/T3.md.
-
-THE FOUR QUANTITIES (iron rule 2 -- nothing else reaches the descriptor)
-    unique_model_id   normalize(id) = strip().lower(); the dedupe key shared
-                      with scale1m.verify_raw.normalize
-    size_b            safetensors.total / 1e9 ONLY (D-26). No name regex.
-    family            the string that will be looked up in CORE's family_vocab
-    lineage_base      the declared parent, normalized
-
-WHY `family` IS NOT JUST `_infer_one_family` (F-T3-1, measured)
-    CORE's family strings came from ModelLens's `model_profile.family`, which
-    is the HF `config.model_type` namespace: `bert`, `llama`, `vit`, `marian`.
-    `_infer_one_family` returns the *rule table's* namespace: `BERT`, `LLaMA`,
-    `ViT`. Those are DIFFERENT vocab entries -- and `family_vocab` already
-    contains both, because KNOWN_FAMILIES is seeded and the ModelLens strings
-    were admitted dynamically on top.
-
-    Feeding HALO through `_infer_one_family` alone puts **0.64%** of it into a
-    family CORE actually uses. Every llama in HALO would get row `LLaMA` while
-    every llama in CORE sits in row `llama`: same architecture, two embedding
-    rows, zero sharing, and nothing anywhere would raise.
-
-    So resolution goes, in order:
-      1. `config.model_type` if CORE already uses that family   (authoritative)
-      2. lowercased `_infer_one_family` if CORE already uses it (rule fallback)
-      3. `config.model_type` if present                         (new row, right namespace)
-      4. lowercased `_infer_one_family`                         (last resort)
-    Measured on the selected HALO: 29.63% -> 48.47% land in a CORE-used family.
-    `family_source` records which rule fired for every row.
-
-Run (from ModelLakeFishing/):
-    .\\.venv\\Scripts\\python.exe -m scale1m.hf_canonicalize `
-        --candidates <dir> --core stage1BuildTransferGraph/hgraph_ml_v2.pt --out <dir>
-"""
-
 import argparse
 import gzip
 import json
@@ -55,7 +16,6 @@ LAYERS = ("labeled", "lineage", "plain", "dropped")
 
 
 def normalize(mid) -> str:
-    """The one id rule, shared with verify_raw / annotate / build_ladder."""
     return str(mid).strip().lower()
 
 
@@ -70,12 +30,6 @@ def load_shards(cdir):
 
 
 def core_used_families(core_path):
-    """The families CORE's embedding table actually has rows in USE for.
-
-    Not `family_vocab.keys()`: the vocab is seeded with KNOWN_FAMILIES, most of
-    which no CORE model ever hit. Sharing a row only matters if CORE put models
-    in it, so the *used* set is what the resolution policy targets.
-    """
     import torch
     core = torch.load(core_path, weights_only=False)
     vocab = core["xm0_meta"]["family_vocab"]
@@ -85,19 +39,11 @@ def core_used_families(core_path):
 
 
 def size_b_of(rec):
-    """D-26: safetensors ONLY. A missing value stays missing."""
     total = (rec.get("safetensors") or {}).get("total")
     return (float(total) / 1e9, "safetensors") if total else (None, "none")
 
 
 def lineage_base_of(rec):
-    """-> (normalized parent id, relation, source).
-
-    `baseModels` outranks `cardData.base_model`: the plan text says cardData,
-    but T2 established that baseModels is HF's own structured relation while
-    cardData.base_model is a free-text string an author typed. Both are read;
-    which one fired is recorded.
-    """
     bm = rec.get("baseModels")
     if isinstance(bm, dict) and bm.get("ids"):
         return normalize(bm["ids"][0]), bm.get("relation"), "baseModels"
@@ -110,7 +56,6 @@ def lineage_base_of(rec):
 
 
 def family_of(rec, used):
-    """-> (family string, source). See the module docstring for the ordering."""
     mt = str((rec.get("config") or {}).get("model_type") or "").strip().lower()
     inferred = _infer_one_family(rec.get("id") or "")
     inf_low = str(inferred or "").strip().lower()
@@ -124,12 +69,6 @@ def family_of(rec, used):
 
 
 def layer_of(rec, lineage_base):
-    """Audit-only stratum (D-10: never enters training).
-
-    `dropped` is kept verbatim from the plan even though D-27 recorded that it
-    is a dead rule -- HF auto-tags every repo, so the conjunction is never
-    true. Kept so the count is *reported* as zero rather than silently absent.
-    """
     card = rec.get("cardData") or {}
     if not rec.get("pipeline_tag") and not rec.get("tags") \
             and not (rec.get("safetensors") or {}).get("total"):

@@ -1,11 +1,3 @@
-"""Evaluate the frozen 3M retrieval system on its final online path only.
-
-For each held-out query, the evaluator retrieves 1,000 model IDs from the
-split-specific inner-product HNSW index, adds the split-safe task prior to the
-rescaled dense score, and returns ten recommendations.  It intentionally does
-not run alternative scorers, exhaustive retrieval, or candidate-depth sweeps.
-"""
-
 from __future__ import annotations
 
 import argparse
@@ -61,7 +53,6 @@ def _sha256(path: Path, block_size: int = 8 << 20) -> str:
 
 
 def _recommendation_digest(matrix: np.ndarray) -> str:
-    """Hash logical rows, independent of NumPy container metadata."""
     canonical = np.asarray(matrix, dtype="<i8", order="C")
     digest = hashlib.sha256()
     digest.update(np.ascontiguousarray(canonical[:, 0]).tobytes(order="C"))
@@ -124,7 +115,6 @@ def _gold_candidates(path: Path) -> dict[int, tuple[np.ndarray, np.ndarray]]:
 
 
 def _stable_tie_keys(n: int) -> np.ndarray:
-    """Unique, label-free secondary keys used by the deployed reranker."""
     ids = np.arange(n, dtype=np.uint64)
     with np.errstate(over="ignore"):
         keys = (ids * np.uint64(11400714819323198485)
@@ -135,7 +125,6 @@ def _stable_tie_keys(n: int) -> np.ndarray:
 
 
 class TaskPrior:
-    """Split-specific task evidence, reduced to sorted model/boost tables."""
 
     def __init__(self, payload_path: Path, metadata_path: Path, seed: int,
                  query_ids: list[int], dataset_roots: np.ndarray):

@@ -1,26 +1,3 @@
-"""
-cold_start_axis.py -- P5 C-axis: cold-start robustness, both systems, same 12K
-universe / same 517 held-out gold queries / same harness. No extra training --
-stratifies the A-axis result along two cold-start dimensions:
-
-  (1) new-MODEL proxy: bin queries by the GOLD model's TRAINING evidence
-      (# distinct train datasets it was observed on). A gold model seen on few
-      train datasets is closer to cold. Our GNN is inductive (embeds a model
-      from features + neighbourhood); ModelLens leans on a learned per-model id
-      embedding that is weak/[UNK] for thinly-seen models.
-  (2) new-DATASET dimension: bin queries by SIBLING availability -- whether the
-      query dataset's root has OTHER (dataset,task) nodes in the training split.
-      Isolated roots are the hard cold-start; sibling-rich roots are where our
-      graph structure (similar_to) and sibling evidence can help.
-
-Both systems are the SAME as P5 A-axis: ours = held-out z (from_embeddings);
-ModelLens = the retrained NON-BLIND model (retrained_modellens.pt), re-scored.
-
-Run (repo root):
-  ModelLakeFishing/.venv/Scripts/python.exe -m ModelLakeFishing.scale.cold_start_axis \
-     --graph ModelLakeFishing/stage1BuildTransferGraph/hgraph_ml_v2_sub.pt
-"""
-
 import argparse
 import json
 import os
@@ -31,8 +8,8 @@ import pandas as pd
 import torch
 
 _HERE = os.path.dirname(os.path.abspath(__file__))
-from scale import global_metrics as GM  # noqa: E402
-from scale.retrain_modellens import build_modellens, LAKE, EXPORT, OUT, NODE_SEP  # noqa: E402
+from scale import global_metrics as GM
+from scale.retrain_modellens import build_modellens, LAKE, EXPORT, OUT, NODE_SEP
 
 
 def gold_ranks_ours(zm, zd, cands):
@@ -106,7 +83,6 @@ def main():
     r_ours = gold_ranks_ours(zm, zd, cands)
     r_ml, udi, data = gold_ranks_modellens(args.graph, cands, dev)
 
-    # per-query gold model + its TRAIN degree (train = non-test datasets)
     ei = data["model", "trained_on", "dataset"].edge_index.numpy()
     test_d = set(cands)
     train_deg = np.zeros(len(udi) if False else int(ei[0].max()) + 1, dtype=int)
@@ -121,10 +97,6 @@ def main():
         g = int(c[int(np.argmax(a))])
         gold_deg[d] = len(seen.get(g, set()))
 
-    # same-TASK train-peer availability (P2b task-fusion dimension). NOTE the
-    # same-ROOT sibling axis is degenerate here: root-aware splitting removes
-    # every same-root sibling from training BY DESIGN (leakage-free), so all
-    # queries are root-isolated. Task peers are the non-degenerate cold signal.
     task_d = data["dataset"].task_type_id.numpy()
     train_task = {}
     for nd_id in range(len(udi)):

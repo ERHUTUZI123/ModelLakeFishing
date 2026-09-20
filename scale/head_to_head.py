@@ -1,28 +1,3 @@
-"""
-head_to_head.py -- P4: the controlled head-to-head. Both systems scored on the
-SAME 12K candidate universe, the SAME 517 held-out gold queries, and the SAME
-global-metric harness (scale/global_metrics). A-axis = accuracy, B-axis =
-latency.
-
-HONESTY (carried from P2 §3.1 / D-5, non-negotiable disclosure):
-  ModelLens's dataset_desc_matrix AND dataset2id mapping are both UNPUBLISHED.
-  From published artifacts it can only run "dataset-blind" (task+metric+model
-  features), which UNDER-represents the paper's full system. Its numbers here
-  are the "reproducible-from-release" version, NOT proof our method wins on a
-  level field. This is stated in every output.
-
-Fairness controls:
-  * identical candidate universe: our 12,000 sub-lake models, mapped to
-    ModelLens's global ids for its _id_emb / model_desc_matrix (encoded with the
-    REAL global ids, not arange);
-  * identical query set + gold labels: the 517 test datasets from the P3 export
-    (gold_cands.npz);
-  * identical metric code: scale.global_metrics for both.
-
-Run (repo root):
-  ModelLakeFishing/.venv/Scripts/python.exe -m ModelLakeFishing.scale.head_to_head
-"""
-
 import json
 import os
 import sys
@@ -46,9 +21,6 @@ NODE_SEP = "␟"
 
 
 def load_export():
-    # A-axis uses the HELD-OUT eval embeddings (test-split forward): the query
-    # dataset does NOT see its own supervision edges. Using full-graph z_*.npy
-    # here would leak a held-out query's own labels and inflate our gold@K.
     zm = np.load(os.path.join(EXPORT, "z_m_eval.npy"))
     zd = np.load(os.path.join(EXPORT, "z_d_eval.npy"))
     gc = np.load(os.path.join(EXPORT, "gold_cands.npz"))
@@ -67,8 +39,6 @@ def ours(zm, zd, cands, roots):
 
 
 def cache_subset(model, names, global_ids, size_ids, fam_ids, dev):
-    """build_model_cache but with REAL global ids (our 12K is a SUBSET, so
-    arange would mis-index _id_emb / model_desc_matrix)."""
     gid = torch.as_tensor(global_ids, dtype=torch.long, device=dev)
     with torch.no_grad():
         h_model = model.encode_model(gid, names)
@@ -85,7 +55,6 @@ def modellens(zm_len, cands, roots, mid, did):
     pool = pd.read_csv(os.path.join(LAKE, "ml_dataset_pool.csv"))
     node2metric = dict(zip(pool["dataset_node"], pool["chosen_metric"]))
 
-    # our 12K models in mappedID order -> their global ids / size / family
     names = mid.sort_values("mappedID")["model"].tolist()
     fam_allowed = {str(k).strip().lower(): int(v) for k, v in family2id.items()}
     UNK = {"unknown", "", "none", "null", "nan"}
@@ -110,7 +79,7 @@ def modellens(zm_len, cands, roots, mid, did):
 
     node_of = dict(zip(did["mappedID"], did["dataset"]))
     unk_ds = model.unk_dataset_id
-    desc_in = torch.tensor([[float(unk_ds)]], device=dev)   # blind (D-5 release version)
+    desc_in = torch.tensor([[float(unk_ds)]], device=dev)
 
     scores = {}
     for d in cands:
@@ -128,8 +97,6 @@ def modellens(zm_len, cands, roots, mid, did):
 
 
 def bench_latency(zm, zd, cands, model, cache, dev, ctx, ns=(1000, 2000, 5000, 12000)):
-    """B-axis: ModelLens O(N) scan vs our HNSW, CUDA-synced, warmup + reps.
-    latency-vs-N curve (the asymptotic moat; slope is what matters)."""
     import hnswlib
     task2id, metric2id, node2metric, node_of = ctx
     qds = list(cands)[:100]
@@ -138,19 +105,16 @@ def bench_latency(zm, zd, cands, model, cache, dev, ctx, ns=(1000, 2000, 5000, 1
         if dev == "cuda":
             torch.cuda.synchronize()
 
-    # build per-N ModelLens caches (slice the full cache tensors)
     full = cache
     zmn = zm / (np.linalg.norm(zm, axis=1, keepdims=True) + 1e-12)
     zdn = zd / (np.linalg.norm(zd, axis=1, keepdims=True) + 1e-12)
     curve = {}
     for N in ns:
-        # ModelLens scan over first N candidates
         sub = {"h_model": full["h_model"][:N], "h_size": full["h_size"][:N] if full["h_size"] is not None else None,
                "size_ids": full["size_ids"][:N],
                "h_family": full["h_family"][:N] if full["h_family"] is not None else None,
                "family_ids": full["family_ids"][:N]}
         desc_in = torch.tensor([[float(model.unk_dataset_id)]], device=dev)
-        # warmup
         for d in qds[:20]:
             node = str(node_of[int(d)]); task = node.split(NODE_SEP)[1] if NODE_SEP in node else ""
             with torch.no_grad():
@@ -168,7 +132,6 @@ def bench_latency(zm, zd, cands, model, cache, dev, ctx, ns=(1000, 2000, 5000, 1
                 model.score_matrix(ti, desc_in, sub, metric_ids=mi)
             sync(); ml_lat.append((time.perf_counter_ns() - t) / 1e6)
 
-        # our HNSW over first N models
         idx = hnswlib.Index(space="ip", dim=zmn.shape[1])
         idx.init_index(max_elements=N, ef_construction=200, M=32)
         idx.add_items(zmn[:N].astype(np.float32), np.arange(N))

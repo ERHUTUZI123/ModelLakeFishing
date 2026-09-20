@@ -1,25 +1,3 @@
-"""Build X6's mappedID-aligned model-metadata sidecar.
-
-The minimal X6 baselines use snapshot ``downloads`` (P) and model ``tags`` /
-``pipeline_tag`` (L). Those fields live only in the raw crawl shards, so this
-module extracts them once. A few adjacent raw fields are retained because they
-are essentially free to harvest, but they are not additional X6 baselines.
-
-THE ONE THING THAT CAN SILENTLY RUIN EVERY POPULARITY BASELINE
-    Row order. 1Mplan 3.6 froze `mappedID` 0..3,003,758 as the snapshot's crawl
-    order, so streaming the shards in SHARDS.json order reproduces it. If that
-    assumption ever breaks, every B1-B6 number is scored against the wrong
-    model and nothing raises. So this does not sample-check the alignment: it
-    compares `normalize(raw id)` against the ladder's `model` on EVERY row and
-    dies on the first mismatch.
-
-The 12,680 tail rows (models known only from historical supervision, never in
-the snapshot) have no hub record. They receive missing/default metadata rather
-than being dropped, keeping every X6 candidate pool at 3,016,439.
-
-Run (from ModelLakeFishing/):
-    python -m scale1m.baseline_sidecar
-"""
 import argparse
 import gzip
 import json
@@ -35,8 +13,8 @@ _REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(_HERE), ".."))
 if _REPO_ROOT not in sys.path:
     sys.path.insert(0, _REPO_ROOT)
 
-from ModelLakeFishing.scale1m.hf_crawl import data_root, utcnow, write_json_atomic  # noqa: E402
-from ModelLakeFishing.scale1m.hf_canonicalize import normalize  # noqa: E402
+from ModelLakeFishing.scale1m.hf_crawl import data_root, utcnow, write_json_atomic
+from ModelLakeFishing.scale1m.hf_canonicalize import normalize
 
 N_SNAPSHOT = 3_003_759
 N_TOTAL = 3_016_439
@@ -60,7 +38,6 @@ def harvest(raw_dir, ladder_model, verbose_every=250_000):
         with gzip.open(path, "rt", encoding="utf-8") as fh:
             for line in fh:
                 rec = json.loads(line)
-                # THE alignment assertion -- every row, not a sample.
                 mid = normalize(rec.get("id"))
                 if mid != ladder_model[i]:
                     raise AssertionError(
@@ -119,7 +96,6 @@ def main(argv=None):
     out_path = os.path.join(out_dir, "baseline_attrs.parquet")
     df.to_parquet(out_path, index=False)
 
-    # ---- exit gate (X6 6) -------------------------------------------------
     gate = {
         "rows_is_N": len(df) == N_TOTAL,
         "mappedID_contiguous": df["mappedID"].tolist() == list(range(N_TOTAL)),

@@ -1,29 +1,3 @@
-"""
-checkpoint.py -- T6 checkpoint / resume (docs/1M/100kplan.md §9.3).
-
-WHY THIS IS A SEPARATE MODULE WITH ITS OWN TESTS
-    On watGPU a job can be preempted and requeued. A resume that quietly starts
-    from epoch 0, or restores the weights but not the optimizer, produces a run
-    that finishes, reports a number, and is wrong -- no exception anywhere. The
-    plan's gate G-W4 ("save, reload, resume, steps stay continuous") is the only
-    thing standing between that and a reported result, so the machinery it tests
-    lives here rather than inline in the training driver.
-
-WHAT A CHECKPOINT MUST CARRY
-    §9.3 lists it: model, optimizer, scheduler, AMP scaler, epoch, global step,
-    best-metric / early-stopping state, the four RNG streams, resolved config,
-    and the data version. On top of that the checkpoint records its BINDING --
-    family_vocab path and sha256, size-bucket constants, e_name seed, token_dim,
-    encoder name. CLAUDE.md's rule is that the vocab is the only credential for
-    embedding-row identity; a checkpoint that cannot prove which vocab it was
-    trained against has orphaned family rows, and no error will say so.
-
-ATOMICITY
-    Write to a temp file, fsync, rename. `last.pt` is only repointed after the
-    numbered checkpoint is safely on disk, so a job killed mid-write leaves the
-    previous checkpoint intact rather than a truncated one.
-"""
-
 import glob
 import hashlib
 import json
@@ -44,10 +18,6 @@ LAST = "last.pt"
 BEST = "best.pt"
 STEM = "checkpoint_epoch_"
 
-# Keys that must match for a resume to be legitimate. A mismatch here means the
-# checkpoint was trained against different data or a different embedding-row
-# identity, which makes the restored weights meaningless rather than merely
-# stale -- so it is a hard failure, not a warning.
 BINDING_KEYS = ("family_vocab_sha256", "num_families", "num_size_buckets",
                 "size_bucket_version", "name_seed", "name_dim", "desc_dim",
                 "encoder_name", "graph_sha256", "split_seed")
@@ -66,7 +36,6 @@ def sha256_of(path):
 
 
 def graph_digest(path):
-    """Return a stable content identity for file and sharded-directory graphs."""
     if path and os.path.isdir(path):
         with open(os.path.join(path, "meta.json"), encoding="utf-8") as fh:
             files = json.load(fh)["files"]
@@ -76,12 +45,6 @@ def graph_digest(path):
 
 
 def size_bucket_version():
-    """A string that changes whenever the bucket boundaries change.
-
-    The size table needs no vocab file (the boundaries are constants in code),
-    but CLAUDE.md notes that changing them requires retraining -- so the
-    constants themselves are the version.
-    """
     from dataset_embed.xm0_builder import (SIZE_LOG10_MIN, SIZE_LOG10_MAX,
                                            SIZE_BUCKET_WIDTH, NUM_SIZE_BUCKETS)
     return "min%.1f_max%.1f_w%.2f_n%d" % (SIZE_LOG10_MIN, SIZE_LOG10_MAX,
@@ -107,8 +70,6 @@ def make_binding(xm0_meta, *, graph_path, split_seed, family_vocab_path=None,
     }
 
 
-# ── RNG ──────────────────────────────────────────────────────────────────────
-
 def rng_state():
     return {
         "python": random.getstate(),
@@ -129,16 +90,11 @@ def set_rng_state(s):
         try:
             torch.cuda.set_rng_state_all(s["torch_cuda"])
         except (RuntimeError, ValueError):
-            # different GPU count than the run that saved it; CPU streams are
-            # restored either way and the mismatch is reported by the caller
             pass
 
 
-# ── save / load ──────────────────────────────────────────────────────────────
-
 def save(ckpt_dir, *, epoch, global_step, model, scorer, opt, history, cfg,
          binding, best=None, scheduler=None, scaler=None, extra=None, keep=3):
-    """Write checkpoint_epoch_<N>.pt atomically, then repoint last.pt."""
     os.makedirs(ckpt_dir, exist_ok=True)
     payload = {
         "ckpt_version": CKPT_VERSION,
@@ -176,9 +132,6 @@ def _atomic_torch_save(payload, path):
 
 
 def _prune(ckpt_dir, keep):
-    """Keep the newest `keep` numbered checkpoints. best.pt / last.pt are named
-    files and are never in this list, so the run always retains best, latest and
-    at least one historical copy."""
     if not keep or keep < 1:
         return
     nums = []
@@ -201,10 +154,6 @@ def load(path, map_location="cpu"):
 
 
 def resolve_resume(explicit, ckpt_dir):
-    """§9.3's fixed order: explicit --resume, then <run>/ckpt/last.pt, then a
-    new run. Returns (path_or_None, how) so the driver can log the choice --
-    "resumed from nothing" and "started fresh" must not look the same in a log.
-    """
     if explicit:
         if not os.path.exists(explicit):
             raise FileNotFoundError("--resume %s does not exist" % explicit)
@@ -216,7 +165,6 @@ def resolve_resume(explicit, ckpt_dir):
 
 
 def validate(ck, binding, cfg=None, strict_cfg=False):
-    """Return the list of mismatches; empty means safe to resume."""
     bad = []
     ckb = ck.get("binding", {})
     for k in BINDING_KEYS:
@@ -235,26 +183,11 @@ def validate(ck, binding, cfg=None, strict_cfg=False):
 
 
 def to_resume_state(ck):
-    """The dict stage2TrainGraphSAGE.train() consumes.
-
-    The RNG travels inside it rather than being restored by the caller: the
-    model is built by train_eval_one, which reseeds, so anything restored
-    before that call is thrown away.
-    """
     return {"model": ck["model"], "scorer": ck["scorer"], "opt": ck["opt"],
             "epoch": int(ck["epoch"]), "rng": ck.get("rng")}
 
 
 def _jsonable(obj):
-    """A JSON-safe deep copy.
-
-    Copying rather than returning `obj` when it already serialises matters:
-    the training driver snapshots the config for metadata and only afterwards
-    adds the callback and resume state to it. Returning the same dict would
-    make that snapshot alias the live config, and writing the manifest at the
-    end of the run would fail on a function object -- after the training had
-    already been paid for.
-    """
     if isinstance(obj, dict):
         return {str(k): _jsonable(v) for k, v in obj.items()}
     if isinstance(obj, (list, tuple)):

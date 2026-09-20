@@ -1,4 +1,3 @@
-"""Smoke isolation/evaluation guards using tiny tensors and mocked training only."""
 import argparse
 import json
 from pathlib import Path
@@ -26,7 +25,6 @@ def config_args(smoke=False):
 def tiny_pair():
     model, scorer = torch.nn.Linear(2, 2), torch.nn.Linear(2, 1)
     opt = torch.optim.Adam(list(model.parameters()) + list(scorer.parameters()), lr=0.01)
-    # Only a 2-element fixture update: no graph encoder or production trainer.
     (model(torch.ones(1, 2)).sum() + scorer(torch.ones(1, 2)).sum()).backward()
     opt.step()
     return model, scorer, opt
@@ -65,7 +63,6 @@ def test_smoke_single_epoch_gate_checks_optimization_not_loss_descent():
     assert gate["loss_descended"] is None
     assert gate["loss_descent_required"] is False
     assert gate["optimizer_steps_max"] == 1
-    # The existing formal acceptance rule is unchanged for a one-epoch history.
     assert not driver.mechanism_gate(hist, model)["passed"]
 
 
@@ -234,7 +231,6 @@ def test_sharded_a0_uses_shared_actual_file_verifier_before_loading(tmp_path, mo
 
     def load(*args, **kwargs):
         events.append("load")
-        # Shared verification hashes all actual bytes; no duplicate pass needed.
         assert kwargs == {"mmap": True, "verify_sha256": False}
         return payload
 

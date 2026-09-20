@@ -2,17 +2,15 @@
 
 ModelLakeFishing finds models for a **dataset–task query**: a dataset and the task you want to perform on it. It learns from model metadata and past evaluation results, uses HNSW to find 1,000 candidates, and reranks them to return ten models.
 
-Follow this guide to download current Hugging Face data and run the full pipeline, from data preparation to training and evaluation. You do not need an existing `data/` folder or a trained ModelLakeFishing checkpoint.
+Follow this guide to download current Hugging Face data and run the full pipeline, from data preparation to training and evaluation.
 
-**This reruns our method on newly collected data.** The paper used an older snapshot and additional historical evaluation records. A new download will contain different models and evidence, so its results may differ from the paper's results.
+**This runs our method on newly collected data.** The paper used an older snapshot and additional historical evaluation records. A new download will contain different models and evidence, so its results may differ from the paper's results. That is not ideal but considering a very large size of original data, it is the best approach we can give to you.
 
 ## What you download
 
-The default `live` profile downloads metadata for all publicly listed models and datasets on Hugging Face at the time of collection. It does not filter models by popularity or impose a model-count limit. Private repositories are excluded.
+You will download metadata for all publicly listed models and datasets on Hugging Face.
 
-The download includes model names, families, sizes, links between base models and their variants, dataset descriptions, and evaluation results reported in model cards. These reported results, stored in the cards' `model-index` field, provide the training and evaluation evidence for this run.
-
-You do **not** download every model's weights or every dataset's examples. The pipeline does not run the candidate models. It downloads a small MiniLM text encoder separately to build features.
+The metadata here includes model names, families, sizes, links between base models and their variants, dataset descriptions, and evaluation results reported in model cards. These reported results, stored in the cards' `model-index` field, provide the training and evaluation evidence for this run.
 
 Each download is saved with its collection dates and file checksums. Later steps use these saved files. Since Hugging Face can change while a download is running, the collection covers a time period rather than one exact instant. See the [HF Hub API documentation](https://huggingface.co/docs/hub/api) for the data source.
 
@@ -89,7 +87,7 @@ For a live run, `compare` shows your measured results; it does not check them ag
 
 - **gold@10** is the fraction of eligible test queries for which the returned ten models include the best model in the held-out evaluation records.
 - **Retention** compares HNSW's gold@10 with the gold@10 from scoring and reranking the entire lake. Both are measured on your downloaded data.
-- **p50 latency** is the median query time. **p95 latency** is the time within which 95% of queries finish.
+- **p50 latency** is the median query time. **p95 latency** is the 95th percentile of query latency time.
 
 Latency covers HNSW search and reranking using precomputed query embeddings and one CPU thread. It excludes encoding, training, index building or loading, and downloads. Summary values average the three splits; retention is the average of the three per-split ratios.
 
@@ -168,18 +166,24 @@ The older `full`, `train`, and `replay` profiles require the original files list
 
 Feature encoding uses `sentence-transformers/all-MiniLM-L6-v2`, fixed at commit `1110a243fdf4706b3f48f1d95db1a4f5529b4d41`. Each collection gets its own model-family vocabulary.
 
-## Where the code lives
+## Code map in paper order
 
-| Path | What it does |
-|---|---|
-| `scale1m/reproduce.py` | Runs the commands in this guide |
-| `scale1m/reproduction/live_snapshot.py` | Downloads HF metadata and checks saved files |
-| `scale1m/reproduction/pipeline.py` | Runs the pipeline steps in order |
-| `scale1m/reproduction/live_stages.py` | Checks the prepared data and graph |
-| `scale1m/evaluate_live.py` | Measures exact and HNSW retrieval quality and speed |
-| `scale1m/` | Prepares data, builds features and graphs, trains, and exports embeddings |
-| `stage2TrainGraphSAGE/` | Implements the graph encoder and training |
-| `stage3HNSW/build_prior_sidecar.py` | Builds the task-based reranking prior |
+The table follows the paper's method and evaluation order. These files can be read without downloading data or running an experiment.
+
+| Paper step | Implementation | Main logic |
+|---|---|---|
+| Evidence preparation | [canonicalize_rf.py](scale1m/canonicalize_rf.py), [metric_semantics.py](scale1m/metric_semantics.py), [merge_supervision.py](scale1m/merge_supervision.py) | Normalize evaluation records, select a primary metric per dataset-task, and merge evidence sources. |
+| Model and query identities | [build_ladder_rf.py](scale1m/build_ladder_rf.py), [match_dataset_cards.py](scale1m/match_dataset_cards.py) | Keep all referenced models, assign stable row IDs, and match dataset cards. |
+| Features and evidence graph | [embed_lake_rf.py](scale1m/embed_lake_rf.py), [build_graph_rf.py](scale1m/build_graph_rf.py), [prepare_a0_graph.py](scale1m/prepare_a0_graph.py) | Build node features and performance, similarity, and lineage edges. Exclude performance-derived input features. |
+| Root-aware splits | [d0_splits.py](stage2TrainGraphSAGE/d0_splits.py) | Keep each dataset root in one split and remove held-out performance edges in both directions. |
+| Graph encoder | [model.py](stage2TrainGraphSAGE/model.py), [edge_aware.py](stage2TrainGraphSAGE/edge_aware.py) | Use one relation-specific GraphSAGE layer with unweighted aggregation to produce normalized 128-dimensional vectors. |
+| Training objectives and settings | [losses.py](stage2TrainGraphSAGE/losses.py), [train.py](stage2TrainGraphSAGE/train.py), [train_rung.py](scale1m/train_rung.py) | Combine local ranking, model contrast, and whole-lake losses; train for 25 epochs. |
+| Embedding export | [export_rf.py](scale1m/export_rf.py) | Export model and query vectors from the training-plus-validation message graph, excluding test performance edges. |
+| HNSW candidate retrieval | [evaluate_a0_portable.py](scale1m/evaluate_a0_portable.py), [a0_evaluation.py](scale1m/a0_evaluation.py) | Build an inner-product index, calibrate search against exact neighbors, and retrieve 1,000 candidates. |
+| Task prior and reranking | [build_prior_sidecar.py](stage3HNSW/build_prior_sidecar.py), [eval_rf.py](scale1m/eval_rf.py), [a0_evaluation.py](scale1m/a0_evaluation.py) | Compute the prior from training and validation evidence. Rank the retrieved candidates by `(cosine + 1) / 2 + prior` and return ten. |
+| Quality and efficiency evaluation | [eval_y2.py](scale1m/eval_y2.py), [recompute_a0.py](scale1m/recompute_a0.py) | Compute exact reference rankings and independently check gold@10, retention, and saved query timings. |
+
+[pipeline.py](scale1m/reproduction/pipeline.py) lists the complete run sequence. Archived A0 inputs use [evaluate_a0_portable.py](scale1m/evaluate_a0_portable.py); new HF collections use [evaluate_live.py](scale1m/evaluate_live.py). The older `eval_final.py` is not used by the current pipeline.
 
 To view the model-lake visualization, run:
 

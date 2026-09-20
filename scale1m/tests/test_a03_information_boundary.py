@@ -1,4 +1,3 @@
-"""A0.3: held-out labels cannot change GD training or held-out embeddings."""
 import json
 from pathlib import Path
 import random

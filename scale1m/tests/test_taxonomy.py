@@ -1,21 +1,7 @@
-"""Tests for the T2 v2 annotation vocabulary (scale1m/taxonomy.py).
-
-These are not happy-path tests. Each one pins a rule that, if it silently
-regressed, would produce a population that still *looks* balanced in the
-report: a name heuristic overwriting authoritative metadata, a vision model
-labelled "unknown language", a quantization mirror classified as an original
-base model, or two unrelated repos merged because their names share a token.
-
-Run (from ModelLakeFishing/):
-    .\\.venv\\Scripts\\python.exe -m pytest scale1m/tests -q
-"""
-
 import pytest
 
 from scale1m import taxonomy as TX
 
-
-# --- supertask -------------------------------------------------------------
 
 def test_pipeline_tag_beats_every_weaker_signal():
     rec = {"id": "org/x", "pipeline_tag": "translation",
@@ -51,12 +37,9 @@ def test_unmapped_pipeline_tag_is_other_and_is_counted():
 
 def test_code_only_overrides_text_generation_never_vision():
     assert TX.supertask_of({"id": "org/CodeLlama-7b", "pipeline_tag": "text-generation"})[0] == "code"
-    # a vision model whose name happens to contain "code" must stay vision
     assert TX.supertask_of({"id": "org/qr-code-detector",
                             "pipeline_tag": "object-detection"})[0] == "detection-segmentation"
 
-
-# --- language ---------------------------------------------------------------
 
 def test_card_language_beats_tags():
     rec = {"id": "org/x", "cardData": {"language": ["fr"]}, "tags": ["en"]}
@@ -65,8 +48,6 @@ def test_card_language_beats_tags():
 
 
 def test_language_junk_tags_are_rejected():
-    """The bare `^[a-z]{2,3}$` regex matches trl/sft/tf/jax/mms -- measured on
-    the v1 150K shard. The ISO allowlist is what stops those."""
     rec = {"id": "org/x", "tags": ["trl", "sft", "tf", "jax", "mms", "mtp", "en"]}
     langs, _ = TX.languages_of(rec)
     assert langs == ["en"]
@@ -96,8 +77,6 @@ def test_language_buckets(langs, expected):
     assert TX.language_bucket_of(rec, "text-generation-chat")[0] == expected
 
 
-# --- quantization -----------------------------------------------------------
-
 def test_quantization_authoritative_before_name():
     assert TX.quantization_of({"id": "org/plain", "gguf": True})[::2] == ("gguf", "gguf_block")
     assert TX.quantization_of({"id": "org/x", "library_name": "mlx"})[::2] == ("mlx", "library_name")
@@ -109,8 +88,6 @@ def test_quantization_authoritative_before_name():
 def test_plain_model_is_not_a_quantization():
     assert TX.quantization_of({"id": "google-bert/bert-base-uncased"})[0] == "none"
 
-
-# --- source type ------------------------------------------------------------
 
 def test_relation_metadata_drives_source_type():
     assert TX.source_type_of("none", "none", None, [], ["a/base"], "adapter", False)[0] == "adapter-lora"
@@ -133,8 +110,6 @@ def test_no_parent_no_quant_is_original_base():
     assert TX.source_type_of("none", "none", "transformers", [], [], None, False)[0] == "original-base"
 
 
-# --- metadata quality -------------------------------------------------------
-
 def test_quality_rewards_structure_and_punishes_bare_repos():
     rich = {"id": "org/x", "pipeline_tag": "text-classification",
             "config": {"model_type": "bert"}, "safetensors": {"total": 1},
@@ -153,8 +128,6 @@ def test_disabled_repo_fails_quality():
     assert q < TX.METADATA_QUALITY_THRESHOLD and "NEG:disabled" in flags
 
 
-# --- stems / duplicates -----------------------------------------------------
-
 def test_repo_stem_strips_conversion_tokens_only():
     assert TX.repo_stem("mradermacher/Meta-Llama-3-8B-Instruct-i1-GGUF") == \
         TX.repo_stem("TheBloke/Meta-Llama-3-8B-Instruct-AWQ")
@@ -170,7 +143,6 @@ def test_near_duplicate_key_separates_meaningful_variation():
     k_70b = TX.near_duplicate_key(quant_method="gguf", quant_bits=4, size_b=70.0, **common)
     assert k_q4 != k_awq, "different quantization methods are different variation"
     assert k_q4 != k_70b, "different parameter scale is different variation"
-    # same base, same method, same scale -> the same duplicate group
     assert k_q4 == TX.near_duplicate_key(quant_method="gguf", quant_bits=5,
                                          size_b=8.4, **common)
 
@@ -182,9 +154,6 @@ def test_param_scale_bucket_is_coarser_than_xm0_buckets():
 
 
 def test_missing_size_is_unknown_not_the_top_bucket():
-    """float('nan') survives every `<` comparison. Without an explicit NaN
-    test it lands in ">=90B" and merges thousands of unrelated models into one
-    duplicate group -- measured on the 419K pool: 16,267 in a single group."""
     assert TX.param_scale_bucket(float("nan")) == "unknown"
 
 
@@ -207,8 +176,6 @@ def test_exact_key_only_binds_on_quantizations():
     assert q1 != TX.near_duplicate_key_exact(base, "gguf", 8, "a/z")
 
 
-# --- mirror score -----------------------------------------------------------
-
 def test_mirror_score_is_generic_not_a_username_list():
     quant_mill = {"n_repos": 14061, "quant_frac": 0.98,
                   "distinct_upstream_authors": 4200, "original_frac": 0.01,
@@ -219,7 +186,6 @@ def test_mirror_score_is_generic_not_a_username_list():
     s_lab, _ = TX.mirror_score_of(real_lab)
     assert s_mill >= TX.MIRROR_SCORE_THRESHOLD and s_lab < TX.MIRROR_SCORE_THRESHOLD
     assert why, "reasons must be auditable"
-    # nothing in the module keys off a specific account name
     import inspect
     src = inspect.getsource(TX)
     for name in ("mradermacher", "RichardErkhov", "TheBloke", "bartowski"):

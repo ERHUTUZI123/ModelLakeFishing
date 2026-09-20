@@ -1,14 +1,3 @@
-"""
-test_phase2_edge_aware.py -- Phase 2 required tests (Kendall action guide):
-  3. edge_attr affects message passing NUMERICALLY (topology fixed, weights change
-     -> output changes);
-  - zeroing a relation's weight removes its neighbour contribution (self path only);
-  - unweighted WeightedSAGEConv == plain mean+self (sanity);
-  10. edge-aware checkpoint round-trips (rebuild from arch, reload, same z).
-
-Run:  python -m ModelLakeFishing.stage2TrainGraphSAGE.tests.test_phase2_edge_aware
-"""
-
 import os
 import sys
 
@@ -40,26 +29,23 @@ def check(cond, msg):
 def main():
     torch.manual_seed(0)
 
-    # --- unit: WeightedSAGEConv responds to edge weights ---
     print("=== WeightedSAGEConv: weights change output, zero weight = self only ===")
     conv = WeightedSAGEConv(4, 4)
     x = torch.randn(5, 4)
-    ei = torch.tensor([[0, 1, 2, 3], [4, 4, 4, 4]])      # 4 -> in-edges from 0..3
+    ei = torch.tensor([[0, 1, 2, 3], [4, 4, 4, 4]])
     w1 = torch.tensor([1.0, 1.0, 1.0, 1.0])
-    w2 = torch.tensor([5.0, 0.1, 0.1, 0.1])              # same topology, diff weights
+    w2 = torch.tensor([5.0, 0.1, 0.1, 0.1])
     out1 = conv(x, ei, w1)
     out2 = conv(x, ei, w2)
     check(not torch.allclose(out1[4], out2[4], atol=1e-6),
           "changing edge weights (fixed topology) changes destination output")
 
-    # zero weights on the in-edges of node 4 -> only its self path remains
     w0 = torch.zeros(4)
     out0 = conv(x, ei, w0)
     self_only = conv.lin_self(x[4])
     check(torch.allclose(out0[4], self_only, atol=1e-5),
           "zeroing a node's in-edge weights leaves only the self path")
 
-    # --- EdgeAwareHetero: zeroing a relation's weights removes its contribution ---
     print("\n=== EdgeAwareHetero: relation weight zeroing ===")
     meta = (["a"], [("a", "rel", "a")])
     het = EdgeAwareHetero(4, meta, num_layers=1)
@@ -70,7 +56,6 @@ def main():
     check(not torch.allclose(full[4], zeroed[4], atol=1e-6),
           "relation contribution vanishes when its edge weights are zeroed")
 
-    # --- end-to-end model: edge_aware forward runs + edge_attr matters ---
     print("\n=== HeteroGraphSAGE(edge_aware=True) on top-k graph ===")
     data, xm0, _ = load_hgraph(GRAPH)
     data = topk_similar_to(data, 10, weighted=True)
@@ -87,19 +72,15 @@ def main():
     model.eval()
     with torch.no_grad():
         z_a = model(data.clone())["model"]
-    # perturb similar_to weights only; topology identical -> z_d must change.
-    # (similar_to is dataset->dataset, so in a 1-layer model it reaches DATASET
-    # embeddings; z_m only sees it at depth >= 2. Assert on z_d here.)
     zd_a = model(data.clone())["dataset"]
     data2 = data.clone()
     st = ("dataset", "similar_to", "dataset")
-    data2[st].edge_attr = (data2[st].edge_attr * 0 + 1.0)   # flatten weights to 1
+    data2[st].edge_attr = (data2[st].edge_attr * 0 + 1.0)
     with torch.no_grad():
         zd_b = model(data2)["dataset"]
     check(not torch.allclose(zd_a, zd_b, atol=1e-6),
           "z_d changes when only similar_to edge_attr changes (weights are consumed)")
 
-    # --- checkpoint round-trip for edge-aware model ---
     print("\n=== edge-aware checkpoint round-trip ===")
     os.makedirs(ARTIFACTS, exist_ok=True)
     ckpt = os.path.join(ARTIFACTS, "test_edge_aware.pt")

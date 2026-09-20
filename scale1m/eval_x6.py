@@ -1,9 +1,3 @@
-"""Run the minimal 3M-candidate baseline comparison defined in X6.
-
-Training-free scorers are evaluated one query at a time and discarded, so no
-``queries x 3M`` score matrix is materialized. Learned rows reuse the existing
-RF embedding evaluator. Partial reports are atomic and survive interruption.
-"""
 import argparse
 import gc
 import hashlib
@@ -128,7 +122,6 @@ def _score_training_free(name, scorer, ctx, bundles):
 
 
 def _score_static(name, scores, ctx, bundles):
-    """Evaluate one query-independent ranking after sorting it exactly once."""
     scores = np.asarray(scores, dtype=np.float32)
     if scores.shape != (N_TOTAL,):
         raise AssertionError("%s returned shape %r" % (name, scores.shape))

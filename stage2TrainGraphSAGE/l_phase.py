@@ -1,27 +1,3 @@
-"""
-l_phase.py -- v3 L-track rows (plan §0.3): retrain the OBJECTIVE, not the
-features. Control + one change per row:
-
-    L0   : G2 replica (control; task-incompatible + known-low pools, hard 0.5)
-    L3   : L0 + dataset task_type repair applied (pools coverage 30->50 of 64;
-           also fixes the z_d encoder's task_type rows -- one conceptual change:
-           "repair wrong metadata")
-    L1   : L0 with the global term swapped to whole-lake logQ-corrected sampled
-           softmax (no pools; negatives from ALL 2000 models ~ q(m) ∝
-           (deg+1)^0.75, logits corrected by -log q). The supervision blind
-           spot (E9) closes: unlabeled hubs finally appear as negatives.
-    L1L3 : L1 + task repair (metadata fixes the ENCODER side too)
-    L2   : L1L3 + hard sets mined ONCE at epoch 10 (top-20 currently beating
-           the labeled best, train graph only, never re-mined)
-
-Same harness as G/F phases: five-metric clean eval, provenance-fixed graph,
-promote-gate vs L0 plus the z_m-PR-not-down check.
-
-Run (repo root):
-  ModelLakeFishing/.venv/Scripts/python.exe -m ModelLakeFishing.stage2TrainGraphSAGE.l_phase \
-      --rows L0 L3 L1 L1L3 L2
-"""
-
 import argparse
 import json
 import os
@@ -34,8 +10,8 @@ _REPO_ROOT = os.path.abspath(os.path.join(_HERE, "..", ".."))
 if _REPO_ROOT not in sys.path:
     sys.path.insert(0, _REPO_ROOT)
 
-from ModelLakeFishing.stage2TrainGraphSAGE.top1_gphase import g_configs, gate, PRIMARY  # noqa: E402
-from ModelLakeFishing.stage2TrainGraphSAGE.top1_baselines import run_configs, OUT  # noqa: E402
+from ModelLakeFishing.stage2TrainGraphSAGE.top1_gphase import g_configs, gate, PRIMARY
+from ModelLakeFishing.stage2TrainGraphSAGE.top1_baselines import run_configs, OUT
 
 ROWS = ["L0", "L3", "L1", "L1L3", "L2"]
 TAG = "v3_lphase"

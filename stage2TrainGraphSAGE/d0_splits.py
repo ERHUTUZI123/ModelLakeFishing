@@ -1,30 +1,9 @@
-"""
-d0_splits.py -- v4 W1-D2: ROOT-AWARE fixed splits for the D0 graph.
-
-Why node-level splitting is no longer acceptable (plan v4 §0.2-4): the D0 lake
-carries per-language / per-config sibling nodes of one root dataset (tatoeba
-112 nodes, amazon_massive 102, ...). Siblings are near-duplicates; putting one
-in train and another in test leaks the answer through the message graph. Here
-the SPLIT UNIT IS THE ROOT: every trained_on edge whose dataset belongs to a
-root lands on exactly one side.
-
-Semantics mirror split_trained_on / CustomRandomLinkSplit downstream contract:
-  train_data : message = train edges minus the disjoint supervision part;
-               edge_label_index/edge_label = disjoint part + sampled negatives
-  val_data   : message = ALL train edges; labels = val edges + negatives
-  test_data  : message = train + val edges; labels = test edges + negatives
-  (binary edge_label: 1 = real edge, 0 = negative; accuracy comes from
-  `accuracy_lookup` downstream, same as always. rev_trained_on mirrors the
-  message edges of each split -- held-out edges have no reverse copy.)
-"""
-
 import torch
 
 from ModelLakeFishing.stage2TrainGraphSAGE.losses import TRAINED_ON, REV_TRAINED_ON
 
 
 def _neg_sample(pos_set, num_models, num_datasets, n, gen):
-    """n random (model, dataset) pairs not in pos_set."""
     out_m, out_d = [], []
     while len(out_m) < n:
         m = torch.randint(num_models, (n,), generator=gen)
@@ -37,17 +16,11 @@ def _neg_sample(pos_set, num_models, num_datasets, n, gen):
 
 def make_root_aware_splits(data, dataset_roots, *, split_seed, num_val=0.1,
                            num_test=0.2, neg_ratio=1.0, disjoint_train_ratio=0.3):
-    """
-    dataset_roots : list[str] of length N_datasets (mappedID order), the root
-                    of every dataset node (unique_dataset_id['root']).
-    Returns (train_data, val_data, test_data).
-    """
     gen = torch.Generator().manual_seed(split_seed)
     ei = data[TRAINED_ON].edge_index
     attr = data[TRAINED_ON].edge_attr
     E = ei.shape[1]
 
-    # assign ROOTS (not edges) to sides, greedily filling test then val quota
     edge_root = [dataset_roots[int(d)] for d in ei[1]]
     uniq = sorted(set(edge_root))
     perm = torch.randperm(len(uniq), generator=gen).tolist()
@@ -67,7 +40,6 @@ def make_root_aware_splits(data, dataset_roots, *, split_seed, num_val=0.1,
     mask = {s: torch.tensor([side[r] == s for r in edge_root]) for s in
             ("train", "val", "test")}
 
-    # disjoint part of TRAIN: supervision-only edges removed from the message graph
     tr_idx = mask["train"].nonzero().flatten()
     tr_perm = tr_idx[torch.randperm(tr_idx.numel(), generator=gen)]
     n_disjoint = int(round(disjoint_train_ratio * tr_idx.numel()))
@@ -96,8 +68,6 @@ def make_root_aware_splits(data, dataset_roots, *, split_seed, num_val=0.1,
     val_data = _mk(tr_idx, val_idx)
     test_data = _mk(torch.cat([tr_idx, val_idx]), test_idx)
 
-    # leakage guards: no test/val edge (or its reverse) in any message graph it
-    # could leak through; every root on exactly one side
     for split, held in ((train_data, torch.cat([val_idx, test_idx])),
                         (val_data, test_idx)):
         held_set = {(int(m), int(d)) for m, d in zip(*ei[:, held].tolist())}

@@ -1,4 +1,3 @@
-"""Validate a prepared A0 graph on a training/export host without its source copy."""
 import json
 from pathlib import Path
 

@@ -1,4 +1,3 @@
-"""Download a byte-bound historical HF metadata archive, never a live recrawl."""
 from __future__ import annotations
 
 import hashlib
@@ -56,7 +55,6 @@ def selected_files(manifest: dict, profile: str) -> list[dict]:
 
 
 def input_digest(manifest: dict, profile: str) -> str:
-    """Bind a run to the verified input bytes, independent of archive location."""
     rows = [{key: row[key] for key in ("path", "bytes", "sha256")}
             for row in selected_files(manifest, profile)]
     canonical = json.dumps(sorted(rows, key=lambda row: row["path"]),
@@ -112,8 +110,6 @@ def download(root: Path, manifest: dict, profile: str, *, repo_id=None,
         if not result["ok"]:
             raise ValueError("Offline input verification failed: " + json.dumps(result["errors"]))
         return result
-    # Validate immutable source identity before creating directories or importing
-    # an optional network client. A missing publication is a real blocker.
     repo_id, revision = source_config(manifest, repo_id, revision)
     if fetch is None:
         try:

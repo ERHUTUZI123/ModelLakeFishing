@@ -1,23 +1,3 @@
-"""
-p1_restore_drill.py -- P1 exit gate (adapted).
-
-The PLAN's original restore drill (§1.4) restored raw/ from the OFF-MACHINE
-replica and re-verified. D-6 descoped the off-machine copy to a single D: copy,
-so the off-machine restore is not applicable. The meaningful residual guarantees
-are therefore:
-
-  1. the frozen corpus still matches PROVENANCE.json          (verify_corpus)
-  2. the intake is DETERMINISTIC & reproducible from raw/     (re-run -> identical
-     artifact content), so the graph can always be rebuilt from the frozen bytes.
-
-Content comparison, not byte comparison: parquet embeds non-deterministic
-metadata, so we compare a stable content digest (sorted rows) instead.
-
-Run (from ModelLakeFishing/):
-    .\\.venv\\Scripts\\python.exe -m scale.p1_restore_drill
-Exit 0 = drill passed.
-"""
-
 import hashlib
 import json
 import os
@@ -36,7 +16,6 @@ PY = sys.executable
 
 
 def content_digest(path: str) -> tuple:
-    """(n_rows, sha256 of canonically-sorted, rounded content)."""
     if path.endswith(".parquet"):
         df = pd.read_parquet(path)
     else:
@@ -57,7 +36,6 @@ ARTIFACTS = ["ml_observations.parquet", "ml_dataset_pool.csv",
 def main():
     print("=== P1 restore drill ===\n")
 
-    # 1) corpus integrity
     print("[1/2] verify_corpus ...")
     r = subprocess.run([PY, "-m", "scale.verify_corpus", "--only", "v2"],
                        capture_output=True, text=True)
@@ -66,15 +44,12 @@ def main():
         print("*** DRILL FAILED: corpus verify ***")
         return 1
 
-    # 2) intake determinism: snapshot committed digests, re-run to temp, compare
     print("\n[2/2] intake determinism (re-run from frozen raw/) ...")
     committed = {a: content_digest(os.path.join(LAKE, a)) for a in ARTIFACTS}
 
     tmp = tempfile.mkdtemp(prefix="ml_intake_drill_")
     try:
         env = dict(os.environ, MLF_INTAKE_OUT=tmp)
-        # modellens_intake writes to a fixed OUT; redirect via a tiny shim env.
-        # Simplest robust path: copy the module run with OUT patched through env.
         code = (
             "import scale.modellens_intake as m, os;"
             f"m.OUT=r'{tmp}';"

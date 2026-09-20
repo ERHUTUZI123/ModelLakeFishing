@@ -1,10 +1,3 @@
-"""Unit tests for the sharded rung-graph store (RF, F0).
-
-What is worth pinning here is not that files get written -- it is that the
-round trip is EXACT. The sharded form replaces the single .pt as the input to
-training at full-lake scale, so any silent dtype narrowing or column reordering
-would move `x` rows out from under their mappedID without raising anything.
-"""
 import json
 import os
 
@@ -49,14 +42,11 @@ def test_round_trip_is_tensor_for_tensor_identical(tmp_path):
     G.save_sharded(ckpt, str(tmp_path))
     back = G.load_sharded(str(tmp_path), mmap=True, verify_sha256=True)
     assert G.compare(ckpt, back) == []
-    # dtypes survive: an int64 column silently becoming int32 would still
-    # index correctly today and overflow at 2^31 rows later
     assert back["data"]["model"].family_id.dtype == torch.int64
     assert back["data"]["model"].x.dtype == torch.float32
 
 
 def test_features_are_stored_at_full_precision(tmp_path):
-    """`x` is the frozen half of the model input; storage must not downcast."""
     ckpt = _tiny_ckpt()
     G.save_sharded(ckpt, str(tmp_path))
     arr = np.load(str(tmp_path / "x_model.npy"), mmap_mode="r")
@@ -65,9 +55,6 @@ def test_features_are_stored_at_full_precision(tmp_path):
 
 
 def test_mmap_is_the_default_and_still_reads_correctly(tmp_path):
-    """The memory saving itself is measured, not asserted here: on the 100K
-    graph the load-time resident cost is 50 MB mapped vs 243 MB via .pt
-    (docs/1M/F0.md). This test only guards the switch and the values."""
     ckpt = _tiny_ckpt()
     G.save_sharded(ckpt, str(tmp_path))
     back = G.load_sharded(str(tmp_path))
@@ -89,7 +76,6 @@ def test_a_truncated_shard_is_caught_by_sha256(tmp_path):
 
 
 def test_compare_reports_a_real_difference(tmp_path):
-    """A comparison that cannot fail is not a check."""
     ckpt = _tiny_ckpt()
     G.save_sharded(ckpt, str(tmp_path))
     back = G.load_sharded(str(tmp_path))

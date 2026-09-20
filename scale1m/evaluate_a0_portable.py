@@ -80,7 +80,6 @@ def check_gold(path, n_models, n_datasets):
 
 
 def check_prior(payload, meta, all_queries, roots, datasets, nodes, n_models):
-    """Check actual arrays, including excluded queries, before any scoring."""
     em, ed, weights = (np.asarray(payload[key]) for key in ("edge_model", "edge_dataset", "edge_acc"))
     task, root = (np.asarray(payload[key]) for key in ("task_id", "root_id"))
     require(em.ndim == 1 and em.shape == ed.shape == weights.shape,
@@ -112,7 +111,6 @@ def check_prior(payload, meta, all_queries, roots, datasets, nodes, n_models):
 
 
 def validate_rebuilt_graph(directory):
-    """Verify new graph bytes and A0 feature policy, without an old A0 stamp."""
     from .prepare_a0_graph import verify_files, _digest
     from .build_graph_rf import A0_ZERO_COLUMNS, dataset_stats
 
@@ -264,7 +262,6 @@ def validate_seed(args, seed, tie_rank, first_model, first_dataset, nodes):
 
 
 def check_reference_index(directory, seed, inputs, dataset_record):
-    """Bind index bytes and serving inputs without resolving historical paths."""
     directory = Path(directory)
     manifest = read_json(directory / REFERENCE_MANIFEST)
     require(manifest.get("protocol") == "a0" and manifest.get("run_id") == "A0_20260912",
@@ -277,8 +274,6 @@ def check_reference_index(directory, seed, inputs, dataset_record):
     require(source["graph_digest"] == inputs["a0"]["graph_digest"],
             "Reference index and export graph bindings differ")
     for filename, current in inputs["files"].items():
-        # Export/prior metadata may contain relocated path strings. Their own
-        # A0 envelopes and artifact hashes were validated before reaching here.
         if filename.endswith(".json"):
             continue
         bound = {r["sha256"] for r in source["files"]

@@ -1,4 +1,3 @@
-"""Portable repair restores archived identities without weakening A0 checks."""
 import json
 import shutil
 

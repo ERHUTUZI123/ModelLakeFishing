@@ -1,10 +1,3 @@
-"""Unit tests for the metric semantics table (RF, F2, D-61).
-
-The property worth pinning is not that the table has entries -- it is that an
-UNRECOGNISED name lands in `unknown` and therefore cannot decide gold. A
-regression that quietly guessed a direction would flip the best model and the
-worst model for that dataset, and nothing downstream would raise.
-"""
 import pytest
 
 from scale1m import metric_semantics as M
@@ -25,7 +18,6 @@ def test_name_normalisation(raw, want):
 def test_cutoff_and_similarity_prefix_are_stripped_for_lookup_only():
     assert M.base_name("cosine_ndcg_at_10") == "ndcg"
     assert M.base_name("euclidean_spearman") == "spearman"
-    # but the normalised name itself keeps both -- the grouping key needs them
     assert M.normalize_name("cosine_ndcg@10") == "cosine_ndcg_at_10"
 
 
@@ -44,7 +36,6 @@ def test_direction_classes(raw, cls):
 
 
 def test_an_unknown_name_is_never_guessed():
-    """The safe default is the whole point of the table."""
     for junk in ("qualityIndexV2", "北京指标", "metric_7", "xyz@5"):
         assert M.classify(junk)[2] == "unknown"
         assert not M.in_gold(M.classify(junk)[2])

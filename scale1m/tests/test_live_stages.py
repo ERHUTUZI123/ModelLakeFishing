@@ -1,4 +1,3 @@
-"""Live HF evidence integration: synthetic records, no network/author datasets."""
 import json
 
 import numpy as np
@@ -141,8 +140,6 @@ def test_dynamic_graph_validates_without_frozen_a0_universe(tmp_path, monkeypatc
     report = check_graph(graph, rf, ladder)
     assert report["models"] == 1000 and report["dataset_task_nodes"] == 15
     assert report["seven_performance_columns_zero"]
-    # Even an attacker/stale writer who updates the file hash cannot turn a
-    # performance-derived feature into valid live input.
     path = graph / "x_dataset.npy"
     x = np.load(path)
     x[0, 448] = 1

@@ -1,27 +1,3 @@
-"""logo_render.py -- the ModelLakeFishing mark, drawn from the real lake.
-
-The nebula inside the disc is not decoration.  It is the log-density of all
-3,016,439 model rows, in the same layout, palette and rendering path that
-`galaxy_render.py` uses for the plate, so the mark and the figure are the same
-picture at two scales.  On top of it sits the system's whole story in one
-gesture: a query lands on the lake (crimson dot, amber ripples), a line goes
-down, and one model comes back up (gold star, breaking the rim).
-
-Variants written into release_assets/logo/, each as SVG, PDF and PNG:
-
-    mark              the disc on its own, full nebula
-    mark_mono         same geometry, single ink
-    mark_compact      solid silhouette and heavy strokes, survives 32 px
-    mark_compact_mono compact, single ink
-    lockup            mark + wordmark, horizontal
-    lockup_tagline    the same with the one-line caption
-    lockup_mono       single ink
-
-Only matplotlib is used, and every raster layer is confined to the nebula, so
-the PDF and SVG stay vector everywhere the type and strokes are.
-
-    python -m ModelLakeFishing.viz.logo_render
-"""
 import os
 
 import numpy as np
@@ -41,21 +17,18 @@ CACHE = r"d:/research/model_lake/data/data1m/figures/galaxy_cache"
 OUT = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
                    "release_assets", "logo")
 
-# ------------------------------------------------------------------ geometry --
-# All of it in the mark's own coordinates, where the disc is the unit circle.
-FOCUS = (-0.25, -0.05)                       # where the cast lands
-RIPPLE = ((0.145, 1.00), (0.275, 0.78), (0.425, 0.58))   # radius, line weight
+FOCUS = (-0.25, -0.05)
+RIPPLE = ((0.145, 1.00), (0.275, 0.78), (0.425, 0.58))
 _TH = np.deg2rad(50.0)
-STAR = (float(np.cos(_TH)), float(np.sin(_TH)))          # the catch, on the rim
-CTRL = (0.34, 0.06)                          # bezier control for the line
-DAMP = 0.92                                  # hold the nebula back under the ink
-BODY = "#3f4695"                             # compact silhouette fill
+STAR = (float(np.cos(_TH)), float(np.sin(_TH)))
+CTRL = (0.34, 0.06)
+DAMP = 0.92
+BODY = "#3f4695"
 
 _LAKE = None
 
 
 def lake(res=1000):
-    """Log-density of the whole lake, on a square window centred on its mass."""
     global _LAKE
     if _LAKE is not None:
         return _LAKE
@@ -91,9 +64,7 @@ def _axes(ax, pad=1.17):
     ax.axis("off")
 
 
-# --------------------------------------------------------------------- marks --
 def draw_mark(ax, s=1.0, mono=False):
-    """Full mark: the million rows, the cast, the catch."""
     _axes(ax)
     ring = INK if mono else AMBER
     im = ax.imshow(lake() * DAMP, origin="lower", extent=(-1, 1, -1, 1),
@@ -124,7 +95,6 @@ def draw_mark(ax, s=1.0, mono=False):
 
 
 def draw_compact(ax, mono=False):
-    """Small-size build: one solid body, two ripples, heavy strokes."""
     _axes(ax, pad=1.16)
     ring = INK if mono else AMBER
     img = gaussian_filter(lake(), 13.0)
@@ -151,13 +121,12 @@ def draw_compact(ax, mono=False):
                edgecolor=(INK if mono else GOLD), lw=2.4, zorder=10)
 
 
-# ------------------------------------------------------------------ builders --
 def _style():
     plt.rcParams.update({
         "figure.facecolor": PAPER, "savefig.facecolor": PAPER,
         "axes.facecolor": PAPER, "font.family": "sans-serif",
         "font.sans-serif": SANS, "text.color": INK,
-        "pdf.fonttype": 42, "ps.fonttype": 42, "svg.fonttype": "path",   # glyphs as outlines, so the SVG needs no font
+        "pdf.fonttype": 42, "ps.fonttype": 42, "svg.fonttype": "path",
     })
 
 
@@ -214,7 +183,6 @@ def build_lockup(tagline=False, mono=False):
 
 
 def build_sheet():
-    """One contact sheet so the variants can be judged together."""
     fig = plt.figure(figsize=(11.5, 6.4))
     fig.text(0.035, 0.945, "ModelLakeFishing", fontsize=17, weight="bold",
              color=INK, ha="left", va="center")

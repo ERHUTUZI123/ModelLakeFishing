@@ -1,35 +1,3 @@
-"""
-graph_store.py -- RF: sharded, memory-mappable storage for a rung graph.
-
-WHY THIS EXISTS
-    Up to 100K the whole graph is one `torch.save` file of ~223 MB and nothing
-    about that is a problem. At full-lake scale the model feature matrix alone
-    is N x 448 float32 -- 5.2 GB at N = 2.9M -- and `torch.load` of a single
-    file materialises every tensor in RAM at once, on top of the pickle buffer
-    it reads it from. That is the peak this module removes.
-
-    Features are stored at full float32 precision. They are NOT downcast to
-    fp16: `x` is the frozen half of the model input and the one input that the
-    whole ladder holds byte-identical across rungs (constraint 1), so the
-    storage format is not a place to introduce a numeric difference.
-    The saving here comes from mapping the array instead of copying it, which
-    costs nothing in precision.
-
-LAYOUT
-    <dir>/x_model.npy          [N, 448] float32   -- memory-mapped on load
-    <dir>/x_dataset.npy        [D, 458] float32   -- memory-mapped on load
-    <dir>/nodes.npz            the small integer node columns
-    <dir>/edges.npz            edge_index / edge_attr / relation_id per relation
-    <dir>/unique_model_id.parquet, unique_dataset_id.parquet
-    <dir>/meta.json            xm0_meta, xd0_meta, provenance, dtypes, sha256s
-
-    `meta.json` records a sha256 for every file, so a truncated or swapped
-    shard is detected at load time instead of surfacing as a strange metric.
-
-Run (from ModelLakeFishing/):
-    python -m scale1m.graph_store --pt  <graph.pt>  --out <dir>       # convert
-    python -m scale1m.graph_store --pt  <graph.pt>  --verify <dir>    # compare
-"""
 import argparse
 import hashlib
 import json
@@ -63,7 +31,6 @@ def _parse_edge_key(key):
 
 
 def save_sharded(ckpt, out_dir, mmap_fields=X_FILES):
-    """Write a rung checkpoint as one directory of plain arrays."""
     os.makedirs(out_dir, exist_ok=True)
     data = ckpt["data"]
     meta = {
@@ -79,14 +46,12 @@ def save_sharded(ckpt, out_dir, mmap_fields=X_FILES):
         "files": {},
     }
 
-    # 1. the two big float matrices, one .npy each so they can be mapped
     for (nt, field), fname in mmap_fields.items():
         t = data[nt][field]
         np.save(os.path.join(out_dir, fname), t.numpy())
         meta["tensors"][f"{nt}.{field}"] = {"file": fname, "shape": list(t.shape),
                                             "dtype": str(t.dtype).replace("torch.", "")}
 
-    # 2. every remaining node column (all small integer vectors)
     node_arrays = {}
     for nt in data.node_types:
         for field, t in data[nt].items():
@@ -98,7 +63,6 @@ def save_sharded(ckpt, out_dir, mmap_fields=X_FILES):
                                                 "dtype": str(t.dtype).replace("torch.", "")}
     np.savez(os.path.join(out_dir, "nodes.npz"), **node_arrays)
 
-    # 3. edges, keyed by "src__rel__dst__field"
     edge_arrays = {}
     for et in data.edge_types:
         for field, t in data[et].items():
@@ -108,7 +72,6 @@ def save_sharded(ckpt, out_dir, mmap_fields=X_FILES):
                                     "dtype": str(t.dtype).replace("torch.", "")}
     np.savez(os.path.join(out_dir, "edges.npz"), **edge_arrays)
 
-    # 4. the id tables -- parquet keeps dtypes, csv does not
     for name in ("unique_model_id", "unique_dataset_id"):
         if name in ckpt:
             ckpt[name].to_parquet(os.path.join(out_dir, name + ".parquet"), index=False)
@@ -123,8 +86,6 @@ def save_sharded(ckpt, out_dir, mmap_fields=X_FILES):
 
 
 def load_sharded(out_dir, mmap=True, verify_sha256=False):
-    """Rebuild the checkpoint dict. With mmap=True the two `x` matrices stay
-    on disk and are paged in by the sampler as it touches rows."""
     with open(os.path.join(out_dir, "meta.json"), encoding="utf-8") as fh:
         meta = json.load(fh)
 
@@ -142,7 +103,6 @@ def load_sharded(out_dir, mmap=True, verify_sha256=False):
         if not os.path.exists(path):
             continue
         arr = np.load(path, mmap_mode="r" if mmap else None)
-        # from_numpy on a read-only map shares the pages instead of copying
         data[nt][field] = torch.from_numpy(arr if mmap else np.ascontiguousarray(arr))
 
     with np.load(os.path.join(out_dir, "nodes.npz")) as z:
@@ -164,10 +124,6 @@ def load_sharded(out_dir, mmap=True, verify_sha256=False):
 
 
 def compare(a, b):
-    """Every tensor and every metadata value, element by element.
-
-    Returns a list of human-readable differences; empty means identical.
-    """
     diffs = []
     da, db = a["data"], b["data"]
     if set(da.node_types) != set(db.node_types):

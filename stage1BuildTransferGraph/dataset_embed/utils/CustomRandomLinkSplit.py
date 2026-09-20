@@ -13,8 +13,6 @@ from torch_geometric.typing import EdgeType
 from torch_geometric.utils.num_nodes import maybe_num_nodes
 
 
-# from torch_geometric.utils import negative_sampling
-
 def sample(population: int, k: int, device=None) -> Tensor:
     if population <= k:
         return torch.arange(population, device=device)
@@ -34,44 +32,6 @@ def negative_sampling_ori(
         method: str = "sparse",
         force_undirected: bool = False
 ) -> Tensor:
-    r"""Samples random negative edges of a graph given by :attr:`edge_index`.
-
-    Args:
-        edge_index (LongTensor): The edge indices.
-        num_nodes (int or Tuple[int, int], optional): The number of nodes,
-            *i.e.* :obj:`max_val + 1` of :attr:`edge_index`.
-            If given as a tuple, then :obj:`edge_index` is interpreted as a
-            bipartite graph with shape :obj:`(num_src_nodes, num_dst_nodes)`.
-            (default: :obj:`None`)
-        num_neg_samples (int, optional): The (approximate) number of negative
-            samples to return.
-            If set to :obj:`None`, will try to return a negative edge for every
-            positive edge. (default: :obj:`None`)
-        method (str, optional): The method to use for negative sampling,
-            *i.e.* :obj:`"sparse"` or :obj:`"dense"`.
-            This is a memory/runtime trade-off.
-            :obj:`"sparse"` will work on any graph of any size, while
-            :obj:`"dense"` can perform faster true-negative checks.
-            (default: :obj:`"sparse"`)
-        force_undirected (bool, optional): If set to :obj:`True`, sampled
-            negative edges will be undirected. (default: :obj:`False`)
-
-    :rtype: LongTensor
-
-    Examples:
-
-        >>> # Standard usage
-        >>> edge_index = torch.as_tensor([[0, 0, 1, 2],
-        ...                               [0, 1, 2, 3]])
-        >>> negative_sampling(edge_index)
-        tensor([[3, 0, 0, 3],
-                [2, 3, 2, 1]])
-
-        >>> # For bipartite graph
-        >>> negative_sampling(edge_index, num_nodes=(3, 4))
-        tensor([[0, 2, 2, 1],
-                [2, 2, 1, 3]])
-    """
     assert method in ['sparse', 'dense']
 
     size = num_nodes
@@ -93,28 +53,25 @@ def negative_sampling_ori(
     if force_undirected:
         num_neg_samples = num_neg_samples // 2
 
-    prob = 1. - idx.numel() / population  # Probability to sample a negative.
-    sample_size = int(1.1 * num_neg_samples / prob)  # (Over)-sample size.
+    prob = 1. - idx.numel() / population
+    sample_size = int(1.1 * num_neg_samples / prob)
 
     neg_idx = None
     if method == 'dense':
-        # The dense version creates a mask of shape `population` to check for
-        # invalid samples.
         mask = idx.new_ones(population, dtype=torch.bool)
         mask[idx] = False
-        for _ in range(3):  # Number of tries to sample negative indices.
+        for _ in range(3):
             rnd = sample(population, sample_size, idx.device)
-            rnd = rnd[mask[rnd]]  # Filter true negatives.
+            rnd = rnd[mask[rnd]]
             neg_idx = rnd if neg_idx is None else torch.cat([neg_idx, rnd])
             if neg_idx.numel() >= num_neg_samples:
                 neg_idx = neg_idx[:num_neg_samples]
                 break
             mask[neg_idx] = False
 
-    else:  # 'sparse'
-        # The sparse version checks for invalid samples via `np.isin`.
+    else:
         idx = idx.to('cpu')
-        for _ in range(3):  # Number of tries to sample negative indices.
+        for _ in range(3):
             rnd = sample(population, sample_size, device='cpu')
             mask = np.isin(rnd, idx)
             if neg_idx is not None:
@@ -136,14 +93,13 @@ def edge_index_to_vector(
         force_undirected: bool = False,
 ) -> Tuple[Tensor, int]:
     row, col = edge_index
-    if bipartite:  # No need to account for self-loops.
+    if bipartite:
         idx = (row * size[1]).add_(col)
         population = size[0] * size[1]
         return idx, population
     elif force_undirected:
         assert size[0] == size[1]
         num_nodes = size[0]
-        # We only operate on the upper triangular matrix:
         mask = row < col
         row, col = row[mask], col[mask]
         offset = torch.arange(1, num_nodes, device=row.device).cumsum(0)[row]
@@ -153,8 +109,6 @@ def edge_index_to_vector(
     else:
         assert size[0] == size[1]
         num_nodes = size[0]
-        # We remove self-loops as we do not want to take them into account
-        # when sampling negative values.
         mask = row != col
         row, col = row[mask], col[mask]
         col[row < col] -= 1
@@ -167,7 +121,7 @@ def vector_to_edge_index(
         idx: Tensor, size: Tuple[int, int], bipartite: bool,
         force_undirected: bool = False
 ) -> Tensor:
-    if bipartite:  # No need to account for self-loops.
+    if bipartite:
         row = idx.div(size[1], rounding_mode='floor')
         col = idx % size[1]
         return torch.stack([row, col], dim=0)
@@ -195,78 +149,7 @@ def vector_to_edge_index(
         return torch.stack([row, col], dim=0)
 
 
-# @functional_transform('random_link_split')
 class RandomLinkSplit(BaseTransform):
-    r"""Performs an edge-level random split into training, validation and test
-    sets of a :class:`~torch_geometric.data.Data` or a
-    :class:`~torch_geometric.data.HeteroData` object
-    (functional name: :obj:`random_link_split`).
-    The split is performed such that the training split does not include edges
-    in validation and test splits; and the validation split does not include
-    edges in the test split.
-
-    .. code-block::
-
-        from torch_geometric.transforms import RandomLinkSplit
-
-        transform = RandomLinkSplit(is_undirected=True)
-        train_data, val_data, test_data = transform(data)
-
-    Args:
-        num_val (int or float, optional): The number of validation edges.
-            If set to a floating-point value in :math:`[0, 1]`, it represents
-            the ratio of edges to include in the validation set.
-            (default: :obj:`0.1`)
-        num_test (int or float, optional): The number of test edges.
-            If set to a floating-point value in :math:`[0, 1]`, it represents
-            the ratio of edges to include in the test set.
-            (default: :obj:`0.2`)
-        is_undirected (bool): If set to :obj:`True`, the graph is assumed to be
-            undirected, and positive and negative samples will not leak
-            (reverse) edge connectivity across different splits. Note that this
-            only affects the graph split, label data will not be returned
-            undirected.
-            (default: :obj:`False`)
-        key (str, optional): The name of the attribute holding
-            ground-truth labels.
-            If :obj:`data[key]` does not exist, it will be automatically
-            created and represents a binary classification task
-            (:obj:`1` = edge, :obj:`0` = no edge).
-            If :obj:`data[key]` exists, it has to be a categorical label from
-            :obj:`0` to :obj:`num_classes - 1`.
-            After negative sampling, label :obj:`0` represents negative edges,
-            and labels :obj:`1` to :obj:`num_classes` represent the labels of
-            positive edges. (default: :obj:`"edge_label"`)
-        split_labels (bool, optional): If set to :obj:`True`, will split
-            positive and negative labels and save them in distinct attributes
-            :obj:`"pos_edge_label"` and :obj:`"neg_edge_label"`, respectively.
-            (default: :obj:`False`)
-        add_negative_train_samples (bool, optional): Whether to add negative
-            training samples for link prediction.
-            If the model already performs negative sampling, then the option
-            should be set to :obj:`False`.
-            Otherwise, the added negative samples will be the same across
-            training iterations unless negative sampling is performed again.
-            (default: :obj:`True`)
-        neg_sampling_ratio (float, optional): The ratio of sampled negative
-            edges to the number of positive edges. (default: :obj:`1.0`)
-        disjoint_train_ratio (int or float, optional): If set to a value
-            greater than :obj:`0.0`, training edges will not be shared for
-            message passing and supervision. Instead,
-            :obj:`disjoint_train_ratio` edges are used as ground-truth labels
-            for supervision during training. (default: :obj:`0.0`)
-        edge_types (Tuple[EdgeType] or List[EdgeType], optional): The edge
-            types used for performing edge-level splitting in case of
-            operating on :class:`~torch_geometric.data.HeteroData` objects.
-            (default: :obj:`None`)
-        rev_edge_types (Tuple[EdgeType] or List[Tuple[EdgeType]], optional):
-            The reverse edge types of :obj:`edge_types` in case of operating
-            on :class:`~torch_geometric.data.HeteroData` objects.
-            This will ensure that edges of the reverse direction will be
-            split accordingly to prevent any data leakage.
-            Can be :obj:`None` in case no reverse connection exists.
-            (default: :obj:`None`)
-    """
 
     def __init__(
             self,
@@ -376,7 +259,6 @@ class RandomLinkSplit(BaseTransform):
             if num_train - num_disjoint <= 0:
                 raise ValueError("Insufficient number of edges for training")
 
-            # Create data splits:
             self._split(
                 train_store, train_edges[num_disjoint:], is_undirected,
                 rev_edge_type
@@ -387,7 +269,6 @@ class RandomLinkSplit(BaseTransform):
                 rev_edge_type
             )
 
-            # Create negative samples:
             num_neg_train = 0
             if self.add_negative_train_samples:
                 if num_disjoint > 0:
@@ -411,10 +292,7 @@ class RandomLinkSplit(BaseTransform):
                 )
             else:
                 neg_edge_index = negative_sampling(self.negative_pairs, num_neg)
-            # print('==========')
-            # print(f'neg_edge_index: {neg_edge_index}')
 
-            # Adjust ratio if not enough negative edges exist
             if neg_edge_index.size(1) < num_neg:
                 num_neg_found = neg_edge_index.size(1)
                 ratio = num_neg_found / num_neg
@@ -427,7 +305,6 @@ class RandomLinkSplit(BaseTransform):
                 num_neg_val = int((num_neg_val / num_neg) * num_neg_found)
                 num_neg_test = num_neg_found - num_neg_train - num_neg_val
 
-            # Create labels:
             if num_disjoint > 0:
                 train_edges = train_edges[:num_disjoint]
             self._create_label(
@@ -479,7 +356,7 @@ class RandomLinkSplit(BaseTransform):
             rev_store = store._parent()[rev_edge_type]
             for key in rev_store.keys():
                 if key not in store:
-                    del rev_store[key]  # We delete all outdated attributes.
+                    del rev_store[key]
                 elif key == 'edge_index':
                     rev_store.edge_index = store.edge_index.flip([0])
                 else:
@@ -500,8 +377,6 @@ class RandomLinkSplit(BaseTransform):
         if hasattr(store, self.key):
             edge_label = store[self.key]
             edge_label = edge_label[index]
-            # Increment labels by one. Note that there is no need to increment
-            # in case no negative edges are added.
             if neg_edge_index.numel() > 0:
                 assert edge_label.dtype == torch.long
                 assert edge_label.size(0) == edge_index.size(1)

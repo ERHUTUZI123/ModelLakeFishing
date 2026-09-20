@@ -1,10 +1,3 @@
-"""Unit tests for the F8 evaluator (RF).
-
-Two things here decide numbers rather than report them: restricting the
-candidate pool has to remap the gold ids into the restricted row space, and an
-index built over a subset returns ORIGINAL labels, so the brute-force reference
-has to live in the same label space or every recall reads as zero.
-"""
 import json
 import os
 from types import SimpleNamespace
@@ -64,7 +57,7 @@ def test_train_costs_fail_loudly_when_the_run_family_is_wrong(tmp_path):
 def test_curve_files_are_optional_and_sorted(tmp_path):
     d0 = tmp_path / "X4GD_full_s0_e25"
     d0.mkdir()
-    assert E.curve_index_files(str(d0)) == []          # no `curve` stage
+    assert E.curve_index_files(str(d0)) == []
     sub = d0 / "curve"
     sub.mkdir()
     for f in ("hnsw_sub_500k_s1.bin", "hnsw_sub_100k_s0.bin", "notes.json"):
@@ -85,7 +78,6 @@ def test_query_eligibility_maps_flags_onto_export_rows(tmp_path):
     }).to_parquet(nodes)
     d0 = tmp_path / "RF_full_s0_e25"
     d0.mkdir()
-    # export row order is mappedID order, and it is not the parquet order
     pd.DataFrame({"mappedID": [1, 0, 2, 3],
                   "dataset": ["unk	task", "good	task", "##	task", "rl	task"],
                   "root": ["r1", "r0", "r2", "r3"]}).to_parquet(d0 / "dataset_ids.parquet")
@@ -139,10 +131,8 @@ def _toy(n=40, d=8, seed=0):
 
 
 def test_curve_point_remaps_gold_into_the_restricted_row_space():
-    """Without the remap the gold id indexes a different model and the metric
-    is about the wrong row -- which raises nothing."""
     zm, zd, cands, roots = _toy()
-    sel = np.arange(0, 40, 2)                       # keeps 5, 9 out; 2, 6 in
+    sel = np.arange(0, 40, 2)
     keep_all = np.union1d(sel, np.concatenate([c for c, _a in cands.values()]))
     got = E.curve_point(zm, zd, cands, roots, keep_all, "cpu")
     assert got["N"] == len(keep_all)
@@ -153,22 +143,18 @@ def test_curve_point_remaps_gold_into_the_restricted_row_space():
 
 def test_curve_point_drops_a_query_whose_pool_lost_too_many_candidates():
     zm, zd, cands, roots = _toy()
-    sel = np.array([1, 5, 9, 30, 2])                # query 1 keeps only one cand
+    sel = np.array([1, 5, 9, 30, 2])
     got = E.curve_point(zm, zd, cands, roots, sel, "cpu")
     assert got["n_queries"] == 1
 
 
 def test_bench_rung_label_space_default_is_identity():
-    """The historical rungs added row i under label i; the new `labels`
-    argument must not disturb that path."""
     import inspect
     sig = inspect.signature(R.bench_rung)
     assert sig.parameters["labels"].default is None
 
 
 def test_subindex_filename_parses_on_the_last_underscore_s():
-    """`_s` also occurs inside `sub`, so splitting on the first one yields the
-    literal string 'hnsw' as every rung name."""
     for name, n, seed in (("hnsw_sub_100k_s0.bin", "100k", 0),
                           ("hnsw_sub_1000k_s2.bin", "1000k", 2)):
         stem, s = name[:-4].rsplit("_s", 1)
