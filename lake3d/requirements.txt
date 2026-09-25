@@ -1,0 +1,6 @@
+# Visualization dependencies; init_space.py also uses the repository's PyTorch/PyG environment.
+numpy==2.4.6
+pandas==3.0.3
+pyarrow==24.0.0
+umap-learn==0.5.12
+faiss-cpu==1.14.3

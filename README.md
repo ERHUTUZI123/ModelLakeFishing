@@ -192,3 +192,6 @@ python -m http.server 8000 --directory lake3d
 ```
 
 Then open [http://127.0.0.1:8000/lake3d_offline.html](http://127.0.0.1:8000/lake3d_offline.html).
+
+The [visualization source and build instructions](lake3d/README.md) are included
+in `lake3d/` alongside both pages.

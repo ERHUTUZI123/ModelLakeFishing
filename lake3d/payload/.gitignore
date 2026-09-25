@@ -1,0 +1,5 @@
+# Keep the shipped viewer input, not the full layout/export intermediates.
+*
+!.gitignore
+!packed.npz
+!packed_meta.json
