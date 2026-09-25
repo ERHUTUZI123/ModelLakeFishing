@@ -37,7 +37,7 @@ For compatibility details, see [NVIDIA](https://docs.nvidia.com/deploy/cuda-comp
 Open a Linux terminal and install the project:
 
 ```bash
-git clone https://github.com/ERHUTUZI123/xiaoyang_graph_task.git ModelLakeFishing
+git clone "<ANONYMOUS_REPOSITORY_URL>" ModelLakeFishing
 cd ModelLakeFishing
 python3.11 -m venv .venv
 source .venv/bin/activate
