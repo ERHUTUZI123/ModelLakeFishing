@@ -1,5 +1,6 @@
 # ModelLakeFishing
 
+# Review Model Lake 3D here: https://huggingface.co/spaces/copernicium/ModelLake3D
 ModelLakeFishing finds models for a **dataset–task query**: a dataset and the task you want to perform on it. It learns from model metadata and past evaluation results, uses HNSW to find 1,000 candidates, and reranks them to return ten models.
 
 Follow this guide to download current Hugging Face data and run the full pipeline, from data preparation to training and evaluation.
